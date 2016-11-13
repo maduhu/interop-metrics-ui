@@ -40,6 +40,20 @@ def get_counter_metadata():
 def get_timer_metadata():
     return get_available_metrics_metadata('metric_data.raw_timer_with_interval')
 
-# timer_rows = session. execute('select * from metric_data.raw_timer_with_interval limit 100')
-# for timer_row in timer_rows:
-#     print (timer_row.environment, timer_row.application, timer_row.metric_name, timer_row.metric_timestamp, timer_row.mean, timer_row.p99)
+
+def get_timer_metric_timeseries(statistics, environment, application, metric_name, from_timestamp, end_timestamp=None):
+    columns = ', '.join(statistics)
+    query = 'select metric_timestamp, ' + columns + ' from metric_data.raw_timer_with_interval where environment = %s and ' \
+                                                    'application = %s and metric_name = %s and metric_timestamp >= %s'
+    params = [environment, application, metric_name, from_timestamp]
+    if end_timestamp is not None:
+        query += ' and metric_timestamp <= %s'
+        params += end_timestamp
+    query += ' limit 100'
+    print(query)
+    rows = session.execute(query, params)
+    timeseries = []
+    for row in rows:
+        timeseries.append(row)
+
+    return timeseries
