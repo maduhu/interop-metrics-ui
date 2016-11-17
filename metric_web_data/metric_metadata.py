@@ -20,8 +20,9 @@ class Application:
 
 
 class Metric:
-    def __init__(self, metric_name):
+    def __init__(self, metric_name, statistics):
         self.metric_name = metric_name
+        self.statistics = statistics
 
 # nohup  sudo bin/kafka-server-start.sh config/server.properties > kafka.log &
 # nohup sudo bin/zookeeper-server-start.sh config/zookeeper.properties > zookeeper.log &
