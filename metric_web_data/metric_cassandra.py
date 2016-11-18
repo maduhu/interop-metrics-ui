@@ -39,8 +39,8 @@ def get_counter_metadata():
 
 
 def get_timer_metadata():
-    time_statistics = ['count', 'previous_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate', 'five_min_rate', 'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev']
-    return get_available_metrics_metadata('metric_data.raw_timer_with_interval', statistics)
+    timer_statistics = ['count', 'previous_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate', 'five_min_rate', 'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev']
+    return get_available_metrics_metadata('metric_data.raw_timer_with_interval', timer_statistics)
 
 
 def get_counter_metric_timeseries(statistics, environment, application, metric_name, from_timestamp, end_timestamp=None):
