@@ -1,0 +1,4 @@
+Flask==0.12
+Flask-WebTest==0.0.8
+marshmallow==2.12.1
+waitress==1.0.1

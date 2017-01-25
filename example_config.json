@@ -1,0 +1,12 @@
+{
+  "debug": true,
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "threads": 8,
+    "assets": "./assets"
+  },
+  "cassandra": {
+    "host": "0.0.0.0"
+  }
+}
