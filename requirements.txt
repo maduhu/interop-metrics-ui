@@ -1,4 +1,6 @@
 Flask==0.12
 Flask-WebTest==0.0.8
 marshmallow==2.12.1
+python-dateutil==2.6.0
+pytz==2016.10
 waitress==1.0.1

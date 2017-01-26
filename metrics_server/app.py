@@ -22,6 +22,7 @@ class App:
 
         self.flask_app = Flask(__name__, template_folder=template_dir, static_folder=static_folder)
         self.flask_app.debug = config.get('debug')
+        self.init_services()
         self.init_controllers()
 
     def add_service(self, service_class):

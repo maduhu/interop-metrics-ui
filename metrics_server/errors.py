@@ -1,0 +1,2 @@
+class NotFoundError(KeyError):
+    pass
