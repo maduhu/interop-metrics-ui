@@ -47,15 +47,13 @@ class MetricsController(BaseController):
 
     @staticmethod
     def _parse_timestamp(timestamp):
-        gmt = pytz.timezone('GMT')
-
         if timestamp is not None:
             timestamp = parse(timestamp)
 
             if timestamp.tzinfo is None:
-                timestamp = gmt.localize(timestamp)
+                timestamp = pytz.utc.localize(timestamp)
             else:
-                timestamp = timestamp.astimezone(gmt)
+                timestamp = timestamp.astimezone(pytz.utc)
 
         return timestamp
     
@@ -79,6 +77,11 @@ class MetricsController(BaseController):
             end_timestamp = self._parse_timestamp(request.args.get('end_timestamp', None))
         except ValueError:
             return jsonify(error='Invalid end_timestamp'), 400
+
+        # TODO: return a generator so we can stream the data to the client instead of rendering everything in memory
+        # and returning.
+        # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
+        # http://flask.pocoo.org/docs/0.12/patterns/streaming/
 
         return jsonify(
             data={
