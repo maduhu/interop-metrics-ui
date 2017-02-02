@@ -12,6 +12,13 @@ class MetricsController(BaseController):
     def metrics_service(self) -> MetricsService:
         return self.services['MetricsService']
 
+    def distinct_metrics(self):
+        """
+        Retrieves the list of distinct metrics from the database.
+        :return:
+        """
+        return jsonify(data={'metrics': self.metrics_service.get_all_distinct_metrics()})
+
     def environments(self):
         """
         Returns all of the available environments that we can retrieve metrics for.
@@ -68,6 +75,12 @@ class MetricsController(BaseController):
         :return: JSON
         """
 
+        columns = request.args.get('columns', '').split(',')
+        columns = [column.strip() for column in columns if column.strip() != '']
+
+        if len(columns) == 0:
+            return jsonify(error='You must specify at least one column'), 400
+
         try:
             start_timestamp = self._parse_timestamp(request.args.get('start_timestamp', None))
         except ValueError:
@@ -83,17 +96,20 @@ class MetricsController(BaseController):
         # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
         # http://flask.pocoo.org/docs/0.12/patterns/streaming/
 
+        rows = self.metrics_service.get_metrics_data(env, app, table, metric, columns, start_timestamp, end_timestamp)
+
         return jsonify(
             data={
                 'environment': env,
                 'application': app,
                 'table': table,
                 'metric': metric,
-                'rows': self.metrics_service.get_metrics_data(env, app, table, metric, start_timestamp, end_timestamp)
+                'rows': rows
             }
         )
 
     def add_routes(self):
+        self.add_route('/api/v1/metrics', self.distinct_metrics, ['GET'])
         self.add_route('/api/v1/environments/', self.environments, ['GET'])
         self.add_route('/api/v1/environments/<env>/applications', self.applications, ['GET'])
         self.add_route('/api/v1/environments/<env>/applications/<app>/metrics', self.metrics, ['GET'])
