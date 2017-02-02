@@ -1,0 +1,22 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "normalize.css": "^5.0.0",
+    "react-scripts": "0.8.5",
+    "superagent": "^3.4.1"
+  },
+  "dependencies": {
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
+    "superagent": "^3.4.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://0.0.0.0:8080"
+}
