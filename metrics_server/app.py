@@ -1,10 +1,23 @@
 import os
 
-from flask import Flask
+from flask import Flask, request
 
 from metrics_server.core_controller import CoreController
 from metrics_server.metrics_controller import MetricsController
 from metrics_server.metrics_service import MetricsService
+
+
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
+    if request.method == 'OPTIONS':
+        response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+        headers = request.headers.get('Access-Control-Request-Headers')
+
+        if headers:
+            response.headers['Access-Control-Allow-Headers'] = headers
+
+    return response
 
 
 class App:
@@ -19,9 +32,16 @@ class App:
         module_dir = os.path.dirname(os.path.realpath(__file__))
         template_dir = module_dir + '/templates'
         static_folder = os.path.realpath(config['server']['assets'])
+        debug = config.get('debug')
 
         self.flask_app = Flask(__name__, template_folder=template_dir, static_folder=static_folder)
-        self.flask_app.debug = config.get('debug')
+        self.flask_app.debug = debug
+
+        if debug:
+            # Enable CORS for everything when in debug mode so we can use the webpack dev server and get nice
+            # auto-reloading features
+            self.flask_app.after_request(add_cors_headers)
+
         self.init_services()
         self.init_controllers()
 
