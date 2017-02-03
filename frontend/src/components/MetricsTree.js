@@ -62,30 +62,6 @@ function buildApplicationTree(application, environmentName, metricName, table) {
   });
 }
 
-function flattenTree(tree) {
-  /**
-   * flattenTree takes all nodes in the tree that only have one child and combines them, for example:
-   *  com
-   *    cacherules
-   *      transfers_fulfillment
-   *        fullfillment_time
-   *        fulfillment_count
-   *      users
-   *        login_time
-   *
-   * Would get flattened to:
-   *  com.cacherules
-   *    transfers_fulfillment
-   *      fulfillment_time
-   *      fulfillment_count
-   *    users.login_time
-   */
-
-  // TODO: implement
-
-  return tree;
-}
-
 function listifyNodes(subTree) {
   /**
    * Transforms each node from buildApplicationTree to have a sorted array of nodes instead of an object.
@@ -124,9 +100,7 @@ export function buildEnvironmentTree(metrics) {
   let sorted = Object.values(tree).sort(nodeComparator);
 
   sorted = sorted.map((environment) => {
-    environment = listifyNodes(environment);
-    environment = flattenTree(environment);
-    return environment;
+    return listifyNodes(environment);
   });
 
   return sorted;
