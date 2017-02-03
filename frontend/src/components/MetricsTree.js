@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import './MetricsTree.css';
 
-function treeComparator(a, b) {
+const measureMap = {
+  'raw_timer_with_interval': ['count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999',
+    'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate'],
+  'raw_counter_with_interval': ['count'],
+};
+
+function nodeComparator(a, b) {
   if (a.text < b.text) {
     return -1;
   } else if (a.text > b.text) {
@@ -9,6 +15,10 @@ function treeComparator(a, b) {
   }
 
   return 0;
+}
+
+function defaultNode(text) {
+  return {text, nodes: {}, table: null, collapsed: true, environment: null, application: null, metric: null};
 }
 
 function buildApplicationTree(application, environmentName, metricName, table) {
@@ -34,15 +44,7 @@ function buildApplicationTree(application, environmentName, metricName, table) {
     const isLeaf = idx === pieces.length - 1;
 
     if (!subTree.hasOwnProperty(piece)) {
-      subTree[piece] = {
-        text: piece,
-        nodes: {},
-        table: null,
-        collapsed: true,
-        environment: null,
-        application: null,
-        metric: null
-      };
+      subTree[piece] = defaultNode(piece);
     }
 
     if (isLeaf) {
@@ -50,6 +52,10 @@ function buildApplicationTree(application, environmentName, metricName, table) {
       subTree[piece].environment = environmentName;
       subTree[piece].application = application.text;
       subTree[piece].metric = metricName;
+      subTree[piece].nodes = measureMap[table].reduce((measures, measure) => {
+        measures[measure] = defaultNode(measure);
+        return measures;
+      }, {});
     }
 
     subTree = subTree[piece].nodes;
@@ -86,7 +92,7 @@ function listifyNodes(subTree) {
    * The MetricsTree and related components expect an array instead of an object, and by front-loading this transform
    * we don't have to listify and sort on every render.
    */
-  subTree.nodes = Object.values(subTree.nodes).sort(treeComparator);
+  subTree.nodes = Object.values(subTree.nodes).sort(nodeComparator);
   subTree.nodes = subTree.nodes.map(listifyNodes);
   return subTree;
 }
@@ -115,7 +121,7 @@ export function buildEnvironmentTree(metrics) {
     return environmentTree;
   }, {});
 
-  let sorted = Object.values(tree).sort(treeComparator);
+  let sorted = Object.values(tree).sort(nodeComparator);
 
   sorted = sorted.map((environment) => {
     environment = listifyNodes(environment);
