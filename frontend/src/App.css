@@ -1,3 +1,12 @@
 .app {
   padding: 2em;
 }
+.picker__choices {
+  margin-bottom: 1em;
+}
+.picker__label {
+  padding: 0.5em;
+}
+.picker__radio {
+  padding: 0.5em;
+}

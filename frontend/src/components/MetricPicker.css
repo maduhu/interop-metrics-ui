@@ -1,0 +1,8 @@
+.metric-picker__filters {
+  padding: 0.5em 0;
+  margin-bottom: 0.5em;
+}
+.metric-picker__select,
+.metric-picker__input {
+  margin-right: 0.5em;
+}
