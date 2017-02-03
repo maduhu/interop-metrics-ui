@@ -41,13 +41,13 @@ function buildApplicationTree(application, environmentName, metricName, table) {
   let subTree = application.nodes;
 
   pieces.forEach((piece, idx) => {
-    const isLeaf = idx === pieces.length - 1;
+    const isMetric = idx === pieces.length - 1;
 
     if (!subTree.hasOwnProperty(piece)) {
       subTree[piece] = defaultNode(piece);
     }
 
-    if (isLeaf) {
+    if (isMetric) {
       subTree[piece].table = table;
       subTree[piece].environment = environmentName;
       subTree[piece].application = application.text;
