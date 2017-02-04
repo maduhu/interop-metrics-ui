@@ -1,21 +1,28 @@
 import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import './App.css';
-import { MetricsTree, buildEnvironmentTree } from './components/MetricsTree';
-import { MetricPicker } from './components/MetricPicker';
+import { Dialog } from './components/Dialog';
+import { collapseMetrics, MeasurePicker } from './components/MeasurePicker';
+import { Chart } from './components/Chart';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
-    this.toggleNode = this.toggleNode.bind(this);
-    this.pickNode = this.pickNode.bind(this);
-    this.onPickerChanged = this.onPickerChanged.bind(this);
+    this.onMeasurePicked = this.onMeasurePicked.bind(this);
+    this.addChart = this.addChart.bind(this);
+    this.openMeasurePicker = this.openMeasurePicker.bind(this);
+    this.closeMeasurePicker = this.closeMeasurePicker.bind(this);
+    this.removeChart = this.removeChart.bind(this);
 
     this.state = {
-      metrics: [],
+      rawMetrics: [],
+      metrics: {},
       loading: true,
       loadError: null,
+      charts: [],
+      measurePickerTarget: null,
+      measurePickerOpen: false,
     };
 
     request.get('/api/v1/metrics')
@@ -42,65 +49,73 @@ class App extends Component {
     }
 
     this.setState({
-      pickerType: 'table',
       rawMetrics: response.body.data.metrics,
-      metrics: buildEnvironmentTree(response.body.data.metrics),
-      loading: false,
-      loadError: null
+      metrics: collapseMetrics(response.body.data.metrics),
+      metricsLoading: false,
+      metricsLoadError: null,
+      charts: [],
     });
   }
 
-  toggleNode(node) {
-    node.collapsed = !node.collapsed;
-    this.setState(this.state);
+  addChart() {
+    this.setState(state => ({charts: state.charts.concat([{measures: []}])}));
   }
 
-  pickNode(node, measure) {
-
+  removeChart(idx) {
+    this.setState(state => {
+      const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx+1));
+      return {charts};
+    });
   }
 
-  onPickerChanged(e) {
-    this.setState({pickerType: e.target.value});
+  openMeasurePicker(id) {
+    this.setState({measurePickerTarget: id, measurePickerOpen: true});
+  }
+
+  closeMeasurePicker() {
+    this.setState({measurePickerTarget: null, measurePickerOpen: false});
+  }
+
+  onMeasurePicked(id, table, metric, measure, axis) {
+    // TODO: handle measure being picked for chart.
   }
 
   render() {
-    let body;
+    let dialog;
 
-    if (this.state.loading) {
-      body = <div className="loading-tree">Loading metrics...</div>;
-    } else if (this.state.loadError !== null) {
-      body = <div className="error">{this.state.loadError}</div>;
-    } else {
-      let picker;
+    if (this.state.measurePickerOpen) {
+      let measurePicker;
 
-      if (this.state.pickerType === 'table') {
-        picker = <MetricPicker metrics={this.state.rawMetrics} />;
+      if (this.state.metricsLoading) {
+        measurePicker = <div className="loading-picker">Loading metrics...</div>;
+      } else if (this.state.loadError !== null) {
+        measurePicker = <div className="error">{this.state.metricsLoadError}</div>;
       } else {
-        picker = <MetricsTree nodes={this.state.metrics} toggleNode={this.toggleNode} pickNode={this.pickNode} />;
+        measurePicker = <MeasurePicker metrics={this.state.metrics} onMeasurePicked={this.onMeasurePicked} />;
       }
 
-      body = (
-        <div className="picker">
-          <div className="picker__choices">
-            <input className="picker__radio" type="radio" value="table" id="_table" name="picker"
-                   checked={this.state.pickerType === 'table'} onChange={this.onPickerChanged} />
-
-            <label className="picker__label" htmlFor="_table">Table</label>
-
-            <input className="picker__radio" type="radio" value="tree" id="_tree" name="picker"
-                   checked={this.state.pickerType === 'tree'} onChange={this.onPickerChanged} />
-
-            <label className="picker__label" htmlFor="_tree">Tree</label>
-          </div>
-
-          {picker}
-        </div>
+      dialog = (
+        <Dialog>
+          <button className="button" onClick={this.closeMeasurePicker}>X</button>
+          {measurePicker}
+        </Dialog>
       );
     }
 
+    const charts = this.state.charts.map((chart, idx) => {
+      return (
+        <Chart key={idx} id={idx} openMeasurePicker={this.openMeasurePicker} removeChart={this.removeChart}/>
+      );
+    });
+
     return (
       <div className="app">
-        {body}
+        <div className="add-chart">
+          <button className="button" onClick={this.addChart}>New Chart</button>
+        </div>
+        {dialog}
+
+        {charts}
       </div>
     );
   }

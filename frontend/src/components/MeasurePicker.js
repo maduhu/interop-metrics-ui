@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import Fuse from 'fuse.js';
-import './MetricPicker.css'
+import './MeasurePicker.css'
 
-function collapseMetrics(metrics) {
+export function collapseMetrics(metrics) {
   /**
    * Takes a flat list of metrics that look like this:
    *  {environment: '', application: '', metric_name: '', table: ''}, ...
@@ -36,7 +36,7 @@ function collapseMetrics(metrics) {
   }, {});
 }
 
-class MetricPickerFilters extends Component {
+class MeasurePickerFilters extends Component {
   render() {
     const environment = this.props.environment;
     const environments = this.props.environments;
@@ -70,7 +70,7 @@ class MetricPickerFilters extends Component {
   }
 }
 
-MetricPickerFilters.propTypes = {
+MeasurePickerFilters.propTypes = {
   application: React.PropTypes.string,
   environment: React.PropTypes.string,
   filter: React.PropTypes.string,
@@ -81,7 +81,7 @@ MetricPickerFilters.propTypes = {
   onFilterChange: React.PropTypes.func,
 };
 
-class MetricPickerTable extends Component {
+class MeasurePickerTable extends Component {
   render () {
     const rows = this.props.rows.map((row) => {
       const key = `${row.environment}.${row.application}.${row.metric_name}`;
@@ -100,7 +100,7 @@ class MetricPickerTable extends Component {
   }
 }
 
-export class MetricPicker extends Component {
+export class MeasurePicker extends Component {
   constructor(props) {
     super(props);
     this.onEnvironmentChange = this.onEnvironmentChange.bind(this);
@@ -119,7 +119,6 @@ export class MetricPicker extends Component {
 
     // TODO: once these components are all figured out push this state up to the application instead.
     this.state = {
-      metrics: collapseMetrics(props.metrics),
       environment: '',
       application: '',
       filter: '',
@@ -141,11 +140,11 @@ export class MetricPicker extends Component {
 
 
   render() {
-    const metrics = this.state.metrics;
+    const metrics = this.props.metrics;
     const environment = this.state.environment;
     const application = this.state.application;
     const filter = this.state.filter;
-    const environments = Object.keys(this.state.metrics);
+    const environments = Object.keys(metrics);
     const fuse = this.state.fuse;
     let applications = [];
     let rows = [];
@@ -172,7 +171,7 @@ export class MetricPicker extends Component {
 
     return (
       <div className="metric-picker">
-        <MetricPickerFilters environments={environments}
+        <MeasurePickerFilters environments={environments}
                              environment={environment}
                              onEnvironmentChange={this.onEnvironmentChange}
                              applications={applications}
@@ -181,7 +180,7 @@ export class MetricPicker extends Component {
                              filter={filter}
                              onFilterChange={this.onFilterChange} />
 
-        <MetricPickerTable rows={rows} />
+        <MeasurePickerTable rows={rows} />
       </div>
     );
   }

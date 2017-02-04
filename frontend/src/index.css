@@ -8,4 +8,23 @@ body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
+  color: #213e47;
+}
+.button {
+  background-color: #50c7e8;
+  border: none;
+  /*color: #fff;*/
+  cursor: pointer;
+  padding: 0.5em;
+  box-shadow: 0 0 10px 0.5px transparent;
+  transition: all 0.15s linear;
+}
+.button:hover {
+  background-color: #50c1e2;
+  box-shadow: 0 0 10px 0.5px rgba(0, 0, 0, 0.2);
+  /*transform: scale(0.98);*/
+}
+.button:active,
+.button:focus {
+  outline: none;
 }
