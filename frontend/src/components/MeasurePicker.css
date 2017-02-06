@@ -1,8 +1,48 @@
-.metric-picker__filters {
+.measure-picker__filters {
   padding: 0.5em 0;
   margin-bottom: 0.5em;
+  display: flex;
 }
-.metric-picker__select,
-.metric-picker__input {
+.measure-picker__select,
+.measure-picker__input {
+  font-size: 1.1em;
+}
+.measure-picker__input {
+  font-size: 1.1em;
+  padding: .1em;
+  flex-grow: 1;
+}
+.measure-picker__select {
   margin-right: 0.5em;
+}
+.measure-picker__metrics {
+  height: 500px;
+  padding: .5em 0;
+  overflow-y: scroll;
+}
+.measure-picker__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.measure-picker__tr {
+  padding: .2em 0;
+
+}
+.measure-picker__tr:last-of-type {
+  border: none;
+}
+.measure-picker__th {
+  border-bottom: 1px solid rgb(224, 224, 224);
+  padding: 0.2em;
+  text-align: left;
+}
+.measure-picker__env-col,
+.measure-picker__app-col,
+.measure-picker__metric-col,
+.measure-picker__add-col {
+  padding: 0.3em 0.1em;
+  border-bottom: 1px solid rgb(224, 224, 224);
+}
+.measure-picker__add-col {
+  padding: 0.2em 0.6em;
 }

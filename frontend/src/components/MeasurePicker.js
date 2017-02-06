@@ -52,18 +52,18 @@ class MeasurePickerFilters extends Component {
     const appDisabled = appOptions.length < 2;
 
     return (
-      <div className="metric-picker__filters">
-        <select className="metric-picker__select" value={environment}
+      <div className="measure-picker__filters">
+        <select className="measure-picker__select" value={environment}
                 onChange={(e) => this.props.onEnvironmentChange(e.target.value)}>
           {envOptions}
         </select>
 
-        <select className="metric-picker__select" value={application} disabled={appDisabled}
+        <select className="measure-picker__select" value={application} disabled={appDisabled}
                 onChange={(e) => this.props.onApplicationChange(e.target.value)}>
           {appOptions}
         </select>
 
-        <input className="metric-picker__input" type="text" value={filter} placeholder="filter"
+        <input className="measure-picker__input" type="text" value={filter} placeholder="Filter"
                onChange={(e) => this.props.onFilterChange(e.target.value)}/>
       </div>
     );
@@ -83,18 +83,53 @@ MeasurePickerFilters.propTypes = {
 
 class MeasurePickerTable extends Component {
   render () {
-    const rows = this.props.rows.map((row) => {
-      const key = `${row.environment}.${row.application}.${row.metric_name}`;
-      return (
-        <div key={key} className="metric-picker__table-row">
-          {key}
-        </div>
+    let body;
+
+    if (this.props.metricsLoading) {
+      body = <div className="loading-picker">Loading metrics...</div>;
+    } else if (this.props.metricsLoadError) {
+      body = <div className="error">{this.state.metricsLoadError}</div>;
+    } else {
+      const rows = this.props.rows.map((row) => {
+        const key = `${row.environment}.${row.application}.${row.metric_name}`;
+        const addMeasure = () => {
+          console.log('add measure!', row);
+          this.props.addMeasure(row);
+        };
+
+        return (
+          <tr key={key} className="measure-picker__tr">
+            <td className="measure-picker__env-col">{row.environment}</td>
+            <td className="measure-picker__app-col">{row.application}</td>
+            <td className="measure-picker__metric-col">{row.metric_name}</td>
+            <td className="measure-picker__add-col">
+              <button className="flat-button" onClick={addMeasure}>
+                <span className="fa fa-plus-square"></span>
+              </button>
+            </td>
+          </tr>
+        );
+      });
+
+      body = (
+        <table className="measure-picker__table">
+          <tbody>
+          <tr>
+            <th className="measure-picker__th">Environment</th>
+            <th className="measure-picker__th">Application</th>
+            <th className="measure-picker__th">Metric</th>
+            <th className="measure-picker__th">Add</th>
+          </tr>
+
+          {rows}
+          </tbody>
+        </table>
       );
-    });
+    }
 
     return (
-      <div className="metric-picker__table">
-        {rows}
+      <div className="measure-picker__metrics">
+        {body}
       </div>
     );
   }
@@ -117,7 +152,6 @@ export class MeasurePicker extends Component {
       keys: ['metric_name'],
     };
 
-    // TODO: once these components are all figured out push this state up to the application instead.
     this.state = {
       environment: '',
       application: '',
@@ -138,7 +172,6 @@ export class MeasurePicker extends Component {
     this.setState({filter: filter});
   }
 
-
   render() {
     const metrics = this.props.metrics;
     const environment = this.state.environment;
@@ -158,7 +191,7 @@ export class MeasurePicker extends Component {
     } else if (environment !== '') {
       rows = applications.reduce((rows, app) => rows.concat(metrics[environment][app]), []);
     } else {
-      rows = Object.keys(metrics).reduce((rows, env) => {
+      rows = environments.reduce((rows, env) => {
         return rows.concat(Object.keys(metrics[env]).reduce((rows, app) => rows.concat(metrics[env][app]), []));
       }, []);
     }
@@ -170,18 +203,23 @@ export class MeasurePicker extends Component {
     }
 
     return (
-      <div className="metric-picker">
+      <div className="measure-picker">
         <MeasurePickerFilters environments={environments}
-                             environment={environment}
-                             onEnvironmentChange={this.onEnvironmentChange}
-                             applications={applications}
-                             application={application}
-                             onApplicationChange={this.onApplicationChange}
-                             filter={filter}
-                             onFilterChange={this.onFilterChange} />
+                              environment={environment}
+                              onEnvironmentChange={this.onEnvironmentChange}
+                              applications={applications}
+                              application={application}
+                              onApplicationChange={this.onApplicationChange}
+                              filter={filter}
+                              onFilterChange={this.onFilterChange} />
 
-        <MeasurePickerTable rows={rows} />
+        <MeasurePickerTable metricsLoading={this.props.metricsLoading}
+                            metricsLoadError={this.props.metricsLoadError}
+                            rows={rows}
+                            addMeasure={this.props.addMeasure} />
       </div>
     );
   }
 }
+
+export default MeasurePicker;
