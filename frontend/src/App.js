@@ -2,27 +2,31 @@ import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import './App.css';
 import { Dialog } from './components/Dialog';
-import { collapseMetrics, MeasurePicker } from './components/MeasurePicker';
-import { Chart } from './components/Chart';
+import { collapseMetrics } from './components/MeasurePicker';
+import ChartEditor from './components/ChartEditor';
+import Chart from './components/Chart';
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.onLoadMetrics = this.onLoadMetrics.bind(this);
-    this.onMeasurePicked = this.onMeasurePicked.bind(this);
     this.addChart = this.addChart.bind(this);
-    this.openMeasurePicker = this.openMeasurePicker.bind(this);
+    this.onLoadMetrics = this.onLoadMetrics.bind(this);
+    this.addMeasure = this.addMeasure.bind(this);
+    this.removeMeasure = this.removeMeasure.bind(this);
+    this.saveChart = this.saveChart.bind(this);
+    this.openSettings = this.openSettings.bind(this);
     this.closeMeasurePicker = this.closeMeasurePicker.bind(this);
     this.removeChart = this.removeChart.bind(this);
 
     this.state = {
       rawMetrics: [],
       metrics: {},
-      loading: true,
-      loadError: null,
-      charts: [],
-      measurePickerTarget: null,
-      measurePickerOpen: false,
+      metricsLoading: true,
+      metricsLoadError: null,
+      charts: [{measures: []}],
+      targetChartId: null,
+      targetChart: null,
+      settingsOpen: false,
     };
 
     request.get('/api/v1/metrics')
@@ -41,8 +45,8 @@ class App extends Component {
       }
 
       this.setState({
-        loading: false,
-        loadError: errorMsg,
+        metricsLoading: false,
+        metricsLoadError: errorMsg,
       });
 
       return;
@@ -53,12 +57,12 @@ class App extends Component {
       metrics: collapseMetrics(response.body.data.metrics),
       metricsLoading: false,
       metricsLoadError: null,
-      charts: [],
     });
   }
 
   addChart() {
-    this.setState(state => ({charts: state.charts.concat([{measures: []}])}));
+    const newChart = [{measures: []}];
+    this.setState(state => ({charts: state.charts.concat(newChart)}));
   }
 
   removeChart(idx) {
@@ -68,43 +72,71 @@ class App extends Component {
     });
   }
 
-  openMeasurePicker(id) {
-    this.setState({measurePickerTarget: id, measurePickerOpen: true});
+  openSettings(id) {
+    this.setState({
+      targetChartId: id,
+      // This copy might not be deep enough, if we change the axis of a measure and hit cancel will we actually revert
+      // to the old state? Need to test.
+      targetChart: {...this.state.charts[id], measures: [...this.state.charts[id].measures]},
+      settingsOpen: true
+    });
   }
 
   closeMeasurePicker() {
-    this.setState({measurePickerTarget: null, measurePickerOpen: false});
+    this.setState({targetChart: null, settingsOpen: false});
   }
 
-  onMeasurePicked(id, table, metric, measure, axis) {
-    // TODO: handle measure being picked for chart.
+  addMeasure(metric) {
+    const targetChart = {...this.state.targetChart};
+    targetChart.measures = targetChart.measures.concat([{...metric, measure: null, axis: 'right'}]);
+    this.setState({targetChart});
+  }
+
+  removeMeasure(idx) {
+    this.setState((state) => {
+      const chart = {...state.targetChart};
+      chart.measures = chart.measures.slice(0, idx).concat(chart.measures.slice(idx + 1));
+      return {targetChart: chart};
+    });
+  }
+
+  saveChart() {
+    // TODO: kick off data retrieval as needed.
+    this.setState(state => {
+      const id = state.targetChartId;
+      const newChart = [state.targetChart];
+
+      return {
+        charts: [...state.charts.slice(0, id), ...newChart, ...state.charts.slice(id + 1)],
+        targetChart: null,
+        settingsOpen: false
+      };
+    });
   }
 
   render() {
     let dialog;
 
-    if (this.state.measurePickerOpen) {
-      let measurePicker;
-
-      if (this.state.metricsLoading) {
-        measurePicker = <div className="loading-picker">Loading metrics...</div>;
-      } else if (this.state.loadError !== null) {
-        measurePicker = <div className="error">{this.state.metricsLoadError}</div>;
-      } else {
-        measurePicker = <MeasurePicker metrics={this.state.metrics} onMeasurePicked={this.onMeasurePicked} />;
-      }
-
+    if (this.state.settingsOpen) {
       dialog = (
-        <Dialog>
-          <button className="button" onClick={this.closeMeasurePicker}>X</button>
-          {measurePicker}
+        <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeMeasurePicker} size="xl">
+          <ChartEditor metrics={this.state.metrics}
+                       metricsLoading={this.state.metricsLoading}
+                       metricsLoadError={this.state.metricsLoadError}
+                       chartId={this.state.targetChartId}
+                       chart={this.state.targetChart}
+                       addMeasure={this.addMeasure}
+                       removeMeasure={this.removeMeasure} />
         </Dialog>
       );
     }
 
     const charts = this.state.charts.map((chart, idx) => {
+      const openSettings = () => this.openSettings(idx);
+      const removeChart = () => this.removeChart(idx);
+
       return (
-        <Chart key={idx} id={idx} openMeasurePicker={this.openMeasurePicker} removeChart={this.removeChart}/>
+        <Chart key={idx} config={chart} openSettings={openSettings} removeChart={removeChart}/>
       );
     });
 
@@ -113,6 +145,7 @@ class App extends Component {
         <div className="add-chart">
           <button className="button" onClick={this.addChart}>New Chart</button>
         </div>
+
         {dialog}
 
         {charts}
