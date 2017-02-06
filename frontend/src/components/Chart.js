@@ -3,29 +3,16 @@ import { TimeSeriesChart } from './TimeSeriesChart';
 import './Chart.css';
 
 export class Chart extends Component {
-  constructor(props) {
-    super(props);
-    this.close = this.close.bind(this);
-    this.openMeasurePicker = this.openMeasurePicker.bind(this);
-  }
-
-  close() {
-    this.props.removeChart(this.props.id);
-  }
-
-  openMeasurePicker() {
-    this.props.openMeasurePicker(this.props.id);
-  }
-
   render() {
-    const measures = this.props.measures ? this.props.measures : [];
+    const config = this.props.config;
+    const measures = config.measures;
     let chartArea;
 
     if (measures.length === 0) {
       chartArea = (
         <div className="chart-area__blank">
           <span>No metrics chosen, </span>
-          <button className="button" onClick={this.openMeasurePicker}>choose a metric</button>
+          <button className="button" onClick={this.props.openSettings}>choose a metric</button>
           <span> to visualize.</span>
         </div>
       );
@@ -35,8 +22,14 @@ export class Chart extends Component {
 
     return (
       <div className="chart">
-        <div className="chart__remove">
-          <button className="button" onClick={this.close}>X</button>
+        <div className="chart__icons">
+          <button className="chart__icon button" onClick={this.props.openSettings}>
+            <span className="fa fa-pencil"></span>
+          </button>
+
+          <button className="chart__icon button" onClick={this.props.removeChart}>
+            <span className="fa fa-trash"></span>
+          </button>
         </div>
 
         <div className="chart__controls">

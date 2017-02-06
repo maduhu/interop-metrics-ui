@@ -5,8 +5,11 @@
   margin: 1em 0;
   padding: 2em;
 }
-.chart__remove {
+.chart__icons {
   position: absolute;
   top: 0;
   right: 0;
+}
+.chart__icon {
+  margin-left: 0.8em;
 }
