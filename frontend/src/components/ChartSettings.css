@@ -1,0 +1,25 @@
+.chart-settings__time-inputs {
+  display: flex;
+  padding: 0.5em 0;
+  margin-bottom: 0.5em;
+}
+.chart-settings__time-input {
+  flex-grow: 1;
+  font-size: 1.1em;
+  padding: .1em;
+  margin-right: 0.5em;
+}
+.chart-settings__time-input:last-of-type {
+  margin-right: 0;
+}
+.chart-settings__measures {
+  height: 500px;
+  padding: .5em 0;
+  overflow-y: scroll;
+}
+.chart-settings__table {
+  width: 100%;
+}
+.chart-settings__th {
+  text-align: left;
+}
