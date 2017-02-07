@@ -108,7 +108,7 @@ class App extends Component {
   }
 
   addMetric(metric) {
-    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: null, axis: 'right'}]);
+    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: null, axis: 'left'}]);
     this.updateChart('metrics', metrics);
   }
 
