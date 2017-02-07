@@ -9,15 +9,8 @@ const SETTINGS = 'settings';
 class ChartEditor extends Component {
   constructor(props) {
     super(props);
-    this.renderTabs.bind(this);
-    this.renderMetricPickerTab = this.renderMetricPickerTab.bind(this);
-    this.renderSettingsTab = this.renderSettingsTab.bind(this);
-
-    this.tabMap = {
-      metric_picker: this.renderMetricPickerTab,
-      settings: this.renderSettingsTab,
-    };
-
+    this.renderTabs = this.renderTabs.bind(this);
+    this.setTab = this.setTab.bind(this);
     this.state ={
       tab: props.chart.metrics.length > 0 ? SETTINGS : METRIC_PICKER,
     };
@@ -44,23 +37,22 @@ class ChartEditor extends Component {
     );
   }
 
-  renderMetricPickerTab() {
-    return <MetricPicker metrics={this.props.metrics}
-                         metricsLoading={this.props.metricsLoading}
-                         metricsLoadError={this.props.metricsLoadError}
-                         addMetric={this.props.addMetric} />;
-  }
-
-  renderSettingsTab() {
-    return <ChartSettings chart={this.props.chart} removeMetric={this.props.removeMetric} />;
-  }
-
   render() {
     return (
       <div className="chart-editor">
         {this.renderTabs()}
 
-        {this.tabMap[this.state.tab]()}
+        <MetricPicker hidden={this.state.tab !== METRIC_PICKER}
+                      metrics={this.props.metrics}
+                      metricsLoading={this.props.metricsLoading}
+                      metricsLoadError={this.props.metricsLoadError}
+                      addMetric={this.props.addMetric} />
+
+        <ChartSettings hidden={this.state.tab !== SETTINGS}
+                       chart={this.props.chart}
+                       removeMetric={this.props.removeMetric}
+                       updateChart={this.props.updateChart}
+                       updateMetric={this.props.updateMetric} />
       </div>
     );
   }
