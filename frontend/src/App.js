@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import './App.css';
 import { Dialog } from './components/Dialog';
-import { collapseMetrics } from './components/MeasurePicker';
+import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
 
@@ -15,7 +15,7 @@ function newChart() {
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
-    measures: [],
+    metrics: [],
   };
 }
 
@@ -27,9 +27,9 @@ class App extends Component {
     this.updateChart = this.updateChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
     this.saveChart = this.saveChart.bind(this);
-    this.addMeasure = this.addMeasure.bind(this);
-    this.updateMeasure = this.updateMeasure.bind(this);
-    this.removeMeasure = this.removeMeasure.bind(this);
+    this.addMetric = this.addMetric.bind(this);
+    this.updateMetric = this.updateMetric.bind(this);
+    this.removeMetric = this.removeMetric.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
 
@@ -107,36 +107,34 @@ class App extends Component {
     });
   }
 
-  addMeasure(metric) {
-    const measures = this.state.targetChart.measures.concat([{...metric, measure: null, axis: 'right'}]);
-    this.updateChart('measures', measures);
+  addMetric(metric) {
+    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: null, axis: 'right'}]);
+    this.updateChart('metrics', metrics);
   }
 
-  updateMeasure(idx, attr, value) {
-    const newMeasure = {...this.state.targetChart.measures[idx], [attr]: value};
+  updateMetric(idx, attr, value) {
+    const newMetric = {...this.state.targetChart.metrics[idx], [attr]: value};
 
     this.setState((state) => {
       const targetChart = {
         ...state.targetChart,
-        measures: [...state.measures.splice(0, idx), ...[newMeasure], ...this.state.measures.splice(idx + 1)],
+        metrics: [...state.metrics.splice(0, idx), ...[newMetric], ...this.state.metrics.splice(idx + 1)],
       };
 
       return {targetChart};
     });
   }
 
-  removeMeasure(idx) {
-    let measures = this.state.targetChart.measures;
-    measures = measures.slice(0, idx).concat(measures.slice(idx + 1));
-    this.updateChart('measures', measures);
+  removeMetric(idx) {
+    let metrics = this.state.targetChart.metrics;
+    metrics = metrics.slice(0, idx).concat(metrics.slice(idx + 1));
+    this.updateChart('metrics', metrics);
   }
 
   openSettings(id) {
     this.setState({
       targetChartId: id,
-      // This copy might not be deep enough, if we set the axis of a measure and hit cancel will we actually revert
-      // to the old state? Need to test.
-      targetChart: {...this.state.charts[id], measures: [...this.state.charts[id].measures]},
+      targetChart: {...this.state.charts[id], metrics: [...this.state.charts[id].metrics]},
       settingsOpen: true
     });
   }
@@ -156,9 +154,9 @@ class App extends Component {
                        metricsLoadError={this.state.metricsLoadError}
                        chartId={this.state.targetChartId}
                        chart={this.state.targetChart}
-                       addMeasure={this.addMeasure}
-                       removeMeasure={this.removeMeasure}
-                       updateMeasure={this.updateMeasure}
+                       addMetric={this.addMetric}
+                       removeMetric={this.removeMetric}
+                       updateMetric={this.updateMetric}
                        updateChart={this.updateChart} />
         </Dialog>
       );

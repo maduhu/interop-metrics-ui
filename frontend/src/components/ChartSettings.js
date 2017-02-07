@@ -6,25 +6,21 @@ class ChartSettings extends Component {
     const chart = this.props.chart;
     let body;
 
-    if (chart.measures.length === 0) {
+    if (chart.metrics.length === 0) {
       body = <div>No metrics selected.</div>;
     } else {
-      const measures = chart.measures.map((measure, idx) => {
-        const removeMeasure = () => this.props.removeMeasure(idx);
+      const metrics = chart.metrics.map((metric, idx) => {
+        const removeMetric = () => this.props.removeMetric(idx);
 
         return (
           <tr className="chart-settings__metric" key={idx}>
+            <td>{metric.environment}</td>
+            <td>{metric.application}</td>
+            <td>{metric.metric_name}</td>
+            <td>{metric.measure}</td>
+            <td>{metric.axis}</td>
             <td>
-              {measure.metric_name}
-            </td>
-            <td>
-              measure
-            </td>
-            <td>
-              axis
-            </td>
-            <td>
-              <button className="flat-button" onClick={removeMeasure}>
+              <button className="flat-button" onClick={removeMetric}>
                 <span className="fa fa-trash"></span>
               </button>
             </td>
@@ -35,13 +31,15 @@ class ChartSettings extends Component {
         <table className="chart-settings__table">
           <tbody>
           <tr>
+            <th className="chart-settings__th">Environment</th>
+            <th className="chart-settings__th">Application</th>
             <th className="chart-settings__th">Metric</th>
             <th className="chart-settings__th">Measure</th>
             <th className="chart-settings__th">Axis</th>
             <th className="chart-settings__th">&nbsp;</th>
           </tr>
 
-          {measures}
+          {metrics}
           </tbody>
         </table>
       );
@@ -51,12 +49,12 @@ class ChartSettings extends Component {
       <div className="chart-settings">
         <div className="chart-settings__time-inputs">
           <input className="chart-settings__time-input" type="text" value={this.props.startDate} />
-          <input className="chart-settings__time-input" type="text" value={this.props.starTime} />
+          <input className="chart-settings__time-input" type="text" value={this.props.startTime} />
           <input className="chart-settings__time-input" type="text" value={this.props.endDate} />
           <input className="chart-settings__time-input" type="text" value={this.props.endTime} />
         </div>
 
-        <div className="chart-settings__measures">
+        <div className="chart-settings__metrics">
           {body}
         </div>
       </div>

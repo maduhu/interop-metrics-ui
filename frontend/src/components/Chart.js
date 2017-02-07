@@ -5,10 +5,10 @@ import './Chart.css';
 export class Chart extends Component {
   render() {
     const config = this.props.config;
-    const measures = config.measures;
+    const metrics = config.metrics;
     let chartArea;
 
-    if (measures.length === 0) {
+    if (metrics.length === 0) {
       chartArea = (
         <div className="chart-area__blank">
           <span>No metrics chosen, </span>
@@ -17,7 +17,7 @@ export class Chart extends Component {
         </div>
       );
     } else {
-      chartArea = <TimeSeriesChart measures={measures} />;
+      chartArea = <TimeSeriesChart metrics={metrics} />;
     }
 
     return (

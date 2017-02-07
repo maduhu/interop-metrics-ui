@@ -12,7 +12,7 @@
 .chart-settings__time-input:last-of-type {
   margin-right: 0;
 }
-.chart-settings__measures {
+.chart-settings__metrics {
   height: 500px;
   padding: .5em 0;
   overflow-y: scroll;

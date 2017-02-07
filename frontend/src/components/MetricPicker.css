@@ -1,48 +1,48 @@
-.measure-picker__filters {
+.metric-picker__filters {
   padding: 0.5em 0;
   margin-bottom: 0.5em;
   display: flex;
 }
-.measure-picker__select,
-.measure-picker__input {
+.metric-picker__select,
+.metric-picker__input {
   font-size: 1.1em;
 }
-.measure-picker__input {
+.metric-picker__input {
   font-size: 1.1em;
   padding: .1em;
   flex-grow: 1;
 }
-.measure-picker__select {
+.metric-picker__select {
   margin-right: 0.5em;
 }
-.measure-picker__metrics {
+.metric-picker__metrics {
   height: 500px;
   padding: .5em 0;
   overflow-y: scroll;
 }
-.measure-picker__table {
+.metric-picker__table {
   border-collapse: collapse;
   width: 100%;
 }
-.measure-picker__tr {
+.metric-picker__tr {
   padding: .2em 0;
 
 }
-.measure-picker__tr:last-of-type {
+.metric-picker__tr:last-of-type {
   border: none;
 }
-.measure-picker__th {
+.metric-picker__th {
   border-bottom: 1px solid rgb(224, 224, 224);
   padding: 0.2em;
   text-align: left;
 }
-.measure-picker__env-col,
-.measure-picker__app-col,
-.measure-picker__metric-col,
-.measure-picker__add-col {
+.metric-picker__env-col,
+.metric-picker__app-col,
+.metric-picker__metric-col,
+.metric-picker__add-col {
   padding: 0.3em 0.1em;
   border-bottom: 1px solid rgb(224, 224, 224);
 }
-.measure-picker__add-col {
+.metric-picker__add-col {
   padding: 0.2em 0.6em;
 }

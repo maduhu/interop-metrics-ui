@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Fuse from 'fuse.js';
-import './MeasurePicker.css'
+import './MetricPicker.css'
 
 export function collapseMetrics(metrics) {
   /**
@@ -36,7 +36,7 @@ export function collapseMetrics(metrics) {
   }, {});
 }
 
-class MeasurePickerFilters extends Component {
+class MetricPickerFilters extends Component {
   render() {
     const environment = this.props.environment;
     const environments = this.props.environments;
@@ -52,25 +52,25 @@ class MeasurePickerFilters extends Component {
     const appDisabled = appOptions.length < 2;
 
     return (
-      <div className="measure-picker__filters">
-        <select className="measure-picker__select" value={environment}
+      <div className="metric-picker__filters">
+        <select className="metric-picker__select" value={environment}
                 onChange={(e) => this.props.onEnvironmentChange(e.target.value)}>
           {envOptions}
         </select>
 
-        <select className="measure-picker__select" value={application} disabled={appDisabled}
+        <select className="metric-picker__select" value={application} disabled={appDisabled}
                 onChange={(e) => this.props.onApplicationChange(e.target.value)}>
           {appOptions}
         </select>
 
-        <input className="measure-picker__input" type="text" value={filter} placeholder="Filter"
+        <input className="metric-picker__input" type="text" value={filter} placeholder="Filter"
                onChange={(e) => this.props.onFilterChange(e.target.value)}/>
       </div>
     );
   }
 }
 
-MeasurePickerFilters.propTypes = {
+MetricPickerFilters.propTypes = {
   application: React.PropTypes.string,
   environment: React.PropTypes.string,
   filter: React.PropTypes.string,
@@ -81,7 +81,7 @@ MeasurePickerFilters.propTypes = {
   onFilterChange: React.PropTypes.func,
 };
 
-class MeasurePickerTable extends Component {
+class MetricPickerTable extends Component {
   render () {
     let body;
 
@@ -92,18 +92,17 @@ class MeasurePickerTable extends Component {
     } else {
       const rows = this.props.rows.map((row) => {
         const key = `${row.environment}.${row.application}.${row.metric_name}`;
-        const addMeasure = () => {
-          console.log('add measure!', row);
-          this.props.addMeasure(row);
+        const addMetric = () => {
+          this.props.addMetric(row);
         };
 
         return (
-          <tr key={key} className="measure-picker__tr">
-            <td className="measure-picker__env-col">{row.environment}</td>
-            <td className="measure-picker__app-col">{row.application}</td>
-            <td className="measure-picker__metric-col">{row.metric_name}</td>
-            <td className="measure-picker__add-col">
-              <button className="flat-button" onClick={addMeasure}>
+          <tr key={key} className="metric-picker__tr">
+            <td className="metric-picker__env-col">{row.environment}</td>
+            <td className="metric-picker__app-col">{row.application}</td>
+            <td className="metric-picker__metric-col">{row.metric_name}</td>
+            <td className="metric-picker__add-col">
+              <button className="flat-button" onClick={addMetric}>
                 <span className="fa fa-plus-square"></span>
               </button>
             </td>
@@ -112,13 +111,13 @@ class MeasurePickerTable extends Component {
       });
 
       body = (
-        <table className="measure-picker__table">
+        <table className="metric-picker__table">
           <tbody>
           <tr>
-            <th className="measure-picker__th">Environment</th>
-            <th className="measure-picker__th">Application</th>
-            <th className="measure-picker__th">Metric</th>
-            <th className="measure-picker__th">Add</th>
+            <th className="metric-picker__th">Environment</th>
+            <th className="metric-picker__th">Application</th>
+            <th className="metric-picker__th">Metric</th>
+            <th className="metric-picker__th">Add</th>
           </tr>
 
           {rows}
@@ -128,14 +127,14 @@ class MeasurePickerTable extends Component {
     }
 
     return (
-      <div className="measure-picker__metrics">
+      <div className="metric-picker__metrics">
         {body}
       </div>
     );
   }
 }
 
-export class MeasurePicker extends Component {
+export class MetricPicker extends Component {
   constructor(props) {
     super(props);
     this.onEnvironmentChange = this.onEnvironmentChange.bind(this);
@@ -203,23 +202,23 @@ export class MeasurePicker extends Component {
     }
 
     return (
-      <div className="measure-picker">
-        <MeasurePickerFilters environments={environments}
-                              environment={environment}
-                              onEnvironmentChange={this.onEnvironmentChange}
-                              applications={applications}
-                              application={application}
-                              onApplicationChange={this.onApplicationChange}
-                              filter={filter}
-                              onFilterChange={this.onFilterChange} />
+      <div className="metric-picker">
+        <MetricPickerFilters environments={environments}
+                             environment={environment}
+                             onEnvironmentChange={this.onEnvironmentChange}
+                             applications={applications}
+                             application={application}
+                             onApplicationChange={this.onApplicationChange}
+                             filter={filter}
+                             onFilterChange={this.onFilterChange} />
 
-        <MeasurePickerTable metricsLoading={this.props.metricsLoading}
-                            metricsLoadError={this.props.metricsLoadError}
-                            rows={rows}
-                            addMeasure={this.props.addMeasure} />
+        <MetricPickerTable metricsLoading={this.props.metricsLoading}
+                           metricsLoadError={this.props.metricsLoadError}
+                           rows={rows}
+                           addMetric={this.props.addMetric} />
       </div>
     );
   }
 }
 
-export default MeasurePicker;
+export default MetricPicker;

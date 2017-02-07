@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import MeasurePicker from './MeasurePicker';
+import MetricPicker from './MetricPicker';
 import ChartSettings from './ChartSettings';
 import './ChartEditor.css';
 
@@ -10,16 +10,16 @@ class ChartEditor extends Component {
   constructor(props) {
     super(props);
     this.renderTabs.bind(this);
-    this.renderMeasurePickerTab = this.renderMeasurePickerTab.bind(this);
+    this.renderMetricPickerTab = this.renderMetricPickerTab.bind(this);
     this.renderSettingsTab = this.renderSettingsTab.bind(this);
 
     this.tabMap = {
-      metric_picker: this.renderMeasurePickerTab,
+      metric_picker: this.renderMetricPickerTab,
       settings: this.renderSettingsTab,
     };
 
     this.state ={
-      tab: props.chart.measures.length > 0 ? SETTINGS : METRIC_PICKER,
+      tab: props.chart.metrics.length > 0 ? SETTINGS : METRIC_PICKER,
     };
   }
 
@@ -44,15 +44,15 @@ class ChartEditor extends Component {
     );
   }
 
-  renderMeasurePickerTab() {
-    return <MeasurePicker metrics={this.props.metrics}
-                          metricsLoading={this.props.metricsLoading}
-                          metricsLoadError={this.props.metricsLoadError}
-                          addMeasure={this.props.addMeasure} />;
+  renderMetricPickerTab() {
+    return <MetricPicker metrics={this.props.metrics}
+                         metricsLoading={this.props.metricsLoading}
+                         metricsLoadError={this.props.metricsLoadError}
+                         addMetric={this.props.addMetric} />;
   }
 
   renderSettingsTab() {
-    return <ChartSettings chart={this.props.chart} removeMeasure={this.props.removeMeasure} />;
+    return <ChartSettings chart={this.props.chart} removeMetric={this.props.removeMetric} />;
   }
 
   render() {
