@@ -8,10 +8,10 @@ import Chart from './components/Chart';
 
 function newChart() {
   return {
-    startDate: null,
-    startTime: null,
-    endDate: null,
-    endTime: null,
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
@@ -56,7 +56,7 @@ class App extends Component {
       if (response.body !== null && response.body.error) {
         errorMsg = response.body.error;
       } else {
-        errorMsg = `An error occurred while loading available metrics: ${response.statusCode} - ${response.statusText}`;
+        errorMsg = `${response.statusCode} - ${response.statusText}`;
       }
 
       this.setState({
@@ -108,7 +108,7 @@ class App extends Component {
   }
 
   addMetric(metric) {
-    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: null, axis: 'left'}]);
+    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: '', axis: 'left'}]);
     this.updateChart('metrics', metrics);
   }
 
@@ -116,9 +116,10 @@ class App extends Component {
     const newMetric = {...this.state.targetChart.metrics[idx], [attr]: value};
 
     this.setState((state) => {
+      const oldChart = state.targetChart;
       const targetChart = {
-        ...state.targetChart,
-        metrics: [...state.metrics.splice(0, idx), ...[newMetric], ...this.state.metrics.splice(idx + 1)],
+        ...oldChart,
+        metrics: [...oldChart.metrics.splice(0, idx), ...[newMetric], ...oldChart.metrics.splice(idx + 1)],
       };
 
       return {targetChart};
@@ -174,7 +175,10 @@ class App extends Component {
     return (
       <div className="app">
         <div className="add-chart">
-          <button className="button" onClick={this.addChart}>New Chart</button>
+          <button className="button" onClick={this.addChart}>
+            <span className="fa fa-line-chart">&nbsp;</span>
+            New Chart
+          </button>
         </div>
 
         {dialog}
