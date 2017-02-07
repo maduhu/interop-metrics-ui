@@ -86,21 +86,41 @@ class MetricPickerTable extends Component {
     let body;
 
     if (this.props.metricsLoading) {
-      body = <div className="loading-picker">Loading metrics...</div>;
+      body = <div className="picker-loading">Loading metrics...</div>;
     } else if (this.props.metricsLoadError) {
-      body = <div className="error">{this.state.metricsLoadError}</div>;
+      body = (
+        <div className="picker-error">
+          <div className="picker-error__description">
+            An error occurred while loading available metrics:
+          </div>
+
+          <div className="picker-error__message">
+            {this.props.metricsLoadError}
+          </div>
+
+          <div className="picker-error__description">
+            Try reloading the page. If the error persists contact support.
+          </div>
+        </div>
+      );
     } else {
       const rows = this.props.rows.map((row) => {
         const key = `${row.environment}.${row.application}.${row.metric_name}`;
-        const addMetric = () => {
-          this.props.addMetric(row);
-        };
+        const addMetric = () => this.props.addMetric(row);
+        let typeIcon;
+
+        if (row.table === 'raw_timer_with_interval') {
+          typeIcon = <span className="fa fa-hourglass-o" title="timer"></span>
+        } else if (row.table === 'raw_counter_with_interval') {
+          typeIcon = <span className="fa fa-calculator" title="counter"></span>
+        }
 
         return (
           <tr key={key} className="metric-picker__tr">
             <td className="metric-picker__env-col">{row.environment}</td>
             <td className="metric-picker__app-col">{row.application}</td>
             <td className="metric-picker__metric-col">{row.metric_name}</td>
+            <td className="metric-picker__type-col">{typeIcon}</td>
             <td className="metric-picker__add-col">
               <button className="flat-button" onClick={addMetric}>
                 <span className="fa fa-plus-square"></span>
@@ -117,6 +137,7 @@ class MetricPickerTable extends Component {
             <th className="metric-picker__th">Environment</th>
             <th className="metric-picker__th">Application</th>
             <th className="metric-picker__th">Metric</th>
+            <th className="metric-picker__th">Type</th>
             <th className="metric-picker__th">Add</th>
           </tr>
 
@@ -202,7 +223,7 @@ export class MetricPicker extends Component {
     }
 
     return (
-      <div className="metric-picker">
+      <div className={`metric-picker ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
         <MetricPickerFilters environments={environments}
                              environment={environment}
                              onEnvironmentChange={this.onEnvironmentChange}

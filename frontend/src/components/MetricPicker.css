@@ -1,3 +1,6 @@
+.metric-picker--hidden {
+  display: none;
+}
 .metric-picker__filters {
   padding: 0.5em 0;
   margin-bottom: 0.5em;
@@ -39,10 +42,18 @@
 .metric-picker__env-col,
 .metric-picker__app-col,
 .metric-picker__metric-col,
+.metric-picker__type-col,
 .metric-picker__add-col {
   padding: 0.3em 0.1em;
   border-bottom: 1px solid rgb(224, 224, 224);
 }
+.metric-picker__type-col,
 .metric-picker__add-col {
   padding: 0.2em 0.6em;
+}
+.picker-error__message {
+  border-left: 2px solid #DDD;
+  color: red;
+  margin: 0.5em 0;
+  padding: 1em;
 }
