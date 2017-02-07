@@ -6,24 +6,39 @@ import { collapseMetrics } from './components/MeasurePicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
 
+function newChart() {
+  return {
+    startDate: null,
+    startTime: null,
+    endDate: null,
+    endTime: null,
+    // In the future we should also allow users to set axis domains.
+    leftAxis: 'linear',
+    rightAxis: 'linear',
+    measures: [],
+  };
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
-    this.addChart = this.addChart.bind(this);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
-    this.addMeasure = this.addMeasure.bind(this);
-    this.removeMeasure = this.removeMeasure.bind(this);
-    this.saveChart = this.saveChart.bind(this);
-    this.openSettings = this.openSettings.bind(this);
-    this.closeMeasurePicker = this.closeMeasurePicker.bind(this);
+    this.addChart = this.addChart.bind(this);
+    this.updateChart = this.updateChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
+    this.saveChart = this.saveChart.bind(this);
+    this.addMeasure = this.addMeasure.bind(this);
+    this.updateMeasure = this.updateMeasure.bind(this);
+    this.removeMeasure = this.removeMeasure.bind(this);
+    this.openSettings = this.openSettings.bind(this);
+    this.closeSettings = this.closeSettings.bind(this);
 
     this.state = {
       rawMetrics: [],
       metrics: {},
       metricsLoading: true,
       metricsLoadError: null,
-      charts: [{measures: []}],
+      charts: [newChart()],
       targetChartId: null,
       targetChart: null,
       settingsOpen: false,
@@ -61,8 +76,16 @@ class App extends Component {
   }
 
   addChart() {
-    const newChart = [{measures: []}];
-    this.setState(state => ({charts: state.charts.concat(newChart)}));
+    this.setState(state => ({charts: state.charts.concat([newChart()])}));
+  }
+
+  updateChart(attr, value) {
+    this.setState({
+      targetChart: {
+        ...this.state.targetChart,
+        [attr]: value,
+      }
+    });
   }
 
   removeChart(idx) {
@@ -72,46 +95,54 @@ class App extends Component {
     });
   }
 
+  saveChart() {
+    // TODO: kick off data retrieval as needed.
+    this.setState(state => {
+      const id = state.targetChartId;
+      return {
+        charts: [...state.charts.slice(0, id), ...[state.targetChart], ...state.charts.slice(id + 1)],
+        targetChart: null,
+        settingsOpen: false
+      };
+    });
+  }
+
+  addMeasure(metric) {
+    const measures = this.state.targetChart.measures.concat([{...metric, measure: null, axis: 'right'}]);
+    this.updateChart('measures', measures);
+  }
+
+  updateMeasure(idx, attr, value) {
+    const newMeasure = {...this.state.targetChart.measures[idx], [attr]: value};
+
+    this.setState((state) => {
+      const targetChart = {
+        ...state.targetChart,
+        measures: [...state.measures.splice(0, idx), ...[newMeasure], ...this.state.measures.splice(idx + 1)],
+      };
+
+      return {targetChart};
+    });
+  }
+
+  removeMeasure(idx) {
+    let measures = this.state.targetChart.measures;
+    measures = measures.slice(0, idx).concat(measures.slice(idx + 1));
+    this.updateChart('measures', measures);
+  }
+
   openSettings(id) {
     this.setState({
       targetChartId: id,
-      // This copy might not be deep enough, if we change the axis of a measure and hit cancel will we actually revert
+      // This copy might not be deep enough, if we set the axis of a measure and hit cancel will we actually revert
       // to the old state? Need to test.
       targetChart: {...this.state.charts[id], measures: [...this.state.charts[id].measures]},
       settingsOpen: true
     });
   }
 
-  closeMeasurePicker() {
+  closeSettings() {
     this.setState({targetChart: null, settingsOpen: false});
-  }
-
-  addMeasure(metric) {
-    const targetChart = {...this.state.targetChart};
-    targetChart.measures = targetChart.measures.concat([{...metric, measure: null, axis: 'right'}]);
-    this.setState({targetChart});
-  }
-
-  removeMeasure(idx) {
-    this.setState((state) => {
-      const chart = {...state.targetChart};
-      chart.measures = chart.measures.slice(0, idx).concat(chart.measures.slice(idx + 1));
-      return {targetChart: chart};
-    });
-  }
-
-  saveChart() {
-    // TODO: kick off data retrieval as needed.
-    this.setState(state => {
-      const id = state.targetChartId;
-      const newChart = [state.targetChart];
-
-      return {
-        charts: [...state.charts.slice(0, id), ...newChart, ...state.charts.slice(id + 1)],
-        targetChart: null,
-        settingsOpen: false
-      };
-    });
   }
 
   render() {
@@ -119,14 +150,16 @@ class App extends Component {
 
     if (this.state.settingsOpen) {
       dialog = (
-        <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeMeasurePicker} size="xl">
+        <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeSettings} size="xl">
           <ChartEditor metrics={this.state.metrics}
                        metricsLoading={this.state.metricsLoading}
                        metricsLoadError={this.state.metricsLoadError}
                        chartId={this.state.targetChartId}
                        chart={this.state.targetChart}
                        addMeasure={this.addMeasure}
-                       removeMeasure={this.removeMeasure} />
+                       removeMeasure={this.removeMeasure}
+                       updateMeasure={this.updateMeasure}
+                       updateChart={this.updateChart} />
         </Dialog>
       );
     }
