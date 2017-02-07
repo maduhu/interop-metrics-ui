@@ -1,19 +1,31 @@
+.chart-settings--hidden {
+  display: none;
+}
 .chart-settings__time-inputs {
   display: flex;
-  padding: 0.5em 0;
-  margin-bottom: 0.5em;
+  margin: 0.5em 0;
 }
-.chart-settings__time-input {
-  flex-grow: 1;
-  font-size: 1.1em;
-  padding: .1em;
+.chart-settings__time-input,
+.chart-settings__scale-input {
+  flex: 1;
+  display: inline-block;
   margin-right: 0.5em;
+  padding: .1em;
+}
+.chart-settings__time-input input,
+.chart-settings__scale-input select {
+  width: 100%;
+}
+.chart-settings__time-input label,
+.chart-settings__scale-input label,
+.chart-settings__metrics label {
+  font-weight: bold;
 }
 .chart-settings__time-input:last-of-type {
   margin-right: 0;
 }
 .chart-settings__metrics {
-  height: 500px;
+  height: 449px;
   padding: .5em 0;
   overflow-y: scroll;
 }
@@ -22,4 +34,8 @@
 }
 .chart-settings__th {
   text-align: left;
+}
+.chart-settings__scale-inputs {
+  display: flex;
+  width: 50%;
 }
