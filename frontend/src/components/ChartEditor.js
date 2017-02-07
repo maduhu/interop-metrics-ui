@@ -19,8 +19,7 @@ class ChartEditor extends Component {
     };
 
     this.state ={
-      tab: SETTINGS,
-      // tab: METRIC_PICKER,
+      tab: props.chart.measures.length > 0 ? SETTINGS : METRIC_PICKER,
     };
   }
 
