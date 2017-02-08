@@ -11,6 +11,7 @@ class ChartEditor extends Component {
     super(props);
     this.renderTabs = this.renderTabs.bind(this);
     this.setTab = this.setTab.bind(this);
+    this.addMetric = this.addMetric.bind(this);
     this.state ={
       tab: props.chart.metrics.length > 0 ? SETTINGS : METRIC_PICKER,
     };
@@ -18,6 +19,11 @@ class ChartEditor extends Component {
 
   setTab(tab) {
     this.setState({tab});
+  }
+
+  addMetric(metric) {
+    this.setState({tab: SETTINGS});
+    this.props.addMetric(metric);
   }
 
   renderTabs() {
@@ -43,10 +49,11 @@ class ChartEditor extends Component {
         {this.renderTabs()}
 
         <MetricPicker hidden={this.state.tab !== METRIC_PICKER}
+                      chart={this.props.chart}
                       metrics={this.props.metrics}
                       metricsLoading={this.props.metricsLoading}
                       metricsLoadError={this.props.metricsLoadError}
-                      addMetric={this.props.addMetric} />
+                      addMetric={this.addMetric} />
 
         <ChartSettings hidden={this.state.tab !== SETTINGS}
                        chart={this.props.chart}
