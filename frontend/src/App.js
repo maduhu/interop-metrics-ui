@@ -1,17 +1,25 @@
 import React, { Component } from 'react';
 import request from 'superagent/lib/client';
+import moment from 'moment';
 import './App.css';
 import { Dialog } from './components/Dialog';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
 
+const dateFormat = 'YYYY-MM-DD';
+const timeFormat = 'hh:mm:ss';
+
 function newChart() {
+  // Default to the last 24 hours
+  const now = moment.utc();
+  const yesterday = now.clone().subtract(24, 'hours');
+
   return {
-    startDate: '',
-    startTime: '',
-    endDate: '',
-    endTime: '',
+    startDate: now.format(dateFormat),
+    startTime: now.format(timeFormat),
+    endDate: yesterday.format(dateFormat),
+    endTime: yesterday.format(timeFormat),
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
@@ -32,7 +40,6 @@ class App extends Component {
     this.removeMetric = this.removeMetric.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
-
     this.state = {
       rawMetrics: [],
       metrics: {},
