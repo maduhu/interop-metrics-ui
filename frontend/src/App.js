@@ -11,7 +11,11 @@ const dateFormat = 'YYYY-MM-DD';
 const timeFormat = 'hh:mm:ss';
 
 function newChart() {
-  // Default to the last 24 hours
+  /**
+   * Creates a new chart object.
+   * Defaults chart range to the last 24 hours.
+   * Defaults axes to linear scales.
+   */
   const now = moment.utc();
   const yesterday = now.clone().subtract(24, 'hours');
 
@@ -25,6 +29,13 @@ function newChart() {
     rightAxis: 'linear',
     metrics: [],
   };
+}
+
+function newMetric(metric) {
+  /**
+   * Copies a metric and adds a measure and axis field. In the future we'll probably add more fields.
+   */
+  return {...metric, measure: '', axis: 'left'};
 }
 
 class App extends Component {
@@ -46,7 +57,7 @@ class App extends Component {
       metricsLoading: true,
       metricsLoadError: null,
       charts: [newChart()],
-      targetChartId: null,
+      targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
     };
@@ -57,6 +68,9 @@ class App extends Component {
   }
 
   onLoadMetrics(error, response) {
+    /**
+     * Handles response from metrics api (/api/v1/metrics)
+     */
     if (error !== null) {
       let errorMsg;
 
@@ -83,10 +97,16 @@ class App extends Component {
   }
 
   addChart() {
+    /**
+     * Adds a new (empty) chart to the page.
+     */
     this.setState(state => ({charts: state.charts.concat([newChart()])}));
   }
 
   updateChart(attr, value) {
+    /**
+     * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested
+     */
     this.setState({
       targetChart: {
         ...this.state.targetChart,
@@ -96,6 +116,9 @@ class App extends Component {
   }
 
   removeChart(idx) {
+    /**
+     * Remove the chart at idx.
+     */
     this.setState(state => {
       const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx+1));
       return {charts};
@@ -103,11 +126,17 @@ class App extends Component {
   }
 
   saveChart() {
+    /**
+     * Replaces the chart at targetChartIdx with targetChart and closes the settings panel.
+     */
+
     // TODO: kick off data retrieval as needed.
+
     this.setState(state => {
-      const id = state.targetChartId;
+      const id = state.targetChartIdx;
       return {
         charts: [...state.charts.slice(0, id), ...[state.targetChart], ...state.charts.slice(id + 1)],
+        targetChartIdx: null,
         targetChart: null,
         settingsOpen: false
       };
@@ -115,18 +144,27 @@ class App extends Component {
   }
 
   addMetric(metric) {
-    const metrics = this.state.targetChart.metrics.concat([{...metric, measure: '', axis: 'left'}]);
+    /**
+     * Adds a metric to the targetChart metrics object.
+     */
+    const metrics = this.state.targetChart.metrics.concat([newMetric(metric)]);
     this.updateChart('metrics', metrics);
   }
 
   updateMetric(idx, attr, value) {
+    /**
+     * Updates a metric.
+     * idx: index of the metric on targetChart to update
+     * attr: attribute to update
+     * value: value we want the attribute to have.
+     */
     const newMetric = {...this.state.targetChart.metrics[idx], [attr]: value};
 
     this.setState((state) => {
       const oldChart = state.targetChart;
       const targetChart = {
         ...oldChart,
-        metrics: [...oldChart.metrics.splice(0, idx), ...[newMetric], ...oldChart.metrics.splice(idx + 1)],
+        metrics: [...oldChart.metrics.slice(0, idx), newMetric, ...oldChart.metrics.slice(idx + 1)],
       };
 
       return {targetChart};
@@ -134,21 +172,30 @@ class App extends Component {
   }
 
   removeMetric(idx) {
+    /**
+     * Removes the metric from targetChart at the given index.
+     */
     let metrics = this.state.targetChart.metrics;
     metrics = metrics.slice(0, idx).concat(metrics.slice(idx + 1));
     this.updateChart('metrics', metrics);
   }
 
-  openSettings(id) {
+  openSettings(idx) {
+    /**
+     * Opens the settings panel for the chart at the given index.
+     */
     this.setState({
-      targetChartId: id,
-      targetChart: {...this.state.charts[id], metrics: [...this.state.charts[id].metrics]},
+      targetChartIdx: idx,
+      targetChart: {...this.state.charts[idx], metrics: [...this.state.charts[idx].metrics]},
       settingsOpen: true
     });
   }
 
   closeSettings() {
-    this.setState({targetChart: null, settingsOpen: false});
+    /**
+     * Closes the settings panel and does not save the changes made.
+     */
+    this.setState({targetChartIdx: null, targetChart: null, settingsOpen: false});
   }
 
   render() {
@@ -160,7 +207,6 @@ class App extends Component {
           <ChartEditor metrics={this.state.metrics}
                        metricsLoading={this.state.metricsLoading}
                        metricsLoadError={this.state.metricsLoadError}
-                       chartId={this.state.targetChartId}
                        chart={this.state.targetChart}
                        addMetric={this.addMetric}
                        removeMetric={this.removeMetric}
