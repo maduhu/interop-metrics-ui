@@ -28,10 +28,10 @@ class ScaleSettings extends Component {
     return (
       <div className="chart-settings__scale-inputs">
         <ScaleSelect label="Left Axis Scale:" value={chart.leftAxis}
-                     onChange={value => this.props.updateChart('leftAxis', value)} />
+                     onChange={value => this.props.updateTargetChart('leftAxis', value)} />
 
         <ScaleSelect label="Right Axis Scale:" value={chart.rightAxis}
-                     onChange={value => this.props.updateChart('rightAxis', value)} />
+                     onChange={value => this.props.updateTargetChart('rightAxis', value)} />
       </div>
     );
   }
@@ -47,19 +47,19 @@ class DateTimeSettings extends Component {
   }
 
   changeStartDate(e) {
-    this.props.updateChart('startDate', e.target.value);
+    this.props.updateTargetChart('startDate', e.target.value);
   }
 
   changeStartTime(e) {
-    this.props.updateChart('startTime', e.target.value);
+    this.props.updateTargetChart('startTime', e.target.value);
   }
 
   changeEndDate(e) {
-    this.props.updateChart('endDate', e.target.value);
+    this.props.updateTargetChart('endDate', e.target.value);
   }
 
   changeEndTime(e) {
-    this.props.updateChart('endTime', e.target.value);
+    this.props.updateTargetChart('endTime', e.target.value);
   }
 
   render() {

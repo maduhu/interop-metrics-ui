@@ -58,7 +58,7 @@ class ChartEditor extends Component {
         <ChartSettings hidden={this.state.tab !== SETTINGS}
                        chart={this.props.chart}
                        removeMetric={this.props.removeMetric}
-                       updateChart={this.props.updateChart}
+                       updateTargetChart={this.props.updateTargetChart}
                        updateMetric={this.props.updateMetric} />
       </div>
     );

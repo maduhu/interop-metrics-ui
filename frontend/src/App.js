@@ -43,7 +43,7 @@ class App extends Component {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
     this.addChart = this.addChart.bind(this);
-    this.updateChart = this.updateChart.bind(this);
+    this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
     this.saveChart = this.saveChart.bind(this);
     this.addMetric = this.addMetric.bind(this);
@@ -101,7 +101,7 @@ class App extends Component {
     this.setState(state => ({charts: state.charts.concat([newChart()])}));
   }
 
-  updateChart(attr, value) {
+  updateTargetChart(attr, value) {
     /**
      * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested
      */
@@ -151,7 +151,7 @@ class App extends Component {
      * Adds a metric to the targetChart metrics object.
      */
     const metrics = this.state.targetChart.metrics.concat([newMetric(metric)]);
-    this.updateChart('metrics', metrics);
+    this.updateTargetChart('metrics', metrics);
   }
 
   updateMetric(idx, attr, value) {
@@ -180,7 +180,7 @@ class App extends Component {
      */
     let metrics = this.state.targetChart.metrics;
     metrics = metrics.slice(0, idx).concat(metrics.slice(idx + 1));
-    this.updateChart('metrics', metrics);
+    this.updateTargetChart('metrics', metrics);
   }
 
   openSettings(idx) {
@@ -216,7 +216,7 @@ class App extends Component {
                        addMetric={this.addMetric}
                        removeMetric={this.removeMetric}
                        updateMetric={this.updateMetric}
-                       updateChart={this.updateChart} />
+                       updateTargetChart={this.updateTargetChart} />
         </Dialog>
       );
     }
