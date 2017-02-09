@@ -18,11 +18,11 @@ class ChartEditor extends Component {
   }
 
   setTab(tab) {
-    this.setState({tab});
+    this.setState(() => ({tab}));
   }
 
   addMetric(metric) {
-    this.setState({tab: SETTINGS});
+    this.setState(() => ({tab: SETTINGS}));
     this.props.addMetric(metric);
   }
 

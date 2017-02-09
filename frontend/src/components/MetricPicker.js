@@ -181,15 +181,15 @@ export class MetricPicker extends Component {
   }
 
   onEnvironmentChange(env) {
-    this.setState({environment: env, application: ''});
+    this.setState(() => ({environment: env, application: ''}));
   }
 
   onApplicationChange(app) {
-    this.setState({application: app});
+    this.setState(() => ({application: app}));
   }
 
   onFilterChange(filter) {
-    this.setState({filter: filter});
+    this.setState(() => ({filter: filter}));
   }
 
   render() {

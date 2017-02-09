@@ -80,19 +80,17 @@ class App extends Component {
         errorMsg = `${response.statusCode} - ${response.statusText}`;
       }
 
-      this.setState({
-        metricsLoading: false,
-        metricsLoadError: errorMsg,
-      });
-
+      this.setState(() => ({metricsLoading: false, metricsLoadError: errorMsg}));
       return;
     }
 
-    this.setState({
-      rawMetrics: response.body.data.metrics,
-      metrics: collapseMetrics(response.body.data.metrics),
-      metricsLoading: false,
-      metricsLoadError: null,
+    this.setState(() => {
+      return {
+        rawMetrics: response.body.data.metrics,
+        metrics: collapseMetrics(response.body.data.metrics),
+        metricsLoading: false,
+        metricsLoadError: null,
+      };
     });
   }
 
@@ -107,10 +105,15 @@ class App extends Component {
     /**
      * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested
      */
-    this.setState({
-      targetChart: {
-        ...this.state.targetChart,
-        [attr]: value,
+    this.setState((state) => {
+      return {
+        targetChart: {
+          ...state.targetChart,
+          [attr]: value,
+        }
+      };
+    });
+  }
       }
     });
   }
@@ -184,10 +187,12 @@ class App extends Component {
     /**
      * Opens the settings panel for the chart at the given index.
      */
-    this.setState({
-      targetChartIdx: idx,
-      targetChart: {...this.state.charts[idx], metrics: [...this.state.charts[idx].metrics]},
-      settingsOpen: true
+    this.setState((state) => {
+      return {
+        targetChartIdx: idx,
+        targetChart: {...state.charts[idx], metrics: [...state.charts[idx].metrics]},
+        settingsOpen: true
+      }
     });
   }
 
@@ -195,7 +200,7 @@ class App extends Component {
     /**
      * Closes the settings panel and does not save the changes made.
      */
-    this.setState({targetChartIdx: null, targetChart: null, settingsOpen: false});
+    this.setState(() => ({targetChartIdx: null, targetChart: null, settingsOpen: false}));
   }
 
   render() {
