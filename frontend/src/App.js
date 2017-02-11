@@ -226,7 +226,7 @@ class App extends Component {
       const removeChart = () => this.removeChart(idx);
 
       return (
-        <Chart key={idx} config={chart} openSettings={openSettings} removeChart={removeChart}/>
+        <Chart key={idx} chart={chart} openSettings={openSettings} removeChart={removeChart}/>
       );
     });
 

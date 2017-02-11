@@ -1,11 +1,33 @@
 import React, { Component } from 'react';
 import { TimeSeriesChart } from './TimeSeriesChart';
+import { LoadingCube } from './LoadingCube';
 import './Chart.css';
 
 export class Chart extends Component {
+  constructor(props) {
+    super(props);
+    this.isLoading = this.isLoading.bind(this);
+    this.errors = this.errors.bind(this);
+  }
+
+  isLoading() {
+    return Object.values(this.props.chart.data).some(series => series === '__loading__');
+  }
+
+  errors() {
+    return Object.values(this.props.chart.data).reduce((errors, value, idx) => {
+      if(!Array.isArray(value) && value !== '__loading__') {
+        errors.push(<div key={idx} className="chart__loading-error">{value}</div>);
+      }
+
+      return errors;
+    }, []);
+  }
+
   render() {
-    const config = this.props.config;
-    const metrics = config.metrics;
+    const chart = this.props.chart;
+    const metrics = chart.metrics;
+    const errors = this.errors();
     let chartArea;
 
     if (metrics.length === 0) {
@@ -16,8 +38,17 @@ export class Chart extends Component {
           <span> to visualize.</span>
         </div>
       );
+    } else if (errors.length > 0) {
+      chartArea = (
+        <div className="chart__loading-errors">
+          <div className="chart__error-title">Errors loading chart data:</div>
+          {errors}
+        </div>
+      );
+    } else if (this.isLoading()) {
+      chartArea = <LoadingCube>Loading data...</LoadingCube>;
     } else {
-      chartArea = <TimeSeriesChart metrics={metrics} />;
+      chartArea = <TimeSeriesChart {...this.props} />;
     }
 
     return (
@@ -30,9 +61,6 @@ export class Chart extends Component {
           <button className="chart__icon button" onClick={this.props.removeChart}>
             <span className="fa fa-trash"></span>
           </button>
-        </div>
-
-        <div className="chart__controls">
         </div>
 
         <div className="chart-area">
