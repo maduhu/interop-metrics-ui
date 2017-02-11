@@ -4,6 +4,7 @@ from flask import jsonify
 from flask import request
 
 from metrics_server.base_controller import BaseController
+from metrics_server.errors import NotFoundError
 from metrics_server.metrics_service import MetricsService
 
 
@@ -75,10 +76,10 @@ class MetricsController(BaseController):
         :return: JSON
         """
 
-        columns = request.args.get('columns', '').split(',')
-        columns = [column.strip() for column in columns if column.strip() != '']
+        cols = request.args.get('columns', '').split(',')
+        cols = [col.strip() for col in cols if col.strip() != '']
 
-        if len(columns) == 0:
+        if len(cols) == 0:
             return jsonify(error='You must specify at least one column'), 400
 
         try:
@@ -91,12 +92,15 @@ class MetricsController(BaseController):
         except ValueError:
             return jsonify(error='Invalid end_timestamp'), 400
 
+        try:
+            rows = self.metrics_service.get_metrics_data(env, app, table, metric, cols, start_timestamp, end_timestamp)
+        except NotFoundError as e:
+            return jsonify(error=str(e)), 404
+
         # TODO: return a generator so we can stream the data to the client instead of rendering everything in memory
         # and returning.
         # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
         # http://flask.pocoo.org/docs/0.12/patterns/streaming/
-
-        rows = self.metrics_service.get_metrics_data(env, app, table, metric, columns, start_timestamp, end_timestamp)
 
         return jsonify(
             data={

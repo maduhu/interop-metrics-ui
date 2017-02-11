@@ -157,12 +157,12 @@ class MetricsService(BaseService):
 
         for column in columns:
             if column not in table_columns:
-                raise ValueError(f'Column "{column}" is not available for table "{table}"')
+                raise NotFoundError(f'Column "{column}" is not available for table "{table}"')
 
         columns.append('metric_timestamp')
         column_str = ', '.join(columns)
         query = f"""
-        SELECT {column_str} FROM {table} WHERE environment = %s AND application = %s AND metric_name= %s
+        SELECT {column_str} FROM {table} WHERE environment=%s AND application=%s AND metric_name=%s
         AND metric_timestamp >= %s AND metric_timestamp <= %s;
         """
         rows = self.session.execute(query, [environment, application, metric, start_timestamp, end_timestamp])
