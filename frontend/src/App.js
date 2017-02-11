@@ -28,6 +28,7 @@ function newChart() {
     leftAxis: 'linear',
     rightAxis: 'linear',
     metrics: [],
+    data: {}
   };
 }
 
@@ -38,6 +39,10 @@ function newMetric(metric) {
   return {...metric, measure: '', axis: 'left'};
 }
 
+function generateMetricsKey(metric) {
+  return `${metric.environment}.${metric.application}.${metric.metric_name}.${metric.measure}`;
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -45,6 +50,7 @@ class App extends Component {
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
+    this.loadChartData = this.loadChartData.bind(this);
     this.saveChart = this.saveChart.bind(this);
     this.addMetric = this.addMetric.bind(this);
     this.updateMetric = this.updateMetric.bind(this);
@@ -114,9 +120,6 @@ class App extends Component {
       };
     });
   }
-      }
-    });
-  }
 
   removeChart(idx) {
     /**
@@ -128,17 +131,97 @@ class App extends Component {
     });
   }
 
+  loadChartData(idx, chart, measures) {
+    /**
+     * Retrieves data from the server for each measure in the measures array.
+     */
+    measures.forEach((m) => {
+      const key = generateMetricsKey(m);
+      let url = `api/v1/environments/${m.environment}/applications/${m.application}`;
+      url += `/metrics/${m.table}/${m.metric_name}`;
+
+      const requestHandler = (error, response) => {
+        const body = response.body;
+
+        if (error != null) {
+          let msg = 'Unexpected error returned from server';
+
+          if (body !== null && body.hasOwnProperty('error') && body.error !== null) {
+            msg = body.error;
+          }
+
+          this.setState((state) => {
+            const oldChart = state.charts[idx];
+            const newChart = {
+              ...oldChart,
+              data: {...oldChart.data, [key]: msg},
+            };
+
+            return {
+              charts: [...state.charts.slice(0, idx), ...[newChart], ...state.charts.slice(idx + 1)],
+            };
+          });
+
+          return;
+        }
+
+        this.setState((state) => {
+          const oldChart = state.charts[idx];
+          const newChart = {
+            ...oldChart,
+            data: {...oldChart.data, [key]: []},
+          };
+
+          return {
+            charts: [...state.charts.slice(0, idx), ...[newChart], ...state.charts.slice(idx + 1)],
+          };
+        });
+      };
+
+      request.get(url)
+        .query({columns: m.measure})
+        .query({start_timestamp: `${chart.startDate}T${chart.startTime}`})
+        .query({end_timestamp: `${chart.endDate}T${chart.endTime}`})
+        .set('Accept', 'application/json')
+        .end(requestHandler);
+    });
+  }
+
   saveChart() {
     /**
      * Replaces the chart at targetChartIdx with targetChart and closes the settings panel.
      */
-
-    // TODO: kick off data retrieval as needed.
-
     this.setState(state => {
-      const id = state.targetChartIdx;
+      const idx = state.targetChartIdx;
+      const oldChart = state.charts[idx];
+      let measures = [];
+      const chart = {
+        ...state.targetChart,
+        data: {...state.targetChart.data}
+      };
+      const datesEqual = chart.startDate === oldChart.startDate && chart.endDate === oldChart.endDate;
+      const timesEqual = chart.startTime === oldChart.startTime && chart.endTime === oldChart.endTime;
+
+      if (!datesEqual || !timesEqual) {
+        // If we've changed the date or time range of the chart we need all new data, so set to empty object.
+        chart.data = {};
+      }
+
+      chart.metrics.forEach((metric) => {
+        const key = generateMetricsKey(metric);
+        const data = chart.data.hasOwnProperty(key) ? chart.data[key] : null;
+
+        if (data !== '__loading__' && !Array.isArray(data)) {
+          // Fetch data if we don't have it, or if there was an error previously.
+          chart.data[key] = '__loading__';
+          measures.push(metric);
+        }
+      });
+
+      this.loadChartData(idx, chart, measures);
+
       return {
-        charts: [...state.charts.slice(0, id), ...[state.targetChart], ...state.charts.slice(id + 1)],
+        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
         targetChartIdx: null,
         targetChart: null,
         settingsOpen: false
@@ -161,14 +244,18 @@ class App extends Component {
      * attr: attribute to update
      * value: value we want the attribute to have.
      */
-    const newMetric = {...this.state.targetChart.metrics[idx], [attr]: value};
-
     this.setState((state) => {
+      const newMetric = {...state.targetChart.metrics[idx], [attr]: value};
       const oldChart = state.targetChart;
       const targetChart = {
         ...oldChart,
         metrics: [...oldChart.metrics.slice(0, idx), newMetric, ...oldChart.metrics.slice(idx + 1)],
       };
+
+      if (oldChart.metrics[idx].measure !== targetChart.metrics[idx].measure) {
+        targetChart.data = {...targetChart.data};
+        delete targetChart.data[generateMetricsKey(oldChart.metrics[idx])];
+      }
 
       return {targetChart};
     });
