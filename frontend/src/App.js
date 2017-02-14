@@ -109,7 +109,8 @@ class App extends Component {
 
   updateTargetChart(attr, value) {
     /**
-     * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested
+     * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested be sure to do a
+     * proper copy of it yourself.
      */
     this.setState((state) => {
       return {
@@ -169,7 +170,7 @@ class App extends Component {
           const oldChart = state.charts[idx];
           const newChart = {
             ...oldChart,
-            data: {...oldChart.data, [key]: []},
+            data: {...oldChart.data, [key]: body.data.rows},
           };
 
           return {
@@ -266,8 +267,12 @@ class App extends Component {
      * Removes the metric from targetChart at the given index.
      */
     let metrics = this.state.targetChart.metrics;
-    metrics = metrics.slice(0, idx).concat(metrics.slice(idx + 1));
-    this.updateTargetChart('metrics', metrics);
+    const data = {...this.state.targetChart.data};
+    const key = generateMetricsKey(metrics[idx]);
+    delete data[key];
+
+    this.updateTargetChart('metrics', metrics.slice(0, idx).concat(metrics.slice(idx + 1)));
+    this.updateTargetChart('data', data);
   }
 
   openSettings(idx) {
