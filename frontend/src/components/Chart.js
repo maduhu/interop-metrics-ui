@@ -1,13 +1,15 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { LoadingCube } from './LoadingCube';
 import './Chart.css';
 
-export class Chart extends Component {
+export class Chart extends PureComponent {
   constructor(props) {
     super(props);
     this.isLoading = this.isLoading.bind(this);
     this.errors = this.errors.bind(this);
+    this.openSettings = this.openSettings.bind(this);
+    this.removeChart = this.removeChart.bind(this);
   }
 
   isLoading() {
@@ -24,6 +26,14 @@ export class Chart extends Component {
     }, []);
   }
 
+  openSettings() {
+    this.props.openSettings(this.props.idx);
+  }
+
+  removeChart() {
+    this.props.removeChart(this.props.idx);
+  }
+
   render() {
     const chart = this.props.chart;
     const metrics = chart.metrics;
@@ -34,7 +44,7 @@ export class Chart extends Component {
       chartArea = (
         <div className="chart-area__blank">
           <span>No metrics chosen, </span>
-          <button className="button" onClick={this.props.openSettings}>choose a metric</button>
+          <button className="button" onClick={this.openSettings}>choose a metric</button>
           <span> to visualize.</span>
         </div>
       );
@@ -54,11 +64,11 @@ export class Chart extends Component {
     return (
       <div className="chart">
         <div className="chart__icons">
-          <button className="chart__icon button" onClick={this.props.openSettings}>
+          <button className="chart__icon button" onClick={this.openSettings}>
             <span className="fa fa-pencil"></span>
           </button>
 
-          <button className="chart__icon button" onClick={this.props.removeChart}>
+          <button className="chart__icon button" onClick={this.removeChart}>
             <span className="fa fa-trash"></span>
           </button>
         </div>

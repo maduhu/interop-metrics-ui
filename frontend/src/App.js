@@ -314,11 +314,8 @@ class App extends Component {
     }
 
     const charts = this.state.charts.map((chart, idx) => {
-      const openSettings = () => this.openSettings(idx);
-      const removeChart = () => this.removeChart(idx);
-
       return (
-        <Chart key={idx} chart={chart} openSettings={openSettings} removeChart={removeChart}/>
+        <Chart key={idx} idx={idx} chart={chart} openSettings={this.openSettings} removeChart={this.removeChart}/>
       );
     });
 
