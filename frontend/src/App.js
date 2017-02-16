@@ -20,10 +20,10 @@ function newChart() {
   const yesterday = now.clone().subtract(24, 'hours');
 
   return {
-    startDate: now.format(dateFormat),
-    startTime: now.format(timeFormat),
-    endDate: yesterday.format(dateFormat),
-    endTime: yesterday.format(timeFormat),
+    startDate: yesterday.format(dateFormat),
+    startTime: yesterday.format(timeFormat),
+    endDate: now.format(dateFormat),
+    endTime: now.format(timeFormat),
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
