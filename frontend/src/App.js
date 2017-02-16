@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
 import './App.css';
+import { generateMetricsKey } from './utils';
 import { Dialog } from './components/Dialog';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
@@ -37,10 +38,6 @@ function newMetric(metric) {
    * Copies a metric and adds a measure and axis field. In the future we'll probably add more fields.
    */
   return {...metric, measure: '', axis: 'left'};
-}
-
-function generateMetricsKey(metric) {
-  return `${metric.environment}.${metric.application}.${metric.metric_name}.${metric.measure}`;
 }
 
 class App extends Component {
