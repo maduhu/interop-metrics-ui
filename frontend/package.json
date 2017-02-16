@@ -12,6 +12,7 @@
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "rickshaw": "^1.6.0",
+    "d3": "^3.5.16",
     "superagent": "^3.4.1"
   },
   "scripts": {

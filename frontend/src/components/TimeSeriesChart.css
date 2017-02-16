@@ -1,0 +1,44 @@
+.time-series {
+  display: flex;
+}
+.time-series__axis {
+  width: 40px;
+}
+.time-series__axis--hidden {
+  visibility: hidden;
+}
+.time-series__chart {
+  flex-grow: 4;
+  flex-basis: 0;
+}
+.time-series-legend {
+  flex-grow: 1;
+  flex-basis: 0;
+}
+.time-series-legend.rickshaw_legend {
+  background: inherit;
+  color: inherit;
+  padding: 1em;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+.rickshaw_legend ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.rickshaw_legend li {
+  display: inline-block;
+  margin-right: 0.5em;
+}
+.rickshaw_legend .line .swatch {
+  display: inline-block;
+  margin-right: 3px;
+  border-radius: 2px;
+}
+.rickshaw_legend .swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
