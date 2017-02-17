@@ -26,6 +26,7 @@ export class TimeSeriesChart extends Component {
       element: this.refs.chart,
       stack: false,
       renderer: 'line',
+      interpolation: 'linear',
       series: this.series,
     });
     this.xAxis = new Rickshaw.Graph.Axis.Time({
