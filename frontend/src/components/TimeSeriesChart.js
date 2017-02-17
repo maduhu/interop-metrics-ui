@@ -30,7 +30,7 @@ export class TimeSeriesChart extends Component {
       series: this.series,
     });
     this.xAxis = new Rickshaw.Graph.Axis.Time({
-      graph: this.graph
+      graph: this.graph,
     });
     this.leftScale = d3.scale.linear();
     this.leftAxis = new Rickshaw.Graph.Axis.Y.Scaled({
@@ -55,6 +55,10 @@ export class TimeSeriesChart extends Component {
     this.hoverDetail = new Rickshaw.Graph.HoverDetail({
       graph: this.graph
     });
+    this.preview = new Rickshaw.Graph.RangeSlider.Preview( {
+      graph: this.graph,
+      element: this.refs.zoom,
+    } );
     this.updateChart(this.props);
     this.renderChart();
   }
@@ -178,6 +182,7 @@ export class TimeSeriesChart extends Component {
           <div className="time-series__chart" ref="chart"></div>
           <div className="time-series__axis" ref="rightAxis"></div>
         </div>
+        <div className="time-series-legend" ref="zoom"></div>
         <div className="time-series-legend" ref="legend"></div>
       </div>
     );
