@@ -8,9 +8,6 @@ import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
 
-const dateFormat = 'YYYY-MM-DD';
-const timeFormat = 'hh:mm:ss';
-
 function newChart() {
   /**
    * Creates a new chart object.
@@ -21,10 +18,8 @@ function newChart() {
   const yesterday = now.clone().subtract(24, 'hours');
 
   return {
-    startDate: yesterday.format(dateFormat),
-    startTime: yesterday.format(timeFormat),
-    endDate: now.format(dateFormat),
-    endTime: now.format(timeFormat),
+    startDate: yesterday,
+    endDate: now,
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
@@ -178,8 +173,8 @@ class App extends Component {
 
       request.get(url)
         .query({columns: m.measure})
-        .query({start_timestamp: `${chart.startDate}T${chart.startTime}`})
-        .query({end_timestamp: `${chart.endDate}T${chart.endTime}`})
+        .query({start_timestamp: chart.startDate.format()})
+        .query({end_timestamp: chart.endDate.format()})
         .set('Accept', 'application/json')
         .end(requestHandler);
     });
@@ -298,14 +293,16 @@ class App extends Component {
     if (this.state.settingsOpen) {
       dialog = (
         <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeSettings} size="xl">
-          <ChartEditor metrics={this.state.metrics}
-                       metricsLoading={this.state.metricsLoading}
-                       metricsLoadError={this.state.metricsLoadError}
-                       chart={this.state.targetChart}
-                       addMetric={this.addMetric}
-                       removeMetric={this.removeMetric}
-                       updateMetric={this.updateMetric}
-                       updateTargetChart={this.updateTargetChart} />
+          <ChartEditor
+            metrics={this.state.metrics}
+            metricsLoading={this.state.metricsLoading}
+            metricsLoadError={this.state.metricsLoadError}
+            chart={this.state.targetChart}
+            addMetric={this.addMetric}
+            removeMetric={this.removeMetric}
+            updateMetric={this.updateMetric}
+            updateTargetChart={this.updateTargetChart}
+          />
         </Dialog>
       );
     }

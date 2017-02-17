@@ -5,18 +5,19 @@
   display: flex;
   margin: 0.5em 0;
 }
-.chart-settings__time-input,
+.time-input,
 .chart-settings__scale-input {
   flex: 1;
   display: inline-block;
   margin-right: 0.5em;
   padding: .1em;
 }
-.chart-settings__time-input input,
+.chart-settings__date-picker input,
 .chart-settings__scale-input select {
   width: 100%;
 }
-.chart-settings__time-input label,
+.time-input label,
+.chart-settings__date-picker label,
 .chart-settings__scale-input label,
 .chart-settings__metrics label {
   font-weight: bold;
@@ -38,4 +39,15 @@
 .chart-settings__scale-inputs {
   display: flex;
   width: 50%;
+}
+.time-input__hour,
+.time-input__minute {
+  flex-grow: 1;
+}
+.time-input__select-container {
+  width: 100%;
+  display: flex;
+}
+.react-datepicker__input-container {
+  width: 100%;
 }

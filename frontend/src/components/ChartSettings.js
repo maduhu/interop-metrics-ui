@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+// import { timeFormat } from '../utils';
 import './ChartSettings.css';
 
 const measureMap = {
@@ -6,6 +9,9 @@ const measureMap = {
     'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate'],
   'raw_counter_with_interval': ['count', 'interval_count'],
 };
+
+const hours = Array(24).fill().map((_, i) => i < 10 ? `0${i}` : `${i}`);
+const minutes = Array(60).fill().map((_, i) => i < 10 ? `0${i}` : `${i}`);
 
 class ScaleSelect extends Component {
   render() {
@@ -37,57 +43,136 @@ class ScaleSettings extends Component {
   }
 }
 
+class HourSelect extends Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(e) {
+    this.props.onChange(e.target.value);
+  }
+
+  render() {
+    return (
+      <select className="time-input__hour" value={this.props.value} onChange={this.onChange}>
+        {hours.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+    );
+  }
+}
+
+class MinuteSelect extends Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(e) {
+    this.props.onChange(e.target.value);
+  }
+
+  render() {
+    return (
+      <select className="time-input__minute" value={this.props.value} onChange={this.onChange}>
+        {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+    );
+  }
+}
+
+class TimeSettings extends Component {
+  render () {
+    return (
+      <div className="time-input">
+        <label className="time-input__label">{this.props.label}</label>
+        <div className="time-input__select-container">
+          <HourSelect value={this.props.hour} onChange={this.props.onHourChange} />
+          <MinuteSelect value={this.props.minute} onChange={this.props.onMinuteChange} />
+        </div>
+      </div>
+    );
+  }
+}
+
 class DateTimeSettings extends Component {
   constructor(props) {
     super(props);
     this.changeStartDate = this.changeStartDate.bind(this);
-    this.changeStartTime = this.changeStartTime.bind(this);
+    this.changeStartHour = this.changeStartHour.bind(this);
+    this.changeStartMinute = this.changeStartMinute.bind(this);
     this.changeEndDate = this.changeEndDate.bind(this);
-    this.changeEndTime = this.changeEndTime.bind(this);
+    this.changeEndHour = this.changeEndHour.bind(this);
+    this.changeEndMinute = this.changeEndMinute.bind(this);
   }
 
-  changeStartDate(e) {
-    this.props.updateTargetChart('startDate', e.target.value);
+  changeStartDate(value) {
+    this.props.updateTargetChart('startDate', value);
   }
 
-  changeStartTime(e) {
-    this.props.updateTargetChart('startTime', e.target.value);
+  changeStartHour(value) {
+    this.props.updateTargetChart('startDate', this.props.chart.startDate.clone().hour(value));
   }
 
-  changeEndDate(e) {
-    this.props.updateTargetChart('endDate', e.target.value);
+  changeStartMinute(value) {
+    this.props.updateTargetChart('startDate', this.props.chart.startDate.clone().minute(value));
   }
 
-  changeEndTime(e) {
-    this.props.updateTargetChart('endTime', e.target.value);
+  changeEndDate(value) {
+    this.props.updateTargetChart('endDate', value);
+  }
+
+  changeEndHour(value) {
+    this.props.updateTargetChart('endDate', this.props.chart.endDate.clone().hour(value));
+  }
+
+  changeEndMinute(value) {
+    this.props.updateTargetChart('endDate', this.props.chart.endDate.clone().minute(value));
   }
 
   render() {
-    const datePlaceHolder = 'YYYY-MM-DD';
-    const timePlaceHolder = 'HH:MM:SS';
-    const chart = this.props.chart;
+    const startDate = this.props.chart.startDate;
+    const endDate = this.props.chart.endDate;
 
     return (
       <div className="chart-settings__time-inputs">
-        <div className="chart-settings__time-input">
+        <div className="chart-settings__date-picker">
           <label>Start Date:</label>
-          <input type="text" value={chart.startDate} onChange={this.changeStartDate} placeholder={datePlaceHolder} />
+          <DatePicker
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            selected={startDate}
+            onChange={this.changeStartDate}
+          />
         </div>
 
-        <div className="chart-settings__time-input">
-          <label>Start Time:</label>
-          <input type="text" value={chart.startTime} onChange={this.changeStartTime} placeholder={timePlaceHolder} />
-        </div>
+        <TimeSettings
+          label="Start Time:"
+          hour={startDate.format('HH')}
+          minute={startDate.format('mm')}
+          onHourChange={this.changeStartHour}
+          onMinuteChange={this.changeStartMinute}
+        />
 
-        <div className="chart-settings__time-input">
+        <div className="chart-settings__date-picker">
           <label>End Date:</label>
-          <input type="text" value={chart.endDate} onChange={this.changeEndDate} placeholder={datePlaceHolder} />
+          <DatePicker
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            selected={endDate}
+            onChange={this.changeEndDate}
+          />
         </div>
 
-        <div className="chart-settings__time-input">
-          <label>End Time:</label>
-          <input type="text" value={chart.endTime} onChange={this.changeEndTime} placeholder={timePlaceHolder} />
-        </div>
+        <TimeSettings
+          label="End Time:"
+          hour={endDate.format('HH')}
+          minute={endDate.format('mm')}
+          onHourChange={this.changeEndHour}
+          onMinuteChange={this.changeEndMinute}
+        />
       </div>
     );
   }
