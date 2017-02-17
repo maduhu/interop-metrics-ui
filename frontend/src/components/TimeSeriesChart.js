@@ -151,8 +151,6 @@ export class TimeSeriesChart extends Component {
   renderChart() {
     /**
      * Renders the Rickshaw components.
-     *
-     * TODO: allow zooming
      */
 
     this.graph.render();
@@ -182,7 +180,7 @@ export class TimeSeriesChart extends Component {
           <div className="time-series__chart" ref="chart"></div>
           <div className="time-series__axis" ref="rightAxis"></div>
         </div>
-        <div className="time-series-legend" ref="zoom"></div>
+        <div className="time-series-zoom" ref="zoom"></div>
         <div className="time-series-legend" ref="legend"></div>
       </div>
     );
