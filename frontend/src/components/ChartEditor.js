@@ -48,18 +48,22 @@ class ChartEditor extends Component {
       <div className="chart-editor">
         {this.renderTabs()}
 
-        <MetricPicker hidden={this.state.tab !== METRIC_PICKER}
-                      chart={this.props.chart}
-                      metrics={this.props.metrics}
-                      metricsLoading={this.props.metricsLoading}
-                      metricsLoadError={this.props.metricsLoadError}
-                      addMetric={this.addMetric} />
+        <MetricPicker
+          hidden={this.state.tab !== METRIC_PICKER}
+          chart={this.props.chart}
+          metrics={this.props.metrics}
+          metricsLoading={this.props.metricsLoading}
+          metricsLoadError={this.props.metricsLoadError}
+          addMetric={this.addMetric}
+        />
 
-        <ChartSettings hidden={this.state.tab !== SETTINGS}
-                       chart={this.props.chart}
-                       removeMetric={this.props.removeMetric}
-                       updateTargetChart={this.props.updateTargetChart}
-                       updateMetric={this.props.updateMetric} />
+        <ChartSettings
+          hidden={this.state.tab !== SETTINGS}
+          chart={this.props.chart}
+          removeMetric={this.props.removeMetric}
+          updateTargetChart={this.props.updateTargetChart}
+          updateMetric={this.props.updateMetric}
+        />
       </div>
     );
   }
