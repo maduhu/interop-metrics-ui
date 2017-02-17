@@ -224,19 +224,23 @@ export class MetricPicker extends Component {
 
     return (
       <div className={`metric-picker ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
-        <MetricPickerFilters environments={environments}
-                             environment={environment}
-                             onEnvironmentChange={this.onEnvironmentChange}
-                             applications={applications}
-                             application={application}
-                             onApplicationChange={this.onApplicationChange}
-                             filter={filter}
-                             onFilterChange={this.onFilterChange} />
+        <MetricPickerFilters
+          environments={environments}
+          environment={environment}
+          onEnvironmentChange={this.onEnvironmentChange}
+          applications={applications}
+          application={application}
+          onApplicationChange={this.onApplicationChange}
+          filter={filter}
+          onFilterChange={this.onFilterChange}
+        />
 
-        <MetricPickerTable metricsLoading={this.props.metricsLoading}
-                           metricsLoadError={this.props.metricsLoadError}
-                           rows={rows}
-                           addMetric={this.props.addMetric} />
+        <MetricPickerTable
+          metricsLoading={this.props.metricsLoading}
+          metricsLoadError={this.props.metricsLoadError}
+          rows={rows}
+          addMetric={this.props.addMetric}
+        />
       </div>
     );
   }
