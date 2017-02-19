@@ -32,7 +32,6 @@
   padding: 0;
 }
 .rickshaw_legend li {
-  /*display: inline-block;*/
   margin-right: 0.5em;
 }
 .rickshaw_legend .line .swatch {
