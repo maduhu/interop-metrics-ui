@@ -33,11 +33,7 @@ COLUMN_MAP = {
 
 class MetricsService(BaseService):
     """
-    MetricsService is used to retrieve metrics data and metadata from a database.
-
-    TODO: figure out if we should make retrieving timers different than counters (probably not)
-    TODO: figure out response format for get_available_metrics, should probably include available dimensions for each
-        metric, or at least their type (counter or timer).
+    MetricsService is used to retrieve metrics data and metadata from a Cassandra database.
     """
     def __init__(self, config, services):
         super().__init__(config, services)
@@ -55,6 +51,12 @@ class MetricsService(BaseService):
         self.session.row_factory = dict_factory
 
     def get_distinct_metrics_for_table(self, table):
+        """
+        Queries for and returns all of the distinct metrics in a table.
+
+        :param table: str, the table to query against.
+        :return: list of dicts representing the environment, application, metric_name, and table.
+        """
         all_rows = []
         rows = self.session.execute(f'SELECT DISTINCT environment, application, metric_name FROM {table};')
 
