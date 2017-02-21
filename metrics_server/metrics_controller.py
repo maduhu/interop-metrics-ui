@@ -49,7 +49,7 @@ class MetricsController(BaseController):
             data={
                 'environment': env,
                 'application': app,
-                'metrics': self.metrics_service.get_available_metrics(env, app)
+                'metrics': self.metrics_service.get_metrics(env, app)
             }
         )
 
@@ -93,7 +93,7 @@ class MetricsController(BaseController):
             return jsonify(error='Invalid end_timestamp'), 400
 
         try:
-            rows = self.metrics_service.get_metrics_data(env, app, table, metric, cols, start_timestamp, end_timestamp)
+            rows = self.metrics_service.get_metric_data(env, app, table, metric, cols, start_timestamp, end_timestamp)
         except NotFoundError as e:
             return jsonify(error=str(e)), 404
 

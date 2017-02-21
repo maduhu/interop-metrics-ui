@@ -5,7 +5,7 @@ from cassandra.cluster import Cluster
 from cassandra.query import dict_factory
 
 from metrics_server.base_service import BaseService
-from metrics_server.errors import NotFoundError
+from metrics_server.errors import NotFoundError, ConfigurationError
 
 
 """
@@ -46,6 +46,15 @@ class MetricsService(BaseService):
         :return:
         """
         config = self.config.get('cassandra')
+
+        if config is None:
+            raise ConfigurationError('No cassandra section found in config.')
+
+        host = config.get('host')
+
+        if host is None:
+            raise ConfigurationError('No host value found in cassandra section.')
+
         self.cluster = Cluster([config['host']])
         self.session = self.cluster.connect(KEYSPACE)
         self.session.row_factory = dict_factory
@@ -110,7 +119,7 @@ class MetricsService(BaseService):
 
         return list(applications)
 
-    def get_available_metrics(self, environment, application):
+    def get_metrics(self, environment, application):
         """
         Retrieve available metrics from DB for a given environment and application.
 
@@ -129,8 +138,8 @@ class MetricsService(BaseService):
 
         return available_metrics
 
-    def get_metrics_data(self, environment, application, table, metric, columns, start_timestamp=None,
-                         end_timestamp=None):
+    def get_metric_data(self, environment, application, table, metric, columns, start_timestamp=None,
+                        end_timestamp=None):
         """
         Retrieve data from DB for a given environment, application, and metric.
 
@@ -155,11 +164,11 @@ class MetricsService(BaseService):
         table_columns = COLUMN_MAP.get(table)
 
         if table_columns is None:
-            raise NotFoundError(f'table "{table}" does not exist.')
+            raise NotFoundError(f'table "{table}" does not exist')
 
         for column in columns:
             if column not in table_columns:
-                raise NotFoundError(f'Column "{column}" is not available for table "{table}"')
+                raise NotFoundError(f'column "{column}" not in table "{table}"')
 
         columns.append('metric_timestamp')
         column_str = ', '.join(columns)
