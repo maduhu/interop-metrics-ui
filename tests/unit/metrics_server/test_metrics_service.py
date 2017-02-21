@@ -11,6 +11,7 @@ from metrics_server.metrics_service import MetricsService, TABLE_NAMES
 def metric_key(m):
     """
     Key function for sorting metrics returned from MetricsService.get_metrics
+
     :param m: dict
     :return: str
     """
@@ -22,6 +23,7 @@ def counter_metrics():
     """
     fixture to return some fake counter metrics. These are not constants because the MetricsService does mutate the data
     returned from Cassandra, which could lead to some subtle bugs in the test code if re-used.
+
     :return: list[dict]
     """
     return [{
@@ -60,6 +62,7 @@ def timer_metrics():
     """
     fixture to return some fake timer metrics. These are not constants because the MetricsService does mutate the data
     returned from Cassandra, which could lead to some subtle bugs in the test code if re-used.
+
     :return: list[dict]
     """
     return [{
