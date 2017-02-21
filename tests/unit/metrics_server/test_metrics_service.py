@@ -9,10 +9,21 @@ from metrics_server.metrics_service import MetricsService, TABLE_NAMES
 
 
 def metric_key(m):
+    """
+    Key function for sorting metrics returned from MetricsService.get_metrics
+    :param m: dict
+    :return: str
+    """
     return m['metric_name'] + m['table']
+
 
 @pytest.fixture()
 def counter_metrics():
+    """
+    fixture to return some fake counter metrics. These are not constants because the MetricsService does mutate the data
+    returned from Cassandra, which could lead to some subtle bugs in the test code if re-used.
+    :return: list[dict]
+    """
     return [{
         'application': 'test_app_1',
         'environment': 'dev',
@@ -46,6 +57,11 @@ def counter_metrics():
 
 @pytest.fixture()
 def timer_metrics():
+    """
+    fixture to return some fake timer metrics. These are not constants because the MetricsService does mutate the data
+    returned from Cassandra, which could lead to some subtle bugs in the test code if re-used.
+    :return: list[dict]
+    """
     return [{
         'application': 'test_app_1',
         'environment': 'dev',
@@ -75,6 +91,14 @@ def timer_metrics():
 
 @pytest.fixture()
 def patched_ms(mocker):
+    """
+    This fixture patches the Cluster class imported in metrics_server.metrics_service. Tests that use this fixture can
+    then set return_value or side_effect on the MetricsService.session object in order to unit test scenarios that would
+    normally send a query to the Cassandra server.
+
+    :param mocker: pytest.mock fixture.
+    :return: MetricsService with patched Cassandra Cluster class.
+    """
     mocker.patch('metrics_server.metrics_service.Cluster')
     return MetricsService({'cassandra': {'host': '0.0.0.0'}}, {})
 
@@ -91,18 +115,33 @@ def test_init(patched_ms):
 
 
 def test_no_cassandra():
+    """
+    Test that no cassandra config throws error.
+
+    :return:
+    """
     with pytest.raises(ConfigurationError):
         MetricsService({}, {})
 
 
 def test_no_host():
+    """
+    Test that invalid cassandra config throws error.
+
+    :return:
+    """
     with pytest.raises(ConfigurationError):
         MetricsService({'cassandra': {}}, {})
 
 
 def test_get_distinct_metrics_for_table(patched_ms: MetricsService):
-    patched_ms.session.execute.return_value = [{}, {}]
+    """
+    Test that get_distinct_metrics_for_table injects table name into returned results.
 
+    :param patched_ms: fixture
+    :return:
+    """
+    patched_ms.session.execute.return_value = [{}, {}]
     metrics = patched_ms.get_distinct_metrics_for_table('test_table')
 
     assert len(metrics) == 2
@@ -125,6 +164,14 @@ def test_get_all_distinct_metrics(patched_ms: MetricsService):
 
 
 def test_get_environments(patched_ms: MetricsService, counter_metrics, timer_metrics):
+    """
+    Test that get_environments works as expected.
+
+    :param patched_ms: fixture
+    :param counter_metrics: fixture
+    :param timer_metrics: fixture
+    :return:
+    """
     patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
     expected = {'dev', 'staging', 'prod'}
     environments = patched_ms.get_environments()
@@ -142,6 +189,16 @@ def test_get_environments(patched_ms: MetricsService, counter_metrics, timer_met
     ]
 )
 def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_metrics, environment, expected):
+    """
+    Test that get_applications works as expected.
+    
+    :param patched_ms: fixture 
+    :param counter_metrics: fixture
+    :param timer_metrics: fixture
+    :param environment: environment to query for
+    :param expected: expected result
+    :return: 
+    """
     patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
     environments = patched_ms.get_applications(environment)
 
@@ -162,6 +219,17 @@ def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_met
     ]
 )
 def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics, environment, application, expected):
+    """
+    Test that get_metrics works as intended.
+
+    :param patched_ms: fixture
+    :param counter_metrics: fixture
+    :param timer_metrics: fixture
+    :param environment: environment to query for
+    :param application: application to query for
+    :param expected: expected result
+    :return: 
+    """
     patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
     metrics = sorted(patched_ms.get_metrics(environment, application), key=metric_key)
     expected = sorted(expected, key=metric_key)
@@ -169,11 +237,22 @@ def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics,
     assert expected == metrics
 
 
-@pytest.mark.parametrize('args,expected', [
-    (['', '', 'not_real_table', '', []], 'table "not_real_table"'),
-    (['', '', TABLE_NAMES[0], '', ['not_real_column']], 'column "not_real_column"')
-])
+@pytest.mark.parametrize(
+    'args,expected',
+    [
+        (['', '', 'not_real_table', '', []], 'table "not_real_table"'),
+        (['', '', TABLE_NAMES[0], '', ['not_real_column']], 'column "not_real_column"')
+    ]
+)
 def test_get_metric_data_invalid_args(patched_ms: MetricsService, args, expected):
+    """
+    Test that get_metric_data properly validates arguments.
+    
+    :param patched_ms: fixture
+    :param args: the args to pass to get_metric_data
+    :param expected: string expected to be part of the exception thrown
+    :return:
+    """
     with pytest.raises(NotFoundError) as exc_info:
         patched_ms.get_metric_data(*args)
 
@@ -182,8 +261,10 @@ def test_get_metric_data_invalid_args(patched_ms: MetricsService, args, expected
 
 def test_get_metric_data(patched_ms: MetricsService):
     """
-    The main thing that we do to the data on the way out is
-    :param patched_ms:
+    The main thing that we do to the data on the way out is convert the datetime objects into ISO-8601 strings with UTC
+    timezone.
+
+    :param patched_ms: fixture
     :return:
     """
     test_date = datetime.utcnow()
