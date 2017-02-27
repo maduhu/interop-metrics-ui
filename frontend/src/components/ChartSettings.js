@@ -1,13 +1,14 @@
-import React, { Component } from 'react';
+import React, { Component, PureComponent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-// import { timeFormat } from '../utils';
 import './ChartSettings.css';
 
 const measureMap = {
-  'raw_timer_with_interval': ['count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999',
-    'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate'],
-  'raw_counter_with_interval': ['count', 'interval_count'],
+  raw_timer_with_interval: [
+    'count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999', 'mean_rate', 'one_min_rate',
+    'five_min_rate', 'fifteen_min_rate',
+  ],
+  raw_counter_with_interval: ['count', 'interval_count'],
 };
 
 const hours = Array(24).fill().map((_, i) => i < 10 ? `0${i}` : `${i}`);
@@ -33,11 +34,15 @@ class ScaleSettings extends Component {
 
     return (
       <div className="chart-settings__scale-inputs">
-        <ScaleSelect label="Left Axis Scale:" value={chart.leftAxis}
-                     onChange={value => this.props.updateTargetChart('leftAxis', value)} />
+        <ScaleSelect
+          label="Left Axis Scale:" value={chart.leftAxis}
+          onChange={value => this.props.updateTargetChart('leftAxis', value)}
+        />
 
-        <ScaleSelect label="Right Axis Scale:" value={chart.rightAxis}
-                     onChange={value => this.props.updateTargetChart('rightAxis', value)} />
+        <ScaleSelect
+          label="Right Axis Scale:" value={chart.rightAxis}
+          onChange={value => this.props.updateTargetChart('rightAxis', value)}
+        />
       </div>
     );
   }
@@ -81,8 +86,8 @@ class MinuteSelect extends Component {
   }
 }
 
-class TimeSettings extends Component {
-  render () {
+class TimeSettings extends PureComponent {
+  render() {
     return (
       <div className="time-input">
         <label className="time-input__label">{this.props.label}</label>

@@ -3,7 +3,7 @@ import request from 'superagent/lib/client';
 import moment from 'moment';
 import './App.css';
 import { generateMetricsKey } from './utils';
-import { Dialog } from './components/Dialog';
+import Dialog from './components/Dialog';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
@@ -24,7 +24,7 @@ function newChart() {
     leftAxis: 'linear',
     rightAxis: 'linear',
     metrics: [],
-    data: {}
+    data: {},
   };
 }
 
@@ -32,7 +32,7 @@ function newMetric(metric) {
   /**
    * Copies a metric and adds a measure and axis field. In the future we'll probably add more fields.
    */
-  return {...metric, measure: '', axis: 'left'};
+  return { ...metric, measure: '', axis: 'left' };
 }
 
 class App extends Component {
@@ -78,25 +78,23 @@ class App extends Component {
         errorMsg = `${response.statusCode} - ${response.statusText}`;
       }
 
-      this.setState(() => ({metricsLoading: false, metricsLoadError: errorMsg}));
+      this.setState(() => ({ metricsLoading: false, metricsLoadError: errorMsg }));
       return;
     }
 
-    this.setState(() => {
-      return {
-        rawMetrics: response.body.data.metrics,
-        metrics: collapseMetrics(response.body.data.metrics),
-        metricsLoading: false,
-        metricsLoadError: null,
-      };
-    });
+    this.setState(() => ({
+      rawMetrics: response.body.data.metrics,
+      metrics: collapseMetrics(response.body.data.metrics),
+      metricsLoading: false,
+      metricsLoadError: null,
+    }));
   }
 
   addChart() {
     /**
      * Adds a new (empty) chart to the page.
      */
-    this.setState(state => ({charts: state.charts.concat([newChart()])}));
+    this.setState(state => ({ charts: state.charts.concat([newChart()]) }));
   }
 
   updateTargetChart(attr, value) {
@@ -104,23 +102,21 @@ class App extends Component {
      * Immutably updates a chart attribute with a given value. If modifying an attribute that is nested be sure to do a
      * proper copy of it yourself.
      */
-    this.setState((state) => {
-      return {
-        targetChart: {
-          ...state.targetChart,
-          [attr]: value,
-        }
-      };
-    });
+    this.setState(state => ({
+      targetChart: {
+        ...state.targetChart,
+        [attr]: value,
+      },
+    }));
   }
 
   removeChart(idx) {
     /**
      * Remove the chart at idx.
      */
-    this.setState(state => {
-      const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx+1));
-      return {charts};
+    this.setState((state) => {
+      const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx + 1));
+      return { charts };
     });
   }
 
@@ -145,13 +141,13 @@ class App extends Component {
 
           this.setState((state) => {
             const oldChart = state.charts[idx];
-            const newChart = {
+            const updatedChart = {
               ...oldChart,
-              data: {...oldChart.data, [key]: msg},
+              data: { ...oldChart.data, [key]: msg },
             };
 
             return {
-              charts: [...state.charts.slice(0, idx), ...[newChart], ...state.charts.slice(idx + 1)],
+              charts: [...state.charts.slice(0, idx), ...[updatedChart], ...state.charts.slice(idx + 1)],
             };
           });
 
@@ -160,21 +156,21 @@ class App extends Component {
 
         this.setState((state) => {
           const oldChart = state.charts[idx];
-          const newChart = {
+          const updatedChart = {
             ...oldChart,
-            data: {...oldChart.data, [key]: body.data.rows},
+            data: { ...oldChart.data, [key]: body.data.rows },
           };
 
           return {
-            charts: [...state.charts.slice(0, idx), ...[newChart], ...state.charts.slice(idx + 1)],
+            charts: [...state.charts.slice(0, idx), ...[updatedChart], ...state.charts.slice(idx + 1)],
           };
         });
       };
 
       request.get(url)
-        .query({columns: m.measure})
-        .query({start_timestamp: chart.startDate.format()})
-        .query({end_timestamp: chart.endDate.format()})
+        .query({ columns: m.measure })
+        .query({ start_timestamp: chart.startDate.format() })
+        .query({ end_timestamp: chart.endDate.format() })
         .set('Accept', 'application/json')
         .end(requestHandler);
     });
@@ -184,13 +180,13 @@ class App extends Component {
     /**
      * Replaces the chart at targetChartIdx with targetChart and closes the settings panel.
      */
-    this.setState(state => {
+    this.setState((state) => {
       const idx = state.targetChartIdx;
       const oldChart = state.charts[idx];
-      let measures = [];
+      const measures = [];
       const chart = {
         ...state.targetChart,
-        data: {...state.targetChart.data}
+        data: { ...state.targetChart.data },
       };
       const datesEqual = chart.startDate === oldChart.startDate && chart.endDate === oldChart.endDate;
       const timesEqual = chart.startTime === oldChart.startTime && chart.endTime === oldChart.endTime;
@@ -217,7 +213,7 @@ class App extends Component {
         charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
         targetChartIdx: null,
         targetChart: null,
-        settingsOpen: false
+        settingsOpen: false,
       };
     });
   }
@@ -238,19 +234,19 @@ class App extends Component {
      * value: value we want the attribute to have.
      */
     this.setState((state) => {
-      const newMetric = {...state.targetChart.metrics[idx], [attr]: value};
+      const updatedMetric = { ...state.targetChart.metrics[idx], [attr]: value };
       const oldChart = state.targetChart;
       const targetChart = {
         ...oldChart,
-        metrics: [...oldChart.metrics.slice(0, idx), newMetric, ...oldChart.metrics.slice(idx + 1)],
+        metrics: [...oldChart.metrics.slice(0, idx), updatedMetric, ...oldChart.metrics.slice(idx + 1)],
       };
 
       if (oldChart.metrics[idx].measure !== targetChart.metrics[idx].measure) {
-        targetChart.data = {...targetChart.data};
+        targetChart.data = { ...targetChart.data };
         delete targetChart.data[generateMetricsKey(oldChart.metrics[idx])];
       }
 
-      return {targetChart};
+      return { targetChart };
     });
   }
 
@@ -258,8 +254,8 @@ class App extends Component {
     /**
      * Removes the metric from targetChart at the given index.
      */
-    let metrics = this.state.targetChart.metrics;
-    const data = {...this.state.targetChart.data};
+    const metrics = this.state.targetChart.metrics;
+    const data = { ...this.state.targetChart.data };
     const key = generateMetricsKey(metrics[idx]);
     delete data[key];
 
@@ -271,20 +267,18 @@ class App extends Component {
     /**
      * Opens the settings panel for the chart at the given index.
      */
-    this.setState((state) => {
-      return {
-        targetChartIdx: idx,
-        targetChart: {...state.charts[idx], metrics: [...state.charts[idx].metrics]},
-        settingsOpen: true
-      }
-    });
+    this.setState(state => ({
+      targetChartIdx: idx,
+      targetChart: { ...state.charts[idx], metrics: [...state.charts[idx].metrics] },
+      settingsOpen: true,
+    }));
   }
 
   closeSettings() {
     /**
      * Closes the settings panel and does not save the changes made.
      */
-    this.setState(() => ({targetChartIdx: null, targetChart: null, settingsOpen: false}));
+    this.setState(() => ({ targetChartIdx: null, targetChart: null, settingsOpen: false }));
   }
 
   render() {
@@ -307,11 +301,10 @@ class App extends Component {
       );
     }
 
-    const charts = this.state.charts.map((chart, idx) => {
-      return (
-        <Chart key={idx} idx={idx} chart={chart} openSettings={this.openSettings} removeChart={this.removeChart}/>
-      );
-    });
+    const charts = this.state.charts.map((chart, idx) => (
+      // eslint-disable-next-line react/no-array-index-key
+      <Chart key={idx} idx={idx} chart={chart} openSettings={this.openSettings} removeChart={this.removeChart} />
+    ));
 
     return (
       <div className="app">
