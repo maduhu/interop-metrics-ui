@@ -78,6 +78,7 @@ class MetricsController(BaseController):
 
         cols = request.args.get('columns', '').split(',')
         cols = [col.strip() for col in cols if col.strip() != '']
+        cols = set(cols)
 
         if len(cols) == 0:
             return jsonify(error='You must specify at least one column'), 400
