@@ -1,6 +1,8 @@
+cassandra-driver==3.8.0
 Flask==0.12
 Flask-WebTest==0.0.8
 marshmallow==2.12.1
+pandas==0.19.2
 python-dateutil==2.6.0
 pytz==2016.10
 pytest==3.0.6
