@@ -3,6 +3,7 @@ import os
 from flask import Flask, request
 
 from metrics_server.core_controller import CoreController
+from metrics_server.data_frame_encoder import DataFrameEncoder
 from metrics_server.metrics_controller import MetricsController
 from metrics_server.metrics_service import MetricsService
 
@@ -35,6 +36,7 @@ class App:
         debug = config.get('debug')
 
         self.flask_app = Flask(__name__, template_folder=template_dir, static_folder=static_folder)
+        self.flask_app.json_encoder = DataFrameEncoder
         self.flask_app.debug = debug
 
         if debug:

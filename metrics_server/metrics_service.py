@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
+import numpy as np
+import pandas as pd
 import pytz
-from cassandra.cluster import Cluster
-from cassandra.query import dict_factory
+from cassandra.cluster import Cluster, dict_factory
 
 from metrics_server.base_service import BaseService
 from metrics_server.errors import NotFoundError, ConfigurationError
@@ -22,13 +23,44 @@ time series data, and it looks like we can easily integrate our Cassandra querie
 KEYSPACE = 'metric_data'
 TABLE_NAMES = ['raw_counter_with_interval', 'raw_timer_with_interval']
 TIMESTAMP_COLUMNS = ['metric_timestamp', 'previous_metric_timestamp']
-COUNTER_COLUMNS = {'count', 'previous_count'}
-TIMER_COLUMNS = {'count', 'previous_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate',
-                 'five_min_rate', 'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev'}
+COUNTER_COLUMNS = {'count', 'previous_count', 'interval_count'}
+TIMER_COLUMNS = {
+    'count', 'previous_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate', 'five_min_rate',
+    'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev'
+}
 COLUMN_MAP = {
     'raw_counter_with_interval': COUNTER_COLUMNS,
     'raw_timer_with_interval': TIMER_COLUMNS
 }
+AGGREGATOR_MAP = {
+    'raw_counter_with_interval': {
+        'count': np.sum,
+        'previous_count': np.sum,
+        'interval_count': np.sum
+    },
+    'raw_timer_with_interval': {
+        'count': np.sum,
+        'previous_count': np.sum,
+        'p75': np.max,
+        'p95': np.max,
+        'p98': np.max,
+        'p99': np.max,
+        'p999': np.max,
+        'one_min_rate': np.max,
+        'five_min_rate': np.max,
+        'fifteen_min_rate': np.max,
+        'mean_rate': np.mean,
+        'median': np.max,
+        'max': np.max,
+        'min': np.min,
+        'mean': np.mean,
+        'std_dev': np.max
+    }
+}
+
+
+def interval_count(df: pd.DataFrame):
+    return df.assign(interval_count=df['count'] - df['previous_count']).drop(['count', 'previous_count'], axis=1)
 
 
 class MetricsService(BaseService):
@@ -58,6 +90,11 @@ class MetricsService(BaseService):
         self.cluster = Cluster([config['host']])
         self.session = self.cluster.connect(KEYSPACE)
         self.session.row_factory = dict_factory
+
+        # Note: we have to set the default fetch size to None in order for us to use pandas without taking a huge
+        # performance hit. If we set the fetch_size then we need to page through results and append rows to the
+        # dataframe, which is bad because it has to copy the old dataframe, then append the new rows.
+        self.session.default_fetch_size = None
 
     def get_distinct_metrics_for_table(self, table):
         """
@@ -139,28 +176,31 @@ class MetricsService(BaseService):
         return available_metrics
 
     def get_metric_data(self, environment, application, table, metric, columns, start_timestamp=None,
-                        end_timestamp=None):
+                        end_timestamp=None, size=1000) -> pd.DataFrame:
         """
         Retrieve data from DB for a given environment, application, and metric.
-
-        TODO: will probably want to allow this method to limit the number of rows returned.
 
         :param environment: The environment you want to retrieve data from.
         :param application: The application you want to retrieve data from.
         :param table: The table you want to retrieve data from.
         :param metric: The metric you want to retrieve data from.
-        :param columns: The columns to select.
+        :param columns: A list of stings representing the column names to select.
         :param start_timestamp: The timestamp you want to start retrieving data for. Defaults to 24 hours ago.
         :param end_timestamp: The timestamp you want to receive data until. Defaults to now.
+        :param size: The desired number of rows to return. We will do what we can to return as close to as many rows as
+            requested, however when down sampling we cannot always get exactly the desired amount. Also, sometimes there
+            just isn't enough data in the database.
         :return: list of rows.
         """
+        query_columns = ['metric_timestamp']
+        is_interval_count = False
+
         if end_timestamp is None:
             end_timestamp = datetime.now(tz=pytz.utc)
 
         if start_timestamp is None:
             start_timestamp = end_timestamp - timedelta(hours=24)
 
-        data = []
         table_columns = COLUMN_MAP.get(table)
 
         if table_columns is None:
@@ -170,17 +210,43 @@ class MetricsService(BaseService):
             if column not in table_columns:
                 raise NotFoundError(f'column "{column}" not in table "{table}"')
 
-        columns.append('metric_timestamp')
-        column_str = ', '.join(columns)
+            if column == 'interval_count':
+                query_columns += ['count', 'previous_count']
+                is_interval_count = True
+            else:
+                query_columns.append(column)
+
+        column_str = ', '.join(query_columns)
         query = f"""
         SELECT {column_str} FROM {table} WHERE environment=%s AND application=%s AND metric_name=%s
         AND metric_timestamp >= %s AND metric_timestamp <= %s;
         """
-        rows = self.session.execute(query, [environment, application, metric, start_timestamp, end_timestamp])
+        params = [environment, application, metric, start_timestamp, end_timestamp]
+        rows = self.session.execute(query, params).current_rows
 
-        for row in rows:
-            # Convert the timestamps to ISO 8601 because it's less verbose than the default Flask representation
-            row['metric_timestamp'] = pytz.utc.localize(row['metric_timestamp']).isoformat()
+        if len(rows) == 0:
+            rows = pd.DataFrame([], columns=['metric_timestamp'] + columns)
+        else:
+            rows = pd.DataFrame(rows).set_index(['metric_timestamp']).tz_localize('UTC')
+
+        if len(rows) > size:
+            # If we got more rows from the database than we want, then we resample.
+            seconds = (rows.index[-1] - rows.index[0]).total_seconds()
+            bucket_size = int(seconds // size)
+
+            if is_interval_count:
+                rows = interval_count(rows)
+
+            aggregators = {}
+
+            for column in columns:
+                aggregators[column] = AGGREGATOR_MAP[table][column]
+
+            rows = rows.resample(f'{bucket_size}S').agg(aggregators)
+
+        return rows.reset_index()
+
+
 
             if 'previous_metric_timestamp' in row:
                 row['previous_metric_timestamp'] = pytz.utc.localize(row['previous_metric_timestamp']).isoformat()

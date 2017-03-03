@@ -78,28 +78,32 @@ class MetricsController(BaseController):
 
         cols = request.args.get('columns', '').split(',')
         cols = [col.strip() for col in cols if col.strip() != '']
-        cols = set(cols)
 
         if len(cols) == 0:
             return jsonify(error='You must specify at least one column'), 400
 
         try:
-            start_timestamp = self._parse_timestamp(request.args.get('start_timestamp', None))
+            size = int(request.args.get('size', ''))
+        except ValueError:
+            size = 1000
+
+        try:
+            start_ts = self._parse_timestamp(request.args.get('start_timestamp', None))
         except ValueError:
             return jsonify(error='Invalid start_timestamp'), 400
 
         try:
-            end_timestamp = self._parse_timestamp(request.args.get('end_timestamp', None))
+            end_ts = self._parse_timestamp(request.args.get('end_timestamp', None))
         except ValueError:
             return jsonify(error='Invalid end_timestamp'), 400
 
         try:
-            rows = self.metrics_service.get_metric_data(env, app, table, metric, cols, start_timestamp, end_timestamp)
+            rows = self.metrics_service.get_metric_data(env, app, table, metric, cols, start_ts, end_ts, size)
         except NotFoundError as e:
             return jsonify(error=str(e)), 404
 
-        # TODO: return a generator so we can stream the data to the client instead of rendering everything in memory
-        # and returning.
+        # TODO: return a generator so we can stream the data to the client, this allows for us to quickly start sending
+        # the response.
         # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
         # http://flask.pocoo.org/docs/0.12/patterns/streaming/
 
@@ -109,7 +113,7 @@ class MetricsController(BaseController):
                 'application': app,
                 'table': table,
                 'metric': metric,
-                'rows': rows
+                'rows': rows  # This is a DataFrame, to see how it's encoded take a look at data_frame_encoder.py
             }
         )
 

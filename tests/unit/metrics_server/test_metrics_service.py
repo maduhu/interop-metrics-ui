@@ -1,11 +1,12 @@
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 
 import pytest
-import dateutil
 from dateutil.parser import parse
 
 from metrics_server.errors import ConfigurationError, NotFoundError
 from metrics_server.metrics_service import MetricsService, TABLE_NAMES
+from tests.utils import MockResultSet
 
 
 def metric_key(m):
@@ -90,6 +91,23 @@ def timer_metrics():
         'environment': 'dev',
         'metric_name': 'timer.two'
     }]
+
+
+@pytest.fixture()
+def metric_data():
+    """
+    Reads some test data from a JSON file and puts it into a MockResultSet. Used to test that we properly downsample
+    large datasets. This dataset is 2097 rows.
+
+    :return: 
+    """
+    with open('./tests/data/get_metric_data.json') as f:
+        data = json.load(f)
+
+    for row in data:
+        row['metric_timestamp'] = parse(row['metric_timestamp'])
+
+    return MockResultSet(data)
 
 
 @pytest.fixture()
@@ -264,21 +282,40 @@ def test_get_metric_data_invalid_args(patched_ms: MetricsService, args, expected
 
 def test_get_metric_data(patched_ms: MetricsService):
     """
-    The main thing that we do to the data on the way out is convert the datetime objects into ISO-8601 strings with UTC
-    timezone.
+    Here we check that timestamps are UTC and that small datasets returned from the DB are not altered.
 
     :param patched_ms: fixture
     :return:
     """
     test_date = datetime.utcnow()
-    patched_ms.session.execute.side_effect = [
-        [{'metric_timestamp': test_date, 'previous_metric_timestamp': test_date}]
-    ]
-    metric_data = patched_ms.get_metric_data('dev', 'fake_app', 'raw_counter_with_interval', 'fake_metric', ['count'])
-    metric_timestamp = metric_data[0]['metric_timestamp']
-    previous_metric_timestamp = metric_data[0]['previous_metric_timestamp']
+    patched_ms.session.execute.return_value = MockResultSet([
+        {'metric_timestamp': test_date, 'count': 100},
+        {'metric_timestamp': test_date + timedelta(seconds=5), 'count': 100},
+        {'metric_timestamp': test_date + timedelta(seconds=10), 'count': 104},
+        {'metric_timestamp': test_date + timedelta(seconds=55), 'count': 120}
+    ])
+    resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_counter_with_interval', 'fake_metric', ['count'])
 
-    assert isinstance(metric_timestamp, str)
-    assert parse(metric_timestamp).tzinfo == dateutil.tz.tzutc()
-    assert isinstance(previous_metric_timestamp, str)
-    assert parse(previous_metric_timestamp).tzinfo == dateutil.tz.tzutc()
+    assert len(resp) == 4  # Check that we're not resampling a small result set.
+    assert resp['metric_timestamp'][0].tzinfo.zone == 'UTC'  # Check that timestamps are UTC
+
+
+def test_get_metric_data_resample(patched_ms: MetricsService, metric_data: MockResultSet):
+    """
+    This tests that get_metric_data is downsampling the data based on the size arg. MetricServic.get_metric_data does
+    not return exactly the size you request, so here we don't test for exact numbers, we just check that the number of
+    returned rows is close enough to the size we wanted.
+
+    :param patched_ms: fixture
+    :param metric_data: fixture
+    :return:
+    """
+    patched_ms.session.execute.return_value = metric_data
+    resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_timer_with_interval', 'fake_metric', ['median'])
+
+    assert abs(len(resp) - 1000) < 100
+
+    resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_timer_with_interval', 'fake_metric', ['median'],
+                                             size=500)
+
+    assert abs(len(resp) - 500) < 100
