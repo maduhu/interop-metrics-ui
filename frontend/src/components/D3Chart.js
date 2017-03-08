@@ -11,7 +11,6 @@ const Y = 1;
 window.select = select;
 
 // TODO: Move data transformation code to utils.js, including string -> date conversion
-// TODO: Render legend
 // TODO: Handle mouse over and render values to legend, or render all values in floating element near mouse.
 //      https://bl.ocks.org/mbostock/3902569
 // TODO: Render preview
@@ -253,20 +252,22 @@ export default function D3Chart(el) {
     const scaleX = axes.x.scale;
     const scaleL = axes.left.scale;
     const scaleR = axes.right.scale;
+    const xRange = [dims.left, dims.right];
+    const yRange = [dims.bottom, dims.top];
 
-    // Flip the y range because SVG 0,0 is top left not bottom left.
-    scaleL.range([dims.bottom, dims.top]);
-    scaleR.range([dims.bottom, dims.top]);
-    scaleX.range([dims.left, dims.right]);
+    scaleL.range(yRange);
+    scaleR.range(yRange);
+    scaleX.range(xRange);
 
     sel.select('svg.chart').datum(data)
       .attr('width', `${dims.width}px`)
       .attr('height', `${dims.height}px`)
       .call(renderLines, 'left', trans)
       .call(renderLines, 'right', trans)
-      .call(renderAxis, 'left', scaleX(scaleX.domain()[0]), scaleL(scaleL.domain()[1]) - dims.top)
-      .call(renderAxis, 'right', scaleX(scaleX.domain()[1]), scaleR(scaleR.domain()[1]) - dims.top)
-      .call(renderAxis, 'x', 0, scaleL(scaleL.domain()[0]));
+      // Have to subtract dims.top here because d3 Axis objects are default rendered to 0, 0
+      .call(renderAxis, 'left', xRange[0], yRange[1] - dims.top)
+      .call(renderAxis, 'right', xRange[1], yRange[1] - dims.top)
+      .call(renderAxis, 'x', 0, yRange[0]);
   }
 
 
