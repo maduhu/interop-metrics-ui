@@ -270,8 +270,8 @@ export default function D3Chart(el) {
 
     newItems.append('span').attr('class', 'swatch');
     newItems.append('span').attr('class', 'name');
-    allItems.selectAll('span.name').text(d => d);
-    allItems.selectAll('span.swatch').html('&nbsp;').attr('style', d => `background-color: ${scale(d)};`);
+    allItems.select('span.name').text(d => d);
+    allItems.select('span.swatch').html('&nbsp;').attr('style', d => `background-color: ${scale(d)};`);
     items.exit().remove();
   }
 
