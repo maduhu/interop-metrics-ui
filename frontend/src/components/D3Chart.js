@@ -89,16 +89,14 @@ function groupSeries(data) {
 
 function calculateDimensions(element) {
   const bbox = element.getBoundingClientRect();
-  const left = 30;
   const right = 30;
   const height = 300;
-  const top = 10;
   const bottom = 30;
 
   return {
-    top,
     height,
-    left,
+    top: 10,
+    left: 30,
     bottom: height - bottom,
     width: bbox.width,
     right: bbox.width - right,
@@ -131,6 +129,13 @@ export default function D3Chart(el) {
       type: 'color',
     },
   };
+
+  // Initialize the axis objects with their appropriate scales.
+  Object.values(axes).forEach((a) => {
+    if (has.call(a, 'axis')) {
+      a.axis.scale(a.scale);
+    }
+  });
 
   chart.data = (...args) => {
     /**
@@ -180,30 +185,32 @@ export default function D3Chart(el) {
     return chart;
   };
 
-  function updateScale(scaleName, ...args) {
-    const scale = axes[scaleName];
+  function updateScale(axisName, ...args) {
+    const axis = axes[axisName];
 
     if (!args.length) {
-      return scale.type;
+      return axis.type;
     }
 
     const scaleType = args[0];
 
     if (has.call(SCALE_TYPES, scaleType)) {
-      scale.type = args[0];
+      axis.type = args[0];
     } else {
       throw new Error(`Invalid scale ${scaleType}, scale must be one of ${SCALE_TYPES}`);
     }
 
-    const domain = scale.scale.domain();
+    const domain = axis.scale.domain();
 
-    if (scale.type === 'log') {
-      scale.scale = scaleLog();
+    if (axis.type === 'log') {
+      axis.scale = scaleLog();
+      axis.axis.scale(axis.scale);
     } else {
-      scale.scale = scaleLinear();
+      axis.scale = scaleLinear();
+      axis.axis.scale(axis.scale);
     }
 
-    scale.scale.domain(domain);
+    axis.scale.domain(domain);
 
     return chart;
   }
@@ -242,70 +249,75 @@ export default function D3Chart(el) {
   }
 
   function renderAxis(sel, axisName, xTranslate, yTranslate) {
-    const { scale, axis } = axes[axisName];
     const className = `axis-${axisName}`;
     const selector = `g.${className}`;
+    const isY = axisName === 'left' || axisName === 'right';
 
-    if (axisName !== 'x' && data[axisName].length === 0) {
+    if (isY && data[axisName].length === 0) {
       sel.select(selector).remove();
       return;
     }
 
-    if (select(selector).size() === 0) {
+    if (sel.select(selector).size() === 0) {
       sel.append('g').attr('class', className);
     }
 
-    axis.scale(scale);
     sel.select(selector)
       .attr('transform', `translate(${xTranslate}, ${yTranslate})`)
-      .call(axis);
+      .call(axes[axisName].axis);
   }
 
-  function renderLegend(sel) {
-    const scale = axes.color.scale;
-    const colors = scale.domain();
-    const items = sel.selectAll('li.legend__item').data(colors);
-    const newItems = items.enter().append('li').attr('class', 'legend__item');
-    const allItems = newItems.merge(items);
+  function renderMainChart(sel, dims, trans) {
+    if (sel.select('svg.chart').size() === 0) {
+      sel.append('svg').attr('class', 'chart');
+    }
 
-    newItems.append('span').attr('class', 'swatch');
-    newItems.append('span').attr('class', 'name');
-    allItems.select('span.name').text(d => d);
-    allItems.select('span.swatch').html('&nbsp;').attr('style', d => `background-color: ${scale(d)};`);
-    items.exit().remove();
-  }
-
-  chart.render = () => {
-    const sel = select(el);
-    const trans = transition().duration(1000);
-    const dimensions = calculateDimensions(el);
     const scaleX = axes.x.scale;
     const scaleL = axes.left.scale;
     const scaleR = axes.right.scale;
 
     // Flip the y range because SVG 0,0 is top left not bottom left.
-    scaleL.range([dimensions.bottom, dimensions.top]);
-    scaleR.range([dimensions.bottom, dimensions.top]);
-    scaleX.range([dimensions.left, dimensions.right]);
+    scaleL.range([dims.bottom, dims.top]);
+    scaleR.range([dims.bottom, dims.top]);
+    scaleX.range([dims.left, dims.right]);
 
-    if (sel.select('svg.chart').size() === 0) {
-      sel.append('svg').attr('class', 'chart');
-    }
-
-    sel.select('svg').datum(data)
-      .attr('width', `${dimensions.width}px`)
-      .attr('height', `${dimensions.height}px`)
+    sel.select('svg.chart').datum(data)
+      .attr('width', `${dims.width}px`)
+      .attr('height', `${dims.height}px`)
       .call(renderLines, 'left', trans)
       .call(renderLines, 'right', trans)
-      .call(renderAxis, 'left', scaleX(scaleX.domain()[0]), scaleL(scaleL.domain()[1]) - dimensions.top)
-      .call(renderAxis, 'right', scaleX(scaleX.domain()[1]), scaleR(scaleR.domain()[1]) - dimensions.top)
+      .call(renderAxis, 'left', scaleX(scaleX.domain()[0]), scaleL(scaleL.domain()[1]) - dims.top)
+      .call(renderAxis, 'right', scaleX(scaleX.domain()[1]), scaleR(scaleR.domain()[1]) - dims.top)
       .call(renderAxis, 'x', 0, scaleL(scaleL.domain()[0]));
+  }
 
+
+  function renderLegend(sel) {
     if (sel.select('ul.legend').size() === 0) {
       sel.append('ul').attr('class', 'legend');
     }
 
-    sel.select('ul.legend').call(renderLegend);
+    const scale = axes.color.scale;
+    const colors = scale.domain();
+    const items = sel.select('ul.legend').selectAll('li.legend__item').data(colors);
+    const newItems = items.enter().append('li').attr('class', 'legend__item');
+    const allItems = newItems.merge(items);
+
+    newItems.append('span').attr('class', 'swatch').html('&nbsp;');
+    newItems.append('span').attr('class', 'name');
+    allItems.select('span.name').text(d => d);
+    allItems.select('span.swatch').attr('style', d => `background-color: ${scale(d)};`);
+    items.exit().remove();
+  }
+
+  chart.render = () => {
+    const sel = select(el);
+    const dims = calculateDimensions(el);
+    const trans = transition().duration(1000);
+
+    sel.call(renderMainChart, dims, trans)
+      .call(renderPreview, dims, trans)
+      .call(renderLegend);
 
     return chart;
   };
