@@ -106,8 +106,6 @@ function calculateDimensions(element) {
 export default function D3Chart(el) {
   const chart = {};
   let data;
-  let width;
-  let height = 400;
   const axes = {
     x: {
       scale: scaleTime(),
@@ -161,26 +159,6 @@ export default function D3Chart(el) {
     axes.left.scale.domain(calculateYDomain(data.left)).nice();
     axes.right.scale.domain(calculateYDomain(data.right)).nice();
     axes.color.scale.domain(data.color);
-
-    return chart;
-  };
-
-  chart.width = (...args) => {
-    if (!args.length) {
-      return width;
-    }
-
-    width = args[0];
-
-    return chart;
-  };
-
-  chart.height = (...args) => {
-    if (!args.length) {
-      return height;
-    }
-
-    height = args[0];
 
     return chart;
   };
