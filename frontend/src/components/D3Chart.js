@@ -110,7 +110,7 @@ export default function D3Chart(el) {
   let data;
   let width;
   let height = 400;
-  const scales = {
+  const axes = {
     x: {
       scale: scaleTime(),
       axis: axisBottom(),
@@ -152,10 +152,10 @@ export default function D3Chart(el) {
     const rawData = args[0];
 
     data = groupSeries(rawData);
-    scales.x.scale.domain(calculateXDomain(rawData));
-    scales.left.scale.domain(calculateYDomain(data.left)).nice();
-    scales.right.scale.domain(calculateYDomain(data.right)).nice();
-    scales.color.scale.domain(data.color);
+    axes.x.scale.domain(calculateXDomain(rawData));
+    axes.left.scale.domain(calculateYDomain(data.left)).nice();
+    axes.right.scale.domain(calculateYDomain(data.right)).nice();
+    axes.color.scale.domain(data.color);
 
     return chart;
   };
@@ -181,7 +181,7 @@ export default function D3Chart(el) {
   };
 
   function updateScale(scaleName, ...args) {
-    const scale = scales[scaleName];
+    const scale = axes[scaleName];
 
     if (!args.length) {
       return scale.type;
@@ -214,9 +214,9 @@ export default function D3Chart(el) {
 
   function renderLines(sel, axis, trans) {
     const groupSelector = `g.${axis}`;
-    const scaleX = scales.x.scale;
-    const scaleY = scales[axis].scale;
-    const scaleC = scales.color.scale;
+    const scaleX = axes.x.scale;
+    const scaleY = axes[axis].scale;
+    const scaleC = axes.color.scale;
     const lineGenerator = line()
       .defined(d => d[Y] !== null)
       .x(d => scaleX(d[X]))
@@ -242,7 +242,7 @@ export default function D3Chart(el) {
   }
 
   function renderAxis(sel, axisName, xTranslate, yTranslate) {
-    const { scale, axis } = scales[axisName];
+    const { scale, axis } = axes[axisName];
     const className = `axis-${axisName}`;
     const selector = `g.${className}`;
 
@@ -262,7 +262,7 @@ export default function D3Chart(el) {
   }
 
   function renderLegend(sel) {
-    const scale = scales.color.scale;
+    const scale = axes.color.scale;
     const colors = scale.domain();
     const items = sel.selectAll('li.legend__item').data(colors);
     const newItems = items.enter().append('li').attr('class', 'legend__item');
@@ -279,9 +279,9 @@ export default function D3Chart(el) {
     const sel = select(el);
     const trans = transition().duration(1000);
     const dimensions = calculateDimensions(el);
-    const scaleX = scales.x.scale;
-    const scaleL = scales.left.scale;
-    const scaleR = scales.right.scale;
+    const scaleX = axes.x.scale;
+    const scaleL = axes.left.scale;
+    const scaleR = axes.right.scale;
 
     // Flip the y range because SVG 0,0 is top left not bottom left.
     scaleL.range([dimensions.bottom, dimensions.top]);
