@@ -91,20 +91,26 @@ function calculateDimensions(element) {
   const right = 30;
   const height = 300;
   const bottom = 30;
+  const previewHeight = 60;
+  const previewBottom = 20;
 
   return {
     height,
+    previewHeight,
     top: 10,
     left: 30,
     bottom: height - bottom,
     width: bbox.width,
     right: bbox.width - right,
+    previewTop: 5,
+    previewBottom: previewHeight - previewBottom,
   };
 }
 
 export default function D3Chart(el) {
   const chart = {};
-  let data;
+  let data = null;
+  let previewData = null;
   const axes = {
     x: {
       scale: scaleTime(),
@@ -117,6 +123,21 @@ export default function D3Chart(el) {
       type: 'linear',
     },
     right: {
+      scale: scaleLinear(),
+      axis: axisRight(),
+      type: 'linear',
+    },
+    xPreview: {
+      scale: scaleTime(),
+      axis: axisBottom(), // Consider using axisTop
+      type: 'time',
+    },
+    leftPreview: {
+      scale: scaleLinear(),
+      axis: axisLeft(),
+      type: 'linear',
+    },
+    rightPreview: {
       scale: scaleLinear(),
       axis: axisRight(),
       type: 'linear',
@@ -147,6 +168,7 @@ export default function D3Chart(el) {
      *    {...}
      * ]
      */
+
     if (!args.length) {
       return data;
     }
@@ -162,8 +184,34 @@ export default function D3Chart(el) {
     return chart;
   };
 
+  chart.previewData = (...args) => {
+    /**
+     * Same format expected as data, but used to populate the data to render the preview with.
+     */
+
+    if (!args.length) {
+      return previewData;
+    }
+
+    const rawData = args[0];
+
+    if (rawData === null) {
+      // We're not going to render a preview if you set the previewData to null
+      previewData = rawData;
+      return chart;
+    }
+
+    previewData = groupSeries(rawData);
+    axes.xPreview.scale.domain(calculateXDomain(rawData));
+    axes.leftPreview.scale.domain(calculateYDomain(data.left)).nice();
+    axes.rightPreview.scale.domain(calculateYDomain(data.right)).nice();
+
+    return chart;
+  };
+
   function updateScale(axisName, ...args) {
     const axis = axes[axisName];
+    const previewAxis = axes[`${axisName}Preview`];
 
     if (!args.length) {
       return axis.type;
@@ -178,28 +226,31 @@ export default function D3Chart(el) {
     }
 
     const domain = axis.scale.domain();
+    const previewDomain = previewAxis.scale.domain();
 
     if (axis.type === 'log') {
       axis.scale = scaleLog();
+      previewAxis.scale = scaleLog();
       axis.axis.scale(axis.scale);
+      previewAxis.axis.scale(previewAxis.scale);
     } else {
       axis.scale = scaleLinear();
       axis.axis.scale(axis.scale);
+      previewAxis.scale = scaleLinear();
+      previewAxis.axis.scale(previewAxis.scale);
     }
 
     axis.scale.domain(domain);
+    previewAxis.scale.domain(previewDomain);
 
     return chart;
   }
 
-  chart.yScale = (...args) => updateScale('left', ...args);
   chart.leftScale = (...args) => updateScale('left', ...args);
   chart.rightScale = (...args) => updateScale('right', ...args);
 
-  function renderLines(sel, axis, trans) {
+  function renderLines(sel, axis, scaleX, scaleY, trans) {
     const groupSelector = `g.${axis}`;
-    const scaleX = axes.x.scale;
-    const scaleY = axes[axis].scale;
     const scaleC = axes.color.scale;
     const lineGenerator = line()
       .defined(d => d[Y] !== null)
@@ -252,24 +303,58 @@ export default function D3Chart(el) {
     const scaleX = axes.x.scale;
     const scaleL = axes.left.scale;
     const scaleR = axes.right.scale;
-    const xRange = [dims.left, dims.right];
-    const yRange = [dims.bottom, dims.top];
+    const rangeX = [dims.left, dims.right];
+    const rangeY = [dims.bottom, dims.top];
 
-    scaleL.range(yRange);
-    scaleR.range(yRange);
-    scaleX.range(xRange);
+    scaleX.range(rangeX);
+    scaleL.range(rangeY);
+    scaleR.range(rangeY);
 
     sel.select('svg.chart').datum(data)
       .attr('width', `${dims.width}px`)
       .attr('height', `${dims.height}px`)
-      .call(renderLines, 'left', trans)
-      .call(renderLines, 'right', trans)
+      .call(renderLines, 'left', scaleX, scaleL, trans)
+      .call(renderLines, 'right', scaleX, scaleR, trans)
       // Have to subtract dims.top here because d3 Axis objects are default rendered to 0, 0
-      .call(renderAxis, 'left', xRange[0], yRange[1] - dims.top)
-      .call(renderAxis, 'right', xRange[1], yRange[1] - dims.top)
-      .call(renderAxis, 'x', 0, yRange[0]);
+      .call(renderAxis, 'left', rangeX[0], rangeY[1] - dims.top)
+      .call(renderAxis, 'right', rangeX[1], rangeY[1] - dims.top)
+      .call(renderAxis, 'x', 0, rangeY[0]);
   }
 
+  function renderPreview(sel, dims, trans) {
+    const selector = 'svg.preview';
+    const previewExists = sel.select(selector).size() > 0;
+
+    if (previewData === null) {
+      if (previewExists) {
+        sel.select(selector).remove();
+      }
+
+      return;
+    }
+
+    if (!previewExists) {
+      sel.append('svg').attr('class', 'preview');
+    }
+
+    const height = dims.previewHeight;
+    const scaleL = axes.leftPreview.scale;
+    const scaleR = axes.rightPreview.scale;
+    const scaleX = axes.xPreview.scale;
+    const rangeX = [dims.left, dims.right];
+    const rangeY = [dims.previewBottom, dims.previewTop];
+
+    scaleX.range(rangeX);
+    scaleL.range(rangeY);
+    scaleR.range(rangeY);
+
+    sel.select(selector).datum(previewData)
+      .attr('width', `${dims.width}px`)
+      .attr('height', `${height}px`)
+      .call(renderLines, 'left', scaleX, scaleL, trans)
+      .call(renderLines, 'right', scaleX, scaleR, trans)
+      .call(renderAxis, 'xPreview', 0, rangeY[0]);
+  }
 
   function renderLegend(sel) {
     if (sel.select('ul.legend').size() === 0) {
