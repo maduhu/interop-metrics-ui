@@ -1,5 +1,5 @@
-import { select, transition, scaleLinear, scaleLog, scaleOrdinal, scaleTime, schemeCategory10, extent, line, axisLeft,
-  axisRight, axisBottom } from 'd3';
+import { select, transition, scaleLinear, scaleLog, scaleOrdinal, scaleTime, extent, line, axisLeft,
+  axisRight, axisBottom, brushX, schemeCategory10, event, mouse, bisector } from 'd3';
 import { has } from '../utils';
 import './D3Chart.css';
 
@@ -7,24 +7,25 @@ const SCALE_TYPES = { linear: true, log: true };
 const X = 0;
 const Y = 1;
 
-// TODO: DEBUG DO NOT COMMIT
-window.select = select;
-
+// TODO: Add method for setting X Domain
+//      - Needed so it's obvious when a dataset is missing data.
+//      - Alternatively we can just put a null-y-value row at the start/end of each series with x values of start/end
+// TODO: Disable log scales if the data is invalid (includes values of 0)
+//      - Should probably warn the user somehow that their dataset does not allow for log scales.
 // TODO: Move data transformation code to utils.js, including string -> date conversion
-// TODO: Handle mouse over and render values to legend, or render all values in floating element near mouse.
-//      https://bl.ocks.org/mbostock/3902569
-// TODO: Render preview
-// TODO: allow zoom on preview area
-// TODO: add callbacks to zoom to re-query for data
 // TODO: determine if we should format ticks similar to how it was done in Rickshaw where numbers were abbreviated
-//        i.e. 1,000,000 -> 1M, 15,000 -> 15k
-//        https://github.com/shutterstock/rickshaw/blob/master/src/js/Rickshaw.Fixtures.Number.js
+//      - i.e. 1,000,000 -> 1M, 15,000 -> 15k
+//      - https://github.com/shutterstock/rickshaw/blob/master/src/js/Rickshaw.Fixtures.Number.js
 
-function calculateXDomain(data) {
+function calculateXDomain(data, axis) {
   /**
    * We have a separate function for calculating the x domain because we know it's sorted, so we don't need to scan
    * every value of each series to figure it out, just the first and last.
    */
+  if (axis.userDefinedDomain) {
+    return axis.domain;
+  }
+
   return data.reduce((domain, series) => {
     // First convert the series x values to dates.
     // TODO: remove this conversion, make the chart assume date conversion has already happened.
@@ -86,9 +87,44 @@ function groupSeries(data) {
   };
 }
 
+function updateData(rawData, axisX, axisL, axisR) {
+  /**
+   * rawData should be in the following format:
+   * [
+   *    {
+     *      name: 'a string', // Used for the legend
+     *      axis: 'left', // can be left or right
+     *      rows: [ [x, y], [x, y], ...]
+     *    },
+   *    ...
+   *    {...}
+   * ]
+   */
+  if (rawData === null) {
+    return null;
+  }
+
+  const groupedData = groupSeries(rawData);
+  axisL.domain = calculateYDomain(groupedData.left); // eslint-disable-line
+  axisR.domain = calculateYDomain(groupedData.right); // eslint-disable-line
+  axisX.scale.domain(calculateXDomain(rawData, axisX));
+  axisL.scale.domain(axisL.domain);
+  axisR.scale.domain(axisR.domain);
+
+  if (axisL.type === 'linear') {
+    axisL.scale.nice();
+  }
+
+  if (axisR.type === 'linear') {
+    axisR.scale.nice();
+  }
+
+  return groupedData;
+}
+
 function calculateDimensions(element) {
   const bbox = element.getBoundingClientRect();
-  const right = 30;
+  const right = 40;
   const height = 300;
   const bottom = 30;
   const previewHeight = 60;
@@ -98,7 +134,7 @@ function calculateDimensions(element) {
     height,
     previewHeight,
     top: 10,
-    left: 30,
+    left: 40,
     bottom: height - bottom,
     width: bbox.width,
     right: bbox.width - right,
@@ -109,42 +145,51 @@ function calculateDimensions(element) {
 
 export default function D3Chart(el) {
   const chart = {};
-  let data = null;
+  let mainData = null;
   let previewData = null;
   const axes = {
     x: {
+      type: 'time',
       scale: scaleTime(),
       axis: axisBottom(),
-      type: 'time',
+      userDefinedDomain: false,
     },
     left: {
+      type: 'linear',
+      domain: [0, 1],
       scale: scaleLinear(),
       axis: axisLeft(),
-      type: 'linear',
     },
     right: {
+      type: 'linear',
+      domain: [0, 1],
       scale: scaleLinear(),
       axis: axisRight(),
-      type: 'linear',
     },
     xPreview: {
+      type: 'time',
       scale: scaleTime(),
       axis: axisBottom(), // Consider using axisTop
-      type: 'time',
+      userDefinedDomain: false,
+      brush: brushX(),
+      onBrush: null,
+      onBrushEnd: null,
     },
     leftPreview: {
+      type: 'linear',
+      domain: [0, 1],
       scale: scaleLinear(),
       axis: axisLeft(),
-      type: 'linear',
     },
     rightPreview: {
+      type: 'linear',
+      domain: [0, 1],
       scale: scaleLinear(),
       axis: axisRight(),
-      type: 'linear',
     },
     color: {
-      scale: scaleOrdinal(schemeCategory10),
       type: 'color',
+      scale: scaleOrdinal(schemeCategory10),
     },
   };
 
@@ -156,55 +201,21 @@ export default function D3Chart(el) {
   });
 
   chart.data = (...args) => {
-    /**
-     * Data should be in the following format:
-     * [
-     *    {
-     *      name: 'a string', // Used for the legend
-     *      axis: 'left', // can be left or right
-     *      rows: [ [x, y], [x, y], ...]
-     *    },
-     *    ...
-     *    {...}
-     * ]
-     */
-
     if (!args.length) {
-      return data;
+      return mainData;
     }
 
-    const rawData = args[0];
-
-    data = groupSeries(rawData);
-    axes.x.scale.domain(calculateXDomain(rawData));
-    axes.left.scale.domain(calculateYDomain(data.left)).nice();
-    axes.right.scale.domain(calculateYDomain(data.right)).nice();
-    axes.color.scale.domain(data.color);
+    mainData = updateData(args[0], axes.x, axes.left, axes.right);
 
     return chart;
   };
 
   chart.previewData = (...args) => {
-    /**
-     * Same format expected as data, but used to populate the data to render the preview with.
-     */
-
     if (!args.length) {
       return previewData;
     }
 
-    const rawData = args[0];
-
-    if (rawData === null) {
-      // We're not going to render a preview if you set the previewData to null
-      previewData = rawData;
-      return chart;
-    }
-
-    previewData = groupSeries(rawData);
-    axes.xPreview.scale.domain(calculateXDomain(rawData));
-    axes.leftPreview.scale.domain(calculateYDomain(data.left)).nice();
-    axes.rightPreview.scale.domain(calculateYDomain(data.right)).nice();
+    previewData = updateData(args[0], axes.xPreview, axes.leftPreview, axes.rightPreview);
 
     return chart;
   };
@@ -220,13 +231,11 @@ export default function D3Chart(el) {
     const scaleType = args[0];
 
     if (has.call(SCALE_TYPES, scaleType)) {
-      axis.type = args[0];
+      axis.type = scaleType;
+      previewAxis.type = scaleType;
     } else {
       throw new Error(`Invalid scale ${scaleType}, scale must be one of ${SCALE_TYPES}`);
     }
-
-    const domain = axis.scale.domain();
-    const previewDomain = previewAxis.scale.domain();
 
     if (axis.type === 'log') {
       axis.scale = scaleLog();
@@ -240,8 +249,13 @@ export default function D3Chart(el) {
       previewAxis.axis.scale(previewAxis.scale);
     }
 
-    axis.scale.domain(domain);
-    previewAxis.scale.domain(previewDomain);
+    axis.scale.domain(axis.domain);
+    previewAxis.scale.domain(previewAxis.domain);
+
+    if (scaleType === 'linear') {
+      axis.scale.nice();
+      previewAxis.scale.nice();
+    }
 
     return chart;
   }
@@ -281,7 +295,7 @@ export default function D3Chart(el) {
     const selector = `g.${className}`;
     const isY = axisName === 'left' || axisName === 'right';
 
-    if (isY && data[axisName].length === 0) {
+    if (isY && mainData[axisName].length === 0) {
       sel.select(selector).remove();
       return;
     }
@@ -293,6 +307,76 @@ export default function D3Chart(el) {
     sel.select(selector)
       .attr('transform', `translate(${xTranslate}, ${yTranslate})`)
       .call(axes[axisName].axis);
+  }
+
+  function mouseMove() {
+    /**
+     * Renders the Y value of each series in the legend if there is one near the mouse.
+     *
+     * The basic algorithm for finding the values we're hovered over:
+     * Step 0: get the x position of the mouse, invert to get date value
+     * Step 1: get closest x value in the array to my mouse
+     * Step 2: get the scaled value of the closest x value
+     * Step 3: render value if the scaled value is within 3 pixels of the mouse.
+     */
+
+    const bisectDate = bisector(d => d[0]).left;
+    const scaleX = axes.x.scale;
+    const posX = mouse(this)[0];
+    const dateAtPos = scaleX.invert(posX);
+    const values = {};
+
+    [...mainData.left, ...mainData.right].forEach((series) => {
+      const idx = bisectDate(series.rows, dateAtPos, 1);
+      const date0 = series.rows[idx - 1];
+      const date1 = series.rows[idx];
+      let closestDate;
+
+      if (date1 === undefined) {
+        closestDate = date0;
+      } else {
+        closestDate = dateAtPos - date0[X] > date1[X] - dateAtPos ? date1 : date0;
+      }
+
+      if (Math.abs(scaleX(closestDate[X]) - posX) < 3 && closestDate[Y] !== null) {
+        values[series.name] = closestDate[Y];
+      }
+    });
+
+    select(el).select('.legend')
+      .selectAll('.legend-item')
+      .select('.legend-item__value')
+      .text(d => (isNaN(values[d]) ? values[d] : values[d].toFixed(2)));
+  }
+
+  function mouseOut() {
+    /**
+     * Clears all legend values on mouseout
+     */
+    select(el).select('.legend')
+      .selectAll('.legend-item')
+      .select('.legend-item__value')
+      .text('');
+  }
+
+  function renderMouseOverlay(sel, dims) {
+    const selector = 'rect.overlay';
+
+    if (sel.select(selector).size() === 0) {
+      sel.append('rect')
+        .attr('class', 'overlay')
+        .attr('opacity', 0.0);
+
+      sel.select(selector)
+        .on('mousemove', mouseMove)
+        .on('mouseout', mouseOut);
+    }
+
+    sel.select(selector)
+      .attr('width', dims.right - dims.left)
+      .attr('height', dims.height - dims.top)
+      .attr('x', dims.left)
+      .attr('y', dims.top);
   }
 
   function renderMainChart(sel, dims, trans) {
@@ -310,7 +394,7 @@ export default function D3Chart(el) {
     scaleL.range(rangeY);
     scaleR.range(rangeY);
 
-    sel.select('svg.chart').datum(data)
+    sel.select('svg.chart').datum(mainData)
       .attr('width', `${dims.width}px`)
       .attr('height', `${dims.height}px`)
       .call(renderLines, 'left', scaleX, scaleL, trans)
@@ -318,7 +402,60 @@ export default function D3Chart(el) {
       // Have to subtract dims.top here because d3 Axis objects are default rendered to 0, 0
       .call(renderAxis, 'left', rangeX[0], rangeY[1] - dims.top)
       .call(renderAxis, 'right', rangeX[1], rangeY[1] - dims.top)
-      .call(renderAxis, 'x', 0, rangeY[0]);
+      .call(renderAxis, 'x', 0, rangeY[0])
+      .call(renderMouseOverlay, dims);
+  }
+
+  chart.onBrush = (...args) => {
+    const axis = axes.xPreview;
+
+    if (!args.length) {
+      return axis.onBrush;
+    }
+
+    axis.onBrush = args[0];
+    axis.brush.on('brush', () => {
+      const scaleX = axes.xPreview.scale;
+      const range = event.selection === null ? null : event.selection.map(scaleX.invert, scaleX);
+
+      axis.onBrush(range);
+    });
+
+    return chart;
+  };
+
+  chart.onBrushEnd = (...args) => {
+    const axis = axes.xPreview;
+
+    if (!args.length) {
+      return axis.onBrushEnd;
+    }
+
+    axis.onBrushEnd = args[0];
+    axis.brush.on('end', () => {
+      const scaleX = axis.scale;
+      const range = event.selection === null ? null : event.selection.map(scaleX.invert, scaleX);
+
+      axis.onBrushEnd(range);
+    });
+
+    return chart;
+  };
+
+  function renderBrush(sel, height) {
+    const selector = 'g.brush-area';
+    const axis = axes.xPreview;
+    const rangeX = axis.scale.range();
+    const previewBrush = axis.brush;
+
+    previewBrush.extent([[rangeX[0], 0], [rangeX[1], height]]);
+
+    if (sel.select(selector).size() === 0) {
+      sel.append('g').attr('class', 'brush-area');
+    }
+
+    sel.select(selector)
+      .call(previewBrush);
   }
 
   function renderPreview(sel, dims, trans) {
@@ -353,7 +490,8 @@ export default function D3Chart(el) {
       .attr('height', `${height}px`)
       .call(renderLines, 'left', scaleX, scaleL, trans)
       .call(renderLines, 'right', scaleX, scaleR, trans)
-      .call(renderAxis, 'xPreview', 0, rangeY[0]);
+      .call(renderAxis, 'xPreview', 0, rangeY[0])
+      .call(renderBrush, height);
   }
 
   function renderLegend(sel) {
@@ -363,14 +501,15 @@ export default function D3Chart(el) {
 
     const scale = axes.color.scale;
     const colors = scale.domain();
-    const items = sel.select('ul.legend').selectAll('li.legend__item').data(colors);
-    const newItems = items.enter().append('li').attr('class', 'legend__item');
+    const items = sel.select('ul.legend').selectAll('li.legend-item').data(colors);
+    const newItems = items.enter().append('li').attr('class', 'legend-item');
     const allItems = newItems.merge(items);
 
-    newItems.append('span').attr('class', 'swatch').html('&nbsp;');
-    newItems.append('span').attr('class', 'name');
-    allItems.select('span.name').text(d => d);
-    allItems.select('span.swatch').attr('style', d => `background-color: ${scale(d)};`);
+    newItems.append('span').attr('class', 'legend-item__swatch').html('&nbsp;');
+    newItems.append('span').attr('class', 'legend-item__name');
+    newItems.append('span').attr('class', 'legend-item__value');
+    allItems.select('span.legend-item__name').text(d => d);
+    allItems.select('span.legend-item__swatch').attr('style', d => `background-color: ${scale(d)};`);
     items.exit().remove();
   }
 
@@ -378,6 +517,9 @@ export default function D3Chart(el) {
     const sel = select(el);
     const dims = calculateDimensions(el);
     const trans = transition().duration(1000);
+
+    // Reset color scale to prevent weird behavior when main chart has more/less series than preview chart.
+    axes.color.scale.domain([]);
 
     sel.call(renderMainChart, dims, trans)
       .call(renderPreview, dims, trans)

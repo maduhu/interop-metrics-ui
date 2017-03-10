@@ -1,13 +1,16 @@
 .legend {
-  margin: 0.5em 0 0 1em;
+  margin: 0.5em 0 0 2.5em;
   list-style-type: none;
 }
-.legend__item {
+.legend-item {
   margin-top: 0.2em;
 }
-.swatch {
+.legend-item__swatch {
   display: inline-block;
   margin-right: 0.5em;
   border-radius: 2px;
   width: 17px;
+}
+.legend-item__value {
+  margin-left: 0.5em;
 }
