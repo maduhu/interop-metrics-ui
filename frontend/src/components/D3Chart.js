@@ -28,8 +28,6 @@ function calculateXDomain(data, axis) {
 
   return data.reduce((domain, series) => {
     // First convert the series x values to dates.
-    // TODO: remove this conversion, make the chart assume date conversion has already happened.
-    series.rows.forEach(r => r[X] = new Date(r[X])); // eslint-disable-line no-param-reassign, no-return-assign
     const min = series.rows[0][X];
     const max = series.rows[series.rows.length - 1][X];
 
@@ -92,10 +90,10 @@ function updateData(rawData, axisX, axisL, axisR) {
    * rawData should be in the following format:
    * [
    *    {
-     *      name: 'a string', // Used for the legend
-     *      axis: 'left', // can be left or right
-     *      rows: [ [x, y], [x, y], ...]
-     *    },
+   *      name: 'a string', // Used for the legend
+   *      axis: 'left', // can be left or right
+   *      rows: [ [x, y], [x, y], ...]
+   *    },
    *    ...
    *    {...}
    * ]
@@ -107,7 +105,11 @@ function updateData(rawData, axisX, axisL, axisR) {
   const groupedData = groupSeries(rawData);
   axisL.domain = calculateYDomain(groupedData.left); // eslint-disable-line
   axisR.domain = calculateYDomain(groupedData.right); // eslint-disable-line
-  axisX.scale.domain(calculateXDomain(rawData, axisX));
+
+  if (!axisX.userDefinedDomain) {
+    axisX.scale.domain(calculateXDomain(rawData, axisX));
+  }
+
   axisL.scale.domain(axisL.domain);
   axisR.scale.domain(axisR.domain);
 
@@ -153,6 +155,7 @@ export default function D3Chart(el) {
       scale: scaleTime(),
       axis: axisBottom(),
       userDefinedDomain: false,
+      domain: null,
     },
     left: {
       type: 'linear',
@@ -171,6 +174,7 @@ export default function D3Chart(el) {
       scale: scaleTime(),
       axis: axisBottom(), // Consider using axisTop
       userDefinedDomain: false,
+      domain: null,
       brush: brushX(),
       onBrush: null,
       onBrushEnd: null,
@@ -262,6 +266,29 @@ export default function D3Chart(el) {
 
   chart.leftScale = (...args) => updateScale('left', ...args);
   chart.rightScale = (...args) => updateScale('right', ...args);
+
+  function updateXDomain(axisName, ...args) {
+    const axis = axes[axisName];
+
+    if (args.length === 0) {
+      return axis.domain;
+    }
+
+    const domain = args[0];
+
+    if (domain === null) {
+      axis.userDefinedDomain = false;  // eslint-disable-line
+    } else {
+      axis.userDefinedDomain = true;  // eslint-disable-line
+      axis.domain = domain;  // eslint-disable-line
+      axis.scale.domain(domain);
+    }
+
+    return chart;
+  }
+
+  chart.xDomain = (...args) => updateXDomain('x', ...args);
+  chart.xPreviewDomain = (...args) => updateXDomain('xPreview', ...args);
 
   function renderLines(sel, axis, scaleX, scaleY, trans) {
     const groupSelector = `g.${axis}`;
