@@ -7,9 +7,11 @@ const SCALE_TYPES = { linear: true, log: true };
 const X = 0;
 const Y = 1;
 
-// TODO: Add method for setting X Domain
-//      - Needed so it's obvious when a dataset is missing data.
-//      - Alternatively we can just put a null-y-value row at the start/end of each series with x values of start/end
+// TODO: add an unmount method to delete underlying DOM elements.
+// TODO: add method to clear brush selection.
+// TODO: add methods to toggle loading state
+//      - Render some form of loading mask when loading data
+// TODO: render something when there is no data.
 // TODO: Disable log scales if the data is invalid (includes values of 0)
 //      - Should probably warn the user somehow that their dataset does not allow for log scales.
 // TODO: Move data transformation code to utils.js, including string -> date conversion
@@ -407,8 +409,10 @@ export default function D3Chart(el) {
   }
 
   function renderMainChart(sel, dims, trans) {
-    if (sel.select('svg.chart').size() === 0) {
-      sel.append('svg').attr('class', 'chart');
+    const selector = 'svg.d3-chart';
+
+    if (sel.select(selector).size() === 0) {
+      sel.append('svg').attr('class', 'd3-chart');
     }
 
     const scaleX = axes.x.scale;
@@ -421,7 +425,7 @@ export default function D3Chart(el) {
     scaleL.range(rangeY);
     scaleR.range(rangeY);
 
-    sel.select('svg.chart').datum(mainData)
+    sel.select(selector).datum(mainData)
       .attr('width', `${dims.width}px`)
       .attr('height', `${dims.height}px`)
       .call(renderLines, 'left', scaleX, scaleL, trans)
@@ -522,6 +526,8 @@ export default function D3Chart(el) {
   }
 
   function renderLegend(sel) {
+    // TODO: make it possible to hover over a legend item to emphasize a series.
+    // TODO: make it possible to toggle emphasized series so you don't have to hover.
     if (sel.select('ul.legend').size() === 0) {
       sel.append('ul').attr('class', 'legend');
     }
