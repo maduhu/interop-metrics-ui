@@ -53,18 +53,24 @@ class MetricPickerFilters extends Component {
 
     return (
       <div className="metric-picker__filters">
-        <select className="metric-picker__select" value={environment}
-                onChange={(e) => this.props.onEnvironmentChange(e.target.value)}>
+        <select
+          className="metric-picker__select" value={environment}
+          onChange={e => this.props.onEnvironmentChange(e.target.value)}
+        >
           {envOptions}
         </select>
 
-        <select className="metric-picker__select" value={application} disabled={appDisabled}
-                onChange={(e) => this.props.onApplicationChange(e.target.value)}>
+        <select
+          className="metric-picker__select" value={application} disabled={appDisabled}
+          onChange={e => this.props.onApplicationChange(e.target.value)}
+        >
           {appOptions}
         </select>
 
-        <input className="metric-picker__input" type="text" value={filter} placeholder="Filter"
-               onChange={(e) => this.props.onFilterChange(e.target.value)}/>
+        <input
+          className="metric-picker__input" type="text" value={filter} placeholder="Filter"
+          onChange={e => this.props.onFilterChange(e.target.value)}
+        />
       </div>
     );
   }
