@@ -19,3 +19,6 @@
 .chart__error-title {
   margin-bottom: 0.5em;
 }
+.chart-area__blank {
+  padding: 0 2em;
+}

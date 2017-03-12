@@ -1,5 +1,21 @@
-import { select, transition, scaleLinear, scaleLog, scaleOrdinal, scaleTime, extent, line, axisLeft,
-  axisRight, axisBottom, brushX, schemeCategory10, event, mouse, bisector } from 'd3';
+import {
+  axisLeft,
+  axisRight,
+  axisBottom,
+  bisector,
+  brushX,
+  event,
+  extent,
+  line,
+  mouse,
+  select,
+  scaleLinear,
+  scaleLog,
+  scaleOrdinal,
+  scaleTime,
+  schemeCategory10,
+  transition,
+} from 'd3';
 import { has } from '../utils';
 import './D3Chart.css';
 
@@ -11,10 +27,8 @@ const Y = 1;
 // TODO: add method to clear brush selection.
 // TODO: add methods to toggle loading state
 //      - Render some form of loading mask when loading data
-// TODO: render something when there is no data.
 // TODO: Disable log scales if the data is invalid (includes values of 0)
 //      - Should probably warn the user somehow that their dataset does not allow for log scales.
-// TODO: Move data transformation code to utils.js, including string -> date conversion
 // TODO: determine if we should format ticks similar to how it was done in Rickshaw where numbers were abbreviated
 //      - i.e. 1,000,000 -> 1M, 15,000 -> 15k
 //      - https://github.com/shutterstock/rickshaw/blob/master/src/js/Rickshaw.Fixtures.Number.js

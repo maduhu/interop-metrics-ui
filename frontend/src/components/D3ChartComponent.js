@@ -1,24 +1,8 @@
 import React, { Component } from 'react';
-import { generateMetricsKey } from '../utils';
 import D3Chart from './D3Chart';
 
-function buildSeries(metrics, data) {
-  return metrics.reduce((series, metric) => {
-    const key = generateMetricsKey(metric);
-    const rows = data[key];
-
-    series.push({
-      name: key,
-      rows: rows,
-      axis: metric.axis,
-    });
-
-    return series;
-  }, []);
-}
-
 function isLoading(data) {
-  return Object.values(data).some(series => series === '__loading__');
+  return Object.values(data).some(series => series.loading);
 }
 
 export class D3ChartComponent extends Component {
@@ -51,8 +35,8 @@ export class D3ChartComponent extends Component {
       .onBrushEnd(this.scheduleSelection)
       .xDomain(dataDomain)
       .xPreviewDomain(previewDomain)
-      .data(buildSeries(chart.metrics, chart.previewData))
-      .previewData(buildSeries(chart.metrics, chart.previewData));
+      .data(chart.data)
+      .previewData(chart.previewData);
 
     this.renderChart(this.props);
   }
@@ -67,13 +51,10 @@ export class D3ChartComponent extends Component {
 
     // eslint-disable-next-line
     if (p0 != p1) {
-      console.log('preview data changed');
-
       if (!isLoading(p1)) {
-        this.graph.xPreviewDomain(previewDomain).previewData(buildSeries(chart.metrics, p1));
+        this.graph.xPreviewDomain(previewDomain).previewData(p1);
       } else {
-        // toggle loading state.
-        console.log('loading preview data');
+        // TODO: Implement loading state method and toggle loading state here.
       }
     }
 
@@ -89,7 +70,7 @@ export class D3ChartComponent extends Component {
           dataDomain = [chart.selectionStartDate, chart.selectionEndDate];
         }
 
-        this.graph.xDomain(dataDomain).data(buildSeries(chart.metrics, d1));
+        this.graph.xDomain(dataDomain).data(d1);
       } else {
         // TODO: Implement loading state method and toggle loading state here.
       }
@@ -100,7 +81,6 @@ export class D3ChartComponent extends Component {
 
   componentWillUnmount() {
     // TODO: implement an unmount method on D3Chart and use it here.
-    console.log('unmounting!', this.el);
   }
 
   cancelSelection() {

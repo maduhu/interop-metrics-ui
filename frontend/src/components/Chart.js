@@ -14,20 +14,20 @@ export class Chart extends PureComponent {
   }
 
   isLoading() {
-    return Object.values(this.props.chart.previewData).some(series => series === '__loading__');
+    return this.props.chart.previewData.some(series => series.loading);
   }
 
   errors() {
     const reducer = (errors, value, idx) => {
-      if (!Array.isArray(value) && value !== '__loading__') {
-        errors.push(<div key={idx} className="chart__loading-error">{value}</div>);
+      if (value.error !== null) {
+        errors.push(<div key={idx} className="chart__loading-error">{value.error}</div>);
       }
 
       return errors;
     };
 
-    const previewErrors = Object.values(this.props.chart.previewData).reduce(reducer, []);
-    const dataErrors = Object.values(this.props.chart.data).reduce(reducer, []);
+    const previewErrors = this.props.chart.previewData.reduce(reducer, []);
+    const dataErrors = this.props.chart.data.reduce(reducer, []);
 
     return previewErrors.concat(dataErrors);
   }

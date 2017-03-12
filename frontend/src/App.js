@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
 import './App.css';
-import { generateMetricsKey } from './utils';
+import { generateMetricsKey, generateMetricsUrl, has } from './utils';
 import Dialog from './components/Dialog';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
@@ -18,13 +18,17 @@ function newChart() {
   const yesterday = now.clone().subtract(24, 'hours');
 
   return {
+    title: '',
     startDate: yesterday,
     endDate: now,
+    selectionStartDate: null,
+    selectionEndDate: null,
     // In the future we should also allow users to set axis domains.
     leftAxis: 'linear',
     rightAxis: 'linear',
     metrics: [],
-    data: {},
+    previewData: [],
+    data: [],
   };
 }
 
@@ -42,13 +46,18 @@ class App extends Component {
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
-    this.loadChartData = this.loadChartData.bind(this);
+    this.selectionDataHandler = this.selectionDataHandler.bind(this);
+    this.previewDataHandler = this.previewDataHandler.bind(this);
+    this.loadData = this.loadData.bind(this);
+    this.clearSelection = this.clearSelection.bind(this);
+    this.loadSelectionData = this.loadSelectionData.bind(this);
     this.saveChart = this.saveChart.bind(this);
     this.addMetric = this.addMetric.bind(this);
     this.updateMetric = this.updateMetric.bind(this);
     this.removeMetric = this.removeMetric.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
+    this.refreshChart = this.refreshChart.bind(this);
     this.state = {
       rawMetrics: [],
       metrics: {},
@@ -120,59 +129,167 @@ class App extends Component {
     });
   }
 
-  loadChartData(idx, chart, measures) {
-    /**
-     * Retrieves data from the server for each measure in the measures array.
-     */
-    measures.forEach((m) => {
-      const key = generateMetricsKey(m);
-      let url = `api/v1/environments/${m.environment}/applications/${m.application}`;
-      url += `/metrics/${m.table}/${m.metric_name}`;
+  selectionDataHandler(chartIdx, dataIdx, measure, error, response) {
+    this.setState((state) => {
+      let body = null;
+      const oldChart = state.charts[chartIdx];
+      const chart = { ...oldChart };
+      const data = { ...oldChart.data[dataIdx] };
 
-      const requestHandler = (error, response) => {
-        const body = response.body;
+      if (data === undefined || data.name !== generateMetricsKey(measure)) {
+        // Don't update, the user managed to change the metrics on the chart before the response came back.
+        return {};
+      }
 
-        if (error != null) {
-          let msg = 'Unexpected error returned from server';
+      data.loading = false;
 
-          if (body !== null && body.hasOwnProperty('error') && body.error !== null) {
-            msg = body.error;
-          }
+      if (response !== undefined) {
+        body = response.body;
+      }
 
-          this.setState((state) => {
-            const oldChart = state.charts[idx];
-            const updatedChart = {
-              ...oldChart,
-              data: { ...oldChart.data, [key]: msg },
-            };
+      if (error !== null) {
+        let msg = 'Unexpected error returned from server';
 
-            return {
-              charts: [...state.charts.slice(0, idx), ...[updatedChart], ...state.charts.slice(idx + 1)],
-            };
-          });
-
-          return;
+        if (body !== null && has.call(body, 'error') && body.error !== null) {
+          msg = body.error;
         }
 
-        this.setState((state) => {
-          const oldChart = state.charts[idx];
-          const updatedChart = {
-            ...oldChart,
-            data: { ...oldChart.data, [key]: body.data.rows },
-          };
+        data.rows = [];
+        data.error = msg; // TODO: render this error somewhere.
+      } else {
+        data.error = null;
+        data.rows = response.body.data.rows.map(r => [new Date(r[0]), r[1]]);
+        chart.data = [
+          ...chart.data.slice(0, dataIdx),
+          ...[data],
+          ...chart.data.slice(dataIdx + 1),
+        ];
+      }
 
-          return {
-            charts: [...state.charts.slice(0, idx), ...[updatedChart], ...state.charts.slice(idx + 1)],
-          };
-        });
+      return {
+        charts: [...state.charts.slice(0, chartIdx), ...[chart], ...state.charts.slice(chartIdx + 1)],
+      };
+    });
+  }
+
+  previewDataHandler(chartIdx, dataIdx, measure, error, response) {
+    this.setState((state) => {
+      let body = null;
+      const oldChart = state.charts[chartIdx];
+      const chart = { ...oldChart };
+      const data = { ...oldChart.data[dataIdx] };
+      const previewData = { ...oldChart.previewData[dataIdx] };
+
+      if (data === undefined || data.name !== generateMetricsKey(measure)) {
+        // Don't update, the user managed to change the metrics on the chart before the response came back.
+        return {};
+      }
+
+      data.loading = false;
+      previewData.loading = false;
+
+      if (response !== undefined) {
+        body = response.body;
+      }
+
+      if (error !== null) {
+        let msg = 'Unexpected error returned from server';
+
+        if (body !== null && has.call(body, 'error') && body.error !== null) {
+          msg = body.error;
+        }
+
+        data.rows = [];
+        previewData.rows = [];
+        data.error = msg; // TODO: render this error somewhere.
+        previewData.error = msg; // TODO: render this error somewhere.
+      } else {
+        const rows = response.body.data.rows.map(r => [new Date(r[0]), r[1]]);
+        data.error = null;
+        previewData.error = null;
+        data.rows = rows;
+        previewData.rows = rows;
+
+        chart.data = [
+          ...chart.data.slice(0, dataIdx),
+          ...[data],
+          ...chart.data.slice(dataIdx + 1),
+        ];
+
+        chart.previewData = [
+          ...chart.previewData.slice(0, dataIdx),
+          ...[previewData],
+          ...chart.previewData.slice(dataIdx + 1),
+        ];
+      }
+
+      return {
+        charts: [...state.charts.slice(0, chartIdx), ...[chart], ...state.charts.slice(chartIdx + 1)],
+      };
+    });
+  }
+
+  loadData(chartIdx, dataIdx, measure, start, end, all) {
+    const url = generateMetricsUrl(measure);
+    const handler = all ? this.previewDataHandler : this.selectionDataHandler;
+    const cb = (error, response) => handler(chartIdx, dataIdx, measure, error, response);
+    // Set request size to window width - 144 (we have 64 pixels of padding on the window and 80 pixels on SVG)
+    const desiredRows = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 144;
+
+    request.get(url)
+      .query({ columns: measure.measure })
+      .query({ start_timestamp: start.toISOString() })
+      .query({ end_timestamp: end.toISOString() })
+      .query({ size: desiredRows })
+      .set('Accept', 'application/json')
+      .end(cb);
+  }
+
+  clearSelection(idx) {
+    this.setState((state) => {
+      const oldChart = state.charts[idx];
+      const chart = {
+        ...oldChart,
+        data: oldChart.previewData,
+        selectionStartDate: null,
+        selectionEndDate: null,
       };
 
-      request.get(url)
-        .query({ columns: m.measure })
-        .query({ start_timestamp: chart.startDate.format() })
-        .query({ end_timestamp: chart.endDate.format() })
-        .set('Accept', 'application/json')
-        .end(requestHandler);
+      return {
+        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
+      };
+    });
+  }
+
+  loadSelectionData(idx, selection) {
+    if (selection === null) {
+      this.clearSelection(idx);
+      return;
+    }
+
+    this.setState((state) => {
+      const chart = {
+        ...state.charts[idx],
+        data: [],
+        selectionStartDate: selection[0],
+        selectionEndDate: selection[1],
+      };
+
+      chart.metrics.forEach((m, mIdx) => {
+        chart.data.push({
+          name: generateMetricsKey(m),
+          axis: m.axis,
+          loading: true,
+          error: null,
+          rows: [],
+        });
+
+        this.loadData(idx, mIdx, m, selection[0], selection[1], false);
+      });
+
+      return {
+        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
+      };
     });
   }
 
@@ -183,31 +300,50 @@ class App extends Component {
     this.setState((state) => {
       const idx = state.targetChartIdx;
       const oldChart = state.charts[idx];
-      const measures = [];
       const chart = {
         ...state.targetChart,
-        data: { ...state.targetChart.data },
+        // Note: here we clear selection on save, not sure this behavior is the best.
+        selectionStartDate: null,
+        selectionEndDate: null,
+        data: [...state.targetChart.previewData], // Copy preview data over because we're resetting selection.
+        previewData: [...state.targetChart.previewData],
       };
       const datesEqual = chart.startDate === oldChart.startDate && chart.endDate === oldChart.endDate;
       const timesEqual = chart.startTime === oldChart.startTime && chart.endTime === oldChart.endTime;
+      // If we've changed the date or time range of the chart we need all new data
+      const currentPreviewData = (!datesEqual || !timesEqual) ? [] : chart.previewData;
+      const data = [];
+      const previewData = [];
 
-      if (!datesEqual || !timesEqual) {
-        // If we've changed the date or time range of the chart we need all new data, so set to empty object.
-        chart.data = {};
-      }
-
-      chart.metrics.forEach((metric) => {
+      chart.metrics.forEach((metric, mIdx) => {
         const key = generateMetricsKey(metric);
-        const data = chart.data.hasOwnProperty(key) ? chart.data[key] : null;
+        const metricPreviewData = currentPreviewData.find(d => d.name === key);
 
-        if (data !== '__loading__' && !Array.isArray(data)) {
-          // Fetch data if we don't have it, or if there was an error previously.
-          chart.data[key] = '__loading__';
-          measures.push(metric);
+        if (metricPreviewData) {
+          metricPreviewData.axis = metric.axis; // just in case the user changed the axis.
+          data.push(metricPreviewData);
+          previewData.push(metricPreviewData);
+
+          if (metricPreviewData.error !== null) {
+            // Try requesting metrics that had errors last time.
+            this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
+          }
+        } else {
+          const dataObj = {
+            name: key,
+            axis: metric.axis,
+            error: null,
+            loading: true,
+            rows: [],
+          };
+          data.push({ ...dataObj });
+          previewData.push({ ...dataObj });
+          this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
         }
       });
 
-      this.loadChartData(idx, chart, measures);
+      chart.data = data;
+      chart.previewData = previewData;
 
       return {
         charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
@@ -241,11 +377,6 @@ class App extends Component {
         metrics: [...oldChart.metrics.slice(0, idx), updatedMetric, ...oldChart.metrics.slice(idx + 1)],
       };
 
-      if (oldChart.metrics[idx].measure !== targetChart.metrics[idx].measure) {
-        targetChart.data = { ...targetChart.data };
-        delete targetChart.data[generateMetricsKey(oldChart.metrics[idx])];
-      }
-
       return { targetChart };
     });
   }
@@ -254,13 +385,12 @@ class App extends Component {
     /**
      * Removes the metric from targetChart at the given index.
      */
-    const metrics = this.state.targetChart.metrics;
-    const data = { ...this.state.targetChart.data };
-    const key = generateMetricsKey(metrics[idx]);
-    delete data[key];
-
-    this.updateTargetChart('metrics', metrics.slice(0, idx).concat(metrics.slice(idx + 1)));
-    this.updateTargetChart('data', data);
+    this.setState(state => ({
+      targetChart: {
+        ...state.targetChart,
+        metrics: [...state.targetChart.metrics.slice(0, idx), ...state.targetChart.metrics.slice(idx + 1)],
+      },
+    }));
   }
 
   openSettings(idx) {
@@ -279,6 +409,37 @@ class App extends Component {
      * Closes the settings panel and does not save the changes made.
      */
     this.setState(() => ({ targetChartIdx: null, targetChart: null, settingsOpen: false }));
+  }
+
+  refreshChart(idx) {
+    this.setState((state) => {
+      const chart = state.charts[idx];
+      const copy = {
+        ...chart,
+        selectionStartDate: null,
+        selectionEndDate: null,
+        previewData: [],
+        data: [],
+      };
+
+      // reset all data to loading state
+      copy.metrics.forEach((metric, metricIdx) => {
+        const dataObj = {
+          name: generateMetricsKey(metric),
+          axis: metric.axis,
+          error: null,
+          loading: true,
+          rows: [],
+        };
+        copy.previewData.push({ ...dataObj });
+        copy.data.push({ ...dataObj });
+        this.loadData(idx, metricIdx, metric, copy.startDate.toDate(), copy.endDate.toDate(), true);
+      });
+
+      return {
+        charts: [...state.charts.slice(0, idx), ...[copy], ...state.charts.slice(idx + 1)],
+      };
+    });
   }
 
   render() {
@@ -302,8 +463,15 @@ class App extends Component {
     }
 
     const charts = this.state.charts.map((chart, idx) => (
-      // eslint-disable-next-line react/no-array-index-key
-      <Chart key={idx} idx={idx} chart={chart} openSettings={this.openSettings} removeChart={this.removeChart} />
+      <Chart
+        key={idx} // eslint-disable-line react/no-array-index-key
+        idx={idx}
+        chart={chart}
+        openSettings={this.openSettings}
+        removeChart={this.removeChart}
+        refreshChart={this.refreshChart}
+        onSelection={this.loadSelectionData}
+      />
     ));
 
     return (
