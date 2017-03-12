@@ -231,7 +231,7 @@ class MetricsService(BaseService):
 
         if len(rows) > size:
             # If we got more rows from the database than we want, then we resample.
-            seconds = (rows.index[-1] - rows.index[0]).total_seconds()
+            seconds = (end_timestamp - start_timestamp).total_seconds()
             bucket_size = int(seconds // size)
 
             if is_interval_count:
