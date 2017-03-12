@@ -375,6 +375,10 @@ export default function D3Chart(el) {
       const date1 = series.rows[idx];
       let closestDate;
 
+      if (date0 === undefined && date1 === undefined) {
+        return;
+      }
+
       if (date1 === undefined) {
         closestDate = date0;
       } else {
