@@ -1,6 +1,15 @@
 .chart-settings--hidden {
   display: none;
 }
+.chart-settings__title-input {
+  margin-top: 0.5em;
+  width: 50%;
+}
+.chart-settings__title-input label,
+.chart-settings__title-input input {
+  display: inline-block;
+  width: 100%;
+}
 .chart-settings__time-inputs {
   display: flex;
   margin: 0.5em 0;
@@ -16,10 +25,7 @@
 .chart-settings__scale-input select {
   width: 100%;
 }
-.time-input label,
-.chart-settings__date-picker label,
-.chart-settings__scale-input label,
-.chart-settings__metrics label {
+.chart-settings label {
   font-weight: bold;
 }
 .chart-settings__time-input:last-of-type {

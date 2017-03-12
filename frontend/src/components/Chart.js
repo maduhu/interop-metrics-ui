@@ -73,6 +73,9 @@ export class Chart extends PureComponent {
 
     return (
       <div className="chart">
+        <div className="chart__title">
+          <h5>{chart.title}</h5>
+        </div>
         <div className="chart__icons">
           <button className="chart__icon button" onClick={this.refreshChart}>
             <span className="fa fa-refresh" />

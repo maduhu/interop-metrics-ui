@@ -5,6 +5,15 @@
   margin: 1em 0;
   padding: 2.5em 0 1em 0;
 }
+.chart__title {
+  position: absolute;
+  top: 0.5em;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+.chart__title h5 {
+  font-size: 1.1em;
+}
 .chart__icons {
   position: absolute;
   top: 0;
