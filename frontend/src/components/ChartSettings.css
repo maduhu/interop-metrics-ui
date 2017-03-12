@@ -10,8 +10,11 @@
   display: inline-block;
   width: 100%;
 }
-.chart-settings__time-inputs {
+.chart-settings__fixed-time-inputs {
   display: flex;
+}
+.chart-settings__fixed-time-inputs,
+.chart-settings__dynamic-time-inputs {
   margin: 0.5em 0;
 }
 .time-input,
@@ -56,4 +59,7 @@
 }
 .react-datepicker__input-container {
   width: 100%;
+}
+.radio-label {
+  margin: 0 1em 0 0.5em;
 }

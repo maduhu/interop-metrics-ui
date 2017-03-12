@@ -14,13 +14,16 @@ function newChart() {
    * Defaults chart range to the last 24 hours.
    * Defaults axes to linear scales.
    */
-  const now = moment.utc();
-  const yesterday = now.clone().subtract(24, 'hours');
+  const end = moment.utc();
+  const start = end.clone().subtract(1, 'hours');
 
   return {
     title: '',
-    startDate: yesterday,
-    endDate: now,
+    rangeType: 'dynamic',
+    rangePeriod: 'hours',
+    rangeMultiplier: 1,
+    startDate: start,
+    endDate: end,
     selectionStartDate: null,
     selectionEndDate: null,
     // In the future we should also allow users to set axis domains.
@@ -308,10 +311,22 @@ class App extends Component {
         data: [...state.targetChart.previewData], // Copy preview data over because we're resetting selection.
         previewData: [...state.targetChart.previewData],
       };
+
+      const rangeTypesEqual = chart.rangeType === oldChart.rangeType;
+      const periodsEqual = chart.rangePeriod === oldChart.rangePeriod;
+      const multipliersEqual = chart.rangeMultiplier === oldChart.rangeMultiplier;
+      const dynamicRangeChanged = chart.rangeType === 'dynamic' && (!periodsEqual || !multipliersEqual);
+
+      if (!rangeTypesEqual || dynamicRangeChanged) {
+        chart.endDate = moment.utc();
+        chart.startDate = chart.endDate.clone().subtract(chart.rangeMultiplier, chart.rangePeriod);
+      }
+
       const datesEqual = chart.startDate === oldChart.startDate && chart.endDate === oldChart.endDate;
       const timesEqual = chart.startTime === oldChart.startTime && chart.endTime === oldChart.endTime;
+
       // If we've changed the date or time range of the chart we need all new data
-      const currentPreviewData = (!datesEqual || !timesEqual) ? [] : chart.previewData;
+      const currentPreviewData = (!datesEqual || !timesEqual || rangeTypesEqual) ? [] : chart.previewData;
       const data = [];
       const previewData = [];
 
@@ -421,6 +436,12 @@ class App extends Component {
         previewData: [],
         data: [],
       };
+
+      if (copy.rangeType === 'dynamic') {
+        // Update start and end dates when using dynamic ranges.
+        copy.endDate = moment.utc();
+        copy.startDate = copy.endDate.clone().subtract(copy.rangeMultiplier, copy.rangePeriod);
+      }
 
       // reset all data to loading state
       copy.metrics.forEach((metric, metricIdx) => {

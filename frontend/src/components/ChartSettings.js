@@ -10,7 +10,9 @@ const MEASURE_MAP = {
   ],
   raw_counter_with_interval: ['count', 'interval_count'],
 };
-
+const DYNAMIC = 'dynamic';
+const FIXED = 'fixed';
+const RANGE_PERIODS = ['minutes', 'hours', 'days'];
 const HOURS = Array(24).fill().map((_, i) => (i < 10 ? `0${i}` : `${i}`));
 const MINUTES = Array(60).fill().map((_, i) => (i < 10 ? `0${i}` : `${i}`));
 
@@ -128,12 +130,27 @@ class TimeSettings extends PureComponent {
 class DateTimeSettings extends Component {
   constructor(props) {
     super(props);
+    this.changeRangeType = this.changeRangeType.bind(this);
+    this.changeRangePeriod = this.changeRangePeriod.bind(this);
+    this.changeRangeMultiplier = this.changeRangeMultiplier.bind(this);
     this.changeStartDate = this.changeStartDate.bind(this);
     this.changeStartHour = this.changeStartHour.bind(this);
     this.changeStartMinute = this.changeStartMinute.bind(this);
     this.changeEndDate = this.changeEndDate.bind(this);
     this.changeEndHour = this.changeEndHour.bind(this);
     this.changeEndMinute = this.changeEndMinute.bind(this);
+  }
+
+  changeRangeType(e) {
+    this.props.updateTargetChart('rangeType', e.target.value);
+  }
+
+  changeRangePeriod(e) {
+    this.props.updateTargetChart('rangePeriod', e.target.value);
+  }
+
+  changeRangeMultiplier(e) {
+    this.props.updateTargetChart('rangeMultiplier', e.target.value);
   }
 
   changeStartDate(value) {
@@ -161,48 +178,101 @@ class DateTimeSettings extends Component {
   }
 
   render() {
+    const rangeType = this.props.chart.rangeType;
+    const rangePeriod = this.props.chart.rangePeriod;
+    const rangeMultiplier = this.props.chart.rangeMultiplier;
     const startDate = this.props.chart.startDate;
     const endDate = this.props.chart.endDate;
+    let body;
+
+    const rangePicker = (
+      <div className="chart-settings__range-picker">
+        <label>Range Type:</label>
+        <div className="range-picker-radio-group" >
+          <input
+            type="radio"
+            value={DYNAMIC}
+            name="range-type"
+            checked={rangeType === DYNAMIC}
+            onChange={this.changeRangeType}
+          />
+          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', DYNAMIC)}>Dynamic</span>
+
+          <input
+            type="radio"
+            value={FIXED}
+            name="range-type"
+            checked={rangeType === FIXED}
+            onChange={this.changeRangeType}
+          />
+          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', FIXED)}>Fixed</span>
+        </div>
+      </div>
+    );
+
+    if (rangeType === DYNAMIC) {
+      body = (
+        <div className="chart-settings__dynamic-time-inputs">
+          <label>Range:</label>
+
+          <div>
+            <input type="number" value={rangeMultiplier} onChange={this.changeRangeMultiplier} />
+            <select value={rangePeriod} onChange={this.changeRangePeriod}>
+              {RANGE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+      );
+    } else {
+      body = (
+        <div className="chart-settings__fixed-time-inputs">
+          <div className="chart-settings__date-picker">
+            <label>Start Date:</label>
+            <DatePicker
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              selected={startDate}
+              onChange={this.changeStartDate}
+            />
+          </div>
+
+          <TimeSettings
+            label="Start Time:"
+            hour={startDate.format('HH')}
+            minute={startDate.format('mm')}
+            onHourChange={this.changeStartHour}
+            onMinuteChange={this.changeStartMinute}
+          />
+
+          <div className="chart-settings__date-picker">
+            <label>End Date:</label>
+            <DatePicker
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              selected={endDate}
+              onChange={this.changeEndDate}
+            />
+          </div>
+
+          <TimeSettings
+            label="End Time:"
+            hour={endDate.format('HH')}
+            minute={endDate.format('mm')}
+            onHourChange={this.changeEndHour}
+            onMinuteChange={this.changeEndMinute}
+          />
+        </div>
+      );
+    }
+
 
     return (
-      <div className="chart-settings__time-inputs">
-        <div className="chart-settings__date-picker">
-          <label>Start Date:</label>
-          <DatePicker
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            selected={startDate}
-            onChange={this.changeStartDate}
-          />
-        </div>
+      <div className="chart-settings__date-range">
+        {rangePicker}
 
-        <TimeSettings
-          label="Start Time:"
-          hour={startDate.format('HH')}
-          minute={startDate.format('mm')}
-          onHourChange={this.changeStartHour}
-          onMinuteChange={this.changeStartMinute}
-        />
-
-        <div className="chart-settings__date-picker">
-          <label>End Date:</label>
-          <DatePicker
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            selected={endDate}
-            onChange={this.changeEndDate}
-          />
-        </div>
-
-        <TimeSettings
-          label="End Time:"
-          hour={endDate.format('HH')}
-          minute={endDate.format('mm')}
-          onHourChange={this.changeEndHour}
-          onMinuteChange={this.changeEndMinute}
-        />
+        {body}
       </div>
     );
   }
