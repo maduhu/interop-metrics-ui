@@ -229,14 +229,13 @@ class MetricsService(BaseService):
         else:
             rows = pd.DataFrame(rows).set_index(['metric_timestamp']).tz_localize('UTC')
 
+        if is_interval_count:
+            rows = interval_count(rows)
+
         if len(rows) > size:
             # If we got more rows from the database than we want, then we resample.
             seconds = (end_timestamp - start_timestamp).total_seconds()
             bucket_size = int(seconds // size)
-
-            if is_interval_count:
-                rows = interval_count(rows)
-
             aggregators = {}
 
             for column in columns:
