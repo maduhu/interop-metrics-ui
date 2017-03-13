@@ -60,7 +60,6 @@ function calculateXDomain(data, axis) {
 }
 
 function calculateYDomain(data) {
-  // TODO: If the domain min and max are equal, if they are add/subtract 20% from min/max, or legends don't render
   let min = null;
   let max = null;
 
@@ -75,6 +74,11 @@ function calculateYDomain(data) {
       max = seriesDomain[1];
     }
   });
+
+  if (min === max) {
+    min *= 0.8;
+    max *= 1.2;
+  }
 
   return [min, max];
 }
