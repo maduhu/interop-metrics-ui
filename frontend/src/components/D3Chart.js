@@ -76,8 +76,13 @@ function calculateYDomain(data) {
   });
 
   if (min === max) {
-    min *= 0.8;
-    max *= 1.2;
+    if (min === 0 && max === 0) {
+      min = -5;
+      max = 5;
+    } else {
+      min *= 0.8;
+      max *= 1.2;
+    }
   }
 
   return [min, max];
