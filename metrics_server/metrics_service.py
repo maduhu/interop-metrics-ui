@@ -9,17 +9,6 @@ from metrics_server.base_service import BaseService
 from metrics_server.errors import NotFoundError, ConfigurationError
 
 
-"""
-Because a query can return a very large set of data, we need to find out how to aggregate said data, ideally without
-losing the ability to find anomalies. The pandas library looks to provide a pretty simple to use API for aggregating
-time series data, and it looks like we can easily integrate our Cassandra queries into Pandas data frames:
-    http://pandas-docs.github.io/pandas-docs-travis/timeseries.html
-    http://stackoverflow.com/questions/41247345/python-read-cassandra-data-into-pandas
-    http://blog.yhat.com/posts/aggregating-and-plotting-time-series-in-python.html
-    http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
-    http://pandas.pydata.org/pandas-docs/stable/timeseries.html#frequency-conversion
-"""
-
 KEYSPACE = 'metric_data'
 TABLE_NAMES = ['raw_counter_with_interval', 'raw_timer_with_interval']
 TIMESTAMP_COLUMNS = ['metric_timestamp', 'previous_metric_timestamp']
@@ -34,13 +23,13 @@ COLUMN_MAP = {
 }
 AGGREGATOR_MAP = {
     'raw_counter_with_interval': {
-        'count': np.sum,
-        'previous_count': np.sum,
+        'count': np.max,
+        'previous_count': np.max,
         'interval_count': np.sum
     },
     'raw_timer_with_interval': {
-        'count': np.sum,
-        'previous_count': np.sum,
+        'count': np.max,
+        'previous_count': np.max,
         'p75': np.max,
         'p95': np.max,
         'p98': np.max,
