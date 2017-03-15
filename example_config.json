@@ -3,8 +3,7 @@
   "server": {
     "host": "0.0.0.0",
     "port": 8080,
-    "threads": 8,
-    "assets": "./frontend/build"
+    "threads": 8
   },
   "cassandra": {
     "host": "0.0.0.0"

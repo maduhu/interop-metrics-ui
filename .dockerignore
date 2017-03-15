@@ -1,0 +1,4 @@
+.env/
+frontend/node_modules
+metric_web_data/
+tests/

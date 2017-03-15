@@ -1,26 +1,59 @@
-import argparse
+import os
+from argparse import ArgumentParser
 import json
 
 from waitress import serve
 
 from metrics_server.app import App
 
-parser = argparse.ArgumentParser(description='Start a metrics web server')
-parser.add_argument('config', help='Path to the config.json file used to configure the server')
+TRUTHY = {'true', '1', 'yes', 'on'}
 
 
-def read_config():
+def read_config_from_env():
+    env = os.environ
+    cassandra = env.get('METRICS_SERVER_CASSANDRA')
+    config = {
+        'debug': env.get('METRICS_SERVER_DEBUG', '').lower() in TRUTHY,
+        'server': {
+            'host': env.get('METRICS_SERVER_HOST', '0.0.0.0'),
+            'port': int(env.get('METRICS_SERVER_PORT', '8080')),
+            'threads': int(env.get('METRICS_SERVER_THREADS', '4')),
+        }
+    }
+
+    if cassandra:
+        # There is no good default for this so only add it conditionally that way our validation code raises and error
+        # on App.__init__
+        config['cassandra'] = {'host': cassandra}
+
+    return config
+
+
+def read_config_from_file(config_path):
     """
     Reads the specified config file from disk and parses it as JSON.
 
     :return:
     """
-    args = parser.parse_args()
-
-    with open(args.config, mode='r') as f:
+    with open(config_path, mode='r') as f:
         config = json.load(f)
 
     return config
+
+
+def read_config():
+    help_text = (
+        'Path to the config.json file used to configure the server. '
+        'If not used, defaults to environment variables'
+    )
+    parser = ArgumentParser(description='Start a metrics web server')
+    parser.add_argument('--config', help=help_text, default=None)
+    args = parser.parse_args()
+
+    if args.config is not None:
+        return read_config_from_file(args.config)
+
+    return read_config_from_env()
 
 
 def run():

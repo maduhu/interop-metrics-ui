@@ -1,0 +1,49 @@
+version: '3'
+services:
+  web_1:
+    build:
+      context: .
+      dockerfile: ./docker/metrics_server/Dockerfile
+    environment:
+      - METRICS_SERVER_CASSANDRA
+    ports:
+      - "8080"
+
+  web_2:
+    build:
+      context: .
+      dockerfile: ./docker/metrics_server/Dockerfile
+    environment:
+      - METRICS_SERVER_CASSANDRA
+    ports:
+      - "8080"
+
+  web_3:
+    build:
+      context: .
+      dockerfile: ./docker/metrics_server/Dockerfile
+    environment:
+      - METRICS_SERVER_CASSANDRA
+    ports:
+      - "8080"
+
+  web_4:
+    build:
+      context: .
+      dockerfile: ./docker/metrics_server/Dockerfile
+    environment:
+      - METRICS_SERVER_CASSANDRA
+    ports:
+      - "8080"
+
+  load_balancer:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    links:
+      - web_1
+      - web_2
+      - web_3
+      - web_4
+    ports:
+     - "9000:80"
