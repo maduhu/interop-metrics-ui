@@ -93,10 +93,22 @@ class MetricsService(BaseService):
         :return: list of dicts representing the environment, application, metric_name, and table.
         """
         all_rows = []
+        timestamp_query = (
+            'SELECT environment, application, metric_name, metric_timestamp as last_timestamp '
+            f'FROM {table} '
+            'WHERE environment = %s '
+            'AND application = %s '
+            'AND metric_name = %s '
+            'ORDER BY metric_timestamp DESC '
+            'LIMIT 1;'
+        )
         rows = self.session.execute(f'SELECT DISTINCT environment, application, metric_name FROM {table};')
 
         for row in rows:
+            query_args = [row['environment'], row['application'], row['metric_name']]
+            last_timestamp = self.session.execute(timestamp_query, query_args)
             row['table'] = table
+            row['last_timestamp'] = pytz.utc.localize(last_timestamp[0]['last_timestamp']).isoformat()
             all_rows.append(row)
 
         return all_rows
