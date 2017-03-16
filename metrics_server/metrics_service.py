@@ -218,15 +218,15 @@ class MetricsService(BaseService):
                 query_columns.append(column)
 
         column_str = ', '.join(query_columns)
-        query = f"""
-        SELECT {column_str} FROM {table} WHERE environment=%s AND application=%s AND metric_name=%s
-        AND metric_timestamp >= %s AND metric_timestamp <= %s;
-        """
+        query = (
+            f'SELECT {column_str} FROM {table} WHERE environment=%s AND application=%s AND metric_name=%s '
+            'AND metric_timestamp >= %s AND metric_timestamp <= %s;'
+        )
         params = [environment, application, metric, start_timestamp, end_timestamp]
         rows = self.session.execute(query, params).current_rows
 
         if len(rows) == 0:
-            rows = pd.DataFrame([], columns=['metric_timestamp'] + columns)
+            rows = pd.DataFrame([], columns=query_columns)
         else:
             rows = pd.DataFrame(rows).set_index(['metric_timestamp']).tz_localize('UTC')
 
