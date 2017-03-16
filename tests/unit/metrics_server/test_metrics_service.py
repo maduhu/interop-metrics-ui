@@ -99,7 +99,7 @@ def metric_data():
     Reads some test data from a JSON file and puts it into a MockResultSet. Used to test that we properly downsample
     large datasets. This dataset is 2097 rows.
 
-    :return: 
+    :return:
     """
     with open('./tests/data/get_metric_data.json') as f:
         data = json.load(f)
@@ -162,7 +162,12 @@ def test_get_distinct_metrics_for_table(patched_ms: MetricsService):
     :param patched_ms: fixture
     :return:
     """
-    patched_ms.session.execute.return_value = [{}, {}]
+    fake_metrics = [
+        {'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_one'},
+        {'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_two'}
+    ]
+    fake_ts = [{'last_timestamp': datetime.now()}]
+    patched_ms.session.execute.side_effect = [fake_metrics, fake_ts, fake_ts]
     metrics = patched_ms.get_distinct_metrics_for_table('test_table')
 
     assert len(metrics) == 2
@@ -177,7 +182,10 @@ def test_get_all_distinct_metrics(patched_ms: MetricsService):
     :param patched_ms: fixture
     :return:
     """
-    patched_ms.session.execute.side_effect = [[{}], [{}]]
+    fake_ts = [{'last_timestamp': datetime.now()}]
+    fake_counters = [{'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_counter'}]
+    fake_timers = [{'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_timer'}]
+    patched_ms.session.execute.side_effect = [fake_counters, fake_ts, fake_timers, fake_ts]
     metrics = patched_ms.get_all_distinct_metrics()
 
     for idx, name in enumerate(TABLE_NAMES):
@@ -193,7 +201,9 @@ def test_get_environments(patched_ms: MetricsService, counter_metrics, timer_met
     :param timer_metrics: fixture
     :return:
     """
-    patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
+    counter_timestamps = [[{'last_timestamp': datetime.now()}] for x in counter_metrics]
+    timer_timestamps = [[{'last_timestamp': datetime.now()}] for x in timer_metrics]
+    patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     expected = {'dev', 'staging', 'prod'}
     environments = patched_ms.get_environments()
 
@@ -212,15 +222,17 @@ def test_get_environments(patched_ms: MetricsService, counter_metrics, timer_met
 def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_metrics, environment, expected):
     """
     Test that get_applications works as expected.
-    
-    :param patched_ms: fixture 
+
+    :param patched_ms: fixture
     :param counter_metrics: fixture
     :param timer_metrics: fixture
     :param environment: environment to query for
     :param expected: expected result
-    :return: 
+    :return:
     """
-    patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
+    counter_timestamps = [[{'last_timestamp': datetime.now()}] for x in counter_metrics]
+    timer_timestamps = [[{'last_timestamp': datetime.now()}] for x in timer_metrics]
+    patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     environments = patched_ms.get_applications(environment)
 
     assert expected == set(environments)
@@ -230,9 +242,9 @@ def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_met
     'environment,application,expected',
     [
         ('dev', 'test_app_1', [
-            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval'},
-            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval'},
-            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval'}
+            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
+            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
+            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
         ]),
         ('prod', 'test_app_2', []),
         ('dev', 'not_in_the_data', []),
@@ -249,9 +261,11 @@ def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics,
     :param environment: environment to query for
     :param application: application to query for
     :param expected: expected result
-    :return: 
+    :return:
     """
-    patched_ms.session.execute.side_effect = [counter_metrics, timer_metrics]
+    counter_timestamps = [[{'last_timestamp': datetime(2017, 1, 1)}] for x in counter_metrics]
+    timer_timestamps = [[{'last_timestamp': datetime(2017, 1, 1)}] for x in timer_metrics]
+    patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     metrics = sorted(patched_ms.get_metrics(environment, application), key=metric_key)
     expected = sorted(expected, key=metric_key)
 
@@ -268,7 +282,7 @@ def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics,
 def test_get_metric_data_invalid_args(patched_ms: MetricsService, args, expected):
     """
     Test that get_metric_data properly validates arguments.
-    
+
     :param patched_ms: fixture
     :param args: the args to pass to get_metric_data
     :param expected: string expected to be part of the exception thrown
@@ -310,12 +324,15 @@ def test_get_metric_data_resample(patched_ms: MetricsService, metric_data: MockR
     :param metric_data: fixture
     :return:
     """
+    start = metric_data.current_rows[0]['metric_timestamp']
+    end = metric_data.current_rows[-1]['metric_timestamp']
     patched_ms.session.execute.return_value = metric_data
-    resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_timer_with_interval', 'fake_metric', ['median'])
+    resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_timer_with_interval', 'fake_metric', ['median'],
+                                      start, end)
 
     assert abs(len(resp) - 1000) < 100
 
     resp = patched_ms.get_metric_data('dev', 'fake_app', 'raw_timer_with_interval', 'fake_metric', ['median'],
-                                             size=500)
+                                             start, end, 500)
 
     assert abs(len(resp) - 500) < 100
