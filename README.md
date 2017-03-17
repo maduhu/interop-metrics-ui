@@ -1,27 +1,27 @@
-#metrics_server
+# metrics_server
 
 A Python web server coupled with a React frontend to display metrics data. The major dependencies of the current stack are:
 
-###Backend
+### Backend
 
 * Python 3.6
 * Flask (web framework)
 * waitress (web server)
 * Marshmallow (for server side form validation)
 * PyTest and FlaskWebTest for tests
-* Pandas (for binning/aggregation of data, not yet implemented)
+* Pandas (for binning/aggregation of data)
 
-###Frontend
+### Frontend
 
 * React
 * Webpack
-* Rickshaw
+* D3.js
 
-This project is in the early stages, some of these dependencies may change in the future. Notably we are not 100% sold on Rickshaw. In the near future we will be experimenting with Bokeh (probably just the JS library) and D3. We are also generating large volumes of data that we know browsers will not be able to handle. We will likely be adding Pandas to the backend so we can bin/aggregate the data so we can send less data down to the browser per request.
+This project is in the early stages, some of these dependencies may change in the future.
 
-##Installation 
+## Dev Environment Setup 
 
-###Frontend
+### Frontend
 
 The frontend sources are located in the `frontend` folder in the repo. The frontend is a React application that was bootstrapped with [create-react-app](https://github.com/facebookincubator/create-react-app) and has not yet been [ejected](https://github.com/facebookincubator/create-react-app/blob/master/packages/react-scripts/template/README.md#npm-run-eject). This means it's a basic React app, not yet using Redux (although in the future it probably will), the build/bundle tool is Webpack, and all JavaScript is written in ES6.
 
@@ -39,7 +39,7 @@ Building the frontend should be easy:
 
 
 
-###Backend
+### Backend
 
 The backend is written in Python 3.6, and is not compatible with previous versions of Python (specifically the backend uses f strings). To get the backend server running do the following:
 
@@ -54,47 +54,31 @@ The backend is written in Python 3.6, and is not compatible with previous versio
     * The most important part of the config right now is the Cassandra IP address, everything else can stay the same.
     * If you change the host and port to anything other than `localhost:8080` the Webpack dev server will not proxy correctly. You can fix this by going into package.json and changing the proxy setting to point to your URL, please do not commit this change to the package.json though.
 * To start the server run `python -m metrics_server.run path/to/your/config.json`
+* If you don't want to use a configuration file you may also set the following environment variables and use `python -m metrics_server.run` to run the server:
+    * `METRICS_SERVER_CASSANDRA` - The IP address of your Cassandra server
+    * `METRICS_SERVER_DEBUG` - Optional, if a truthy value (`1`, `true`, `yes`, `on`) it enables debug mode on the Flask app.
+    * `METRICS_SERVER_HOST` - Optional, sets the host name for your flask app, defaults to `0.0.0.0`
+    * `METRICS_SERVER_PORT` - Optional, sets the port for the web server, defaults to `8080`
+    * `METRICS_SERVER_THREADS` - Optional, sets the number of threads for the webserver to use, defaults to `4` 
 
 
-#Other Notes
+## Deploying
+
+Deploying should be pretty straight forward. There is a docker-compose.yml file in the repo that can be used to build and deploy an nginx container that serves our static content and load balances to 4 metrics_server instances.
+
+To build the containers follow these steps:
+
+* Make sure you have Node an NPM installed
+* Make sure you have set the appropriate `DOCKER_HOST`, `DOCKER_TLS_VERIFY`, and `DOCKER_CERT_PATH` environment variables
+    * If you do not change these from the default settings `docker-compose up` will run the containers on the machine you run the command on. This is probably not what you want when deploying.
+* Navigate to the root of the repository
+* Execute `./build_images.sh` and wait a few minutes
+* Run `docker-compose up -d` to deploy on your desired host.
 
 
-###Metrics data store
+# Other Notes
+
+
+### Metrics data store
 Right now the backend data store is Cassandra, as we move forward and further flesh out the product this may change to something more suited for time series data (i.e. InfluxDB or OpenTSB).
 
-
-###Viz framework
-Currently we use Rickshaw for our visualization framework, but it hasn't proven completely ideal, and we may move to something else.
-
-Issues with Rickshaw (in no particular order):
-
-* Awkward API, axes, legend, etc. are all different objects that require a reference to the graph object.
-* Code smells
-    * see Rickshaw.keys, a poorly hand rolled version of Object.keys
-    * cannot replace data in graph object, you are required to mutate the existing series object.
-* Lack of documentation. The Rickshaw.Graph.RangeSlider.Preview is completely undocumented.
-* Overall lack of flexibility, not easily customizable.
-* Depends on D3 3.5, the current version is 4.0
-* Cannot properly visualize missing data
-* Relies on jQuery + jQuery UI
-
-Alternatives to Rickshaw:
-
-* [dc.js](https://dc-js.github.io/dc.js/)
-    * Is more suited for visualizing multiple dimensions of data across multiple related charts.
-    * Doesn't seem to support multiple y axes, which is a requirement.
-* [Bokeh](http://bokeh.pydata.org/en/latest/)
-    * Primarily intended to be a Python library, but has a JavaScript component.
-    * Has ability to embed into an application as a library, but requires your application be written with Tornado framework, and using Bokeh as a library is not as well documented.
-        * Tornado and Flask are not particularly compatible, Tornado has a WSGI wrapper, but they recommend you don't use it.
-    * JS portion is not super well documented, but seems to have nearly the same API as the Python version.
-        * JS Portion is written with backbone, a largely outdated JS application framework, our app is currently written with React.
-    * Is written in CoffeeScript, including all documentation examples.
-* [Metrics Graphics](https://github.com/mozilla/metrics-graphics)
-    * Supports nearly all use-cases we have, including visualizing missing data.
-    * Does not support multiple y-axes out of the box, which is a deal breaker.
-        * May be worth looking at adding this behavior ourselves.
-* [D3](https://d3js.org/)
-    * Supports almost all of the features we need, however requires us to write more code.
-    * Is the current gold standard of data visualization for the web.
-    * Is very well documented, and has a large supportive community.
