@@ -45,5 +45,10 @@ services:
       - web_2
       - web_3
       - web_4
+    depends_on:
+      - web_1
+      - web_2
+      - web_3
+      - web_4
     ports:
      - "9000:80"
