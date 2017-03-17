@@ -1,6 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, PureComponent } from 'react';
 import Fuse from 'fuse.js';
-import './MetricPicker.css'
+import LoadingCube from './LoadingCube';
+import { has } from '../utils';
+import './MetricPicker.css';
 
 export function collapseMetrics(metrics) {
   /**
@@ -20,13 +22,13 @@ export function collapseMetrics(metrics) {
     const envName = metric.environment;
     const appName = metric.application;
 
-    if (!environments.hasOwnProperty(metric.environment)) {
-      environments[envName] = {};
+    if (!has.call(environments, metric.environment)) {
+      environments[envName] = {}; // eslint-disable-line no-param-reassign
     }
 
     const env = environments[envName];
 
-    if (!env.hasOwnProperty(appName)) {
+    if (!has.call(env, appName)) {
       env[appName] = [];
     }
 
@@ -36,7 +38,7 @@ export function collapseMetrics(metrics) {
   }, {});
 }
 
-class MetricPickerFilters extends Component {
+class MetricPickerFilters extends PureComponent {
   render() {
     const environment = this.props.environment;
     const environments = this.props.environments;
@@ -80,19 +82,30 @@ MetricPickerFilters.propTypes = {
   application: React.PropTypes.string,
   environment: React.PropTypes.string,
   filter: React.PropTypes.string,
-  environments: React.PropTypes.array,
-  applications: React.PropTypes.array,
+  environments: React.PropTypes.arrayOf(React.PropTypes.string),
+  applications: React.PropTypes.arrayOf(React.PropTypes.string),
   onApplicationChange: React.PropTypes.func,
   onEnvironmentChange: React.PropTypes.func,
   onFilterChange: React.PropTypes.func,
 };
 
-class MetricPickerTable extends Component {
-  render () {
+MetricPickerFilters.defaultProps = {
+  application: '',
+  environment: '',
+  filter: '',
+  environments: [],
+  applications: [],
+  onApplicationChange: () => {},
+  onEnvironmentChange: () => {},
+  onFilterChange: () => {},
+};
+
+class MetricPickerTable extends PureComponent {
+  render() {
     let body;
 
     if (this.props.metricsLoading) {
-      body = <div className="picker-loading">Loading metrics...</div>;
+      body = <LoadingCube>Loading metrics...</LoadingCube>;
     } else if (this.props.metricsLoadError) {
       body = (
         <div className="picker-error">
@@ -116,9 +129,9 @@ class MetricPickerTable extends Component {
         let typeIcon;
 
         if (row.table === 'raw_timer_with_interval') {
-          typeIcon = <span className="fa fa-hourglass-o" title="timer"></span>
+          typeIcon = <span className="fa fa-hourglass-o" title="timer" />;
         } else if (row.table === 'raw_counter_with_interval') {
-          typeIcon = <span className="fa fa-calculator" title="counter"></span>
+          typeIcon = <span className="fa fa-calculator" title="counter" />;
         }
 
         return (
@@ -129,7 +142,7 @@ class MetricPickerTable extends Component {
             <td className="metric-picker__type-col">{typeIcon}</td>
             <td className="metric-picker__add-col">
               <button className="flat-button" onClick={addMetric}>
-                <span className="fa fa-plus-square"></span>
+                <span className="fa fa-plus-square" />
               </button>
             </td>
           </tr>
@@ -139,15 +152,15 @@ class MetricPickerTable extends Component {
       body = (
         <table className="metric-picker__table">
           <tbody>
-          <tr>
-            <th className="metric-picker__th">Environment</th>
-            <th className="metric-picker__th">Application</th>
-            <th className="metric-picker__th">Metric</th>
-            <th className="metric-picker__th">Type</th>
-            <th className="metric-picker__th">Add</th>
-          </tr>
+            <tr>
+              <th className="metric-picker__th">Environment</th>
+              <th className="metric-picker__th">Application</th>
+              <th className="metric-picker__th">Metric</th>
+              <th className="metric-picker__th">Type</th>
+              <th className="metric-picker__th">Add</th>
+            </tr>
 
-          {rows}
+            {rows}
           </tbody>
         </table>
       );
@@ -182,20 +195,20 @@ export class MetricPicker extends Component {
       environment: '',
       application: '',
       filter: '',
-      fuse: new Fuse([], fuseOptions)
+      fuse: new Fuse([], fuseOptions),
     };
   }
 
-  onEnvironmentChange(env) {
-    this.setState(() => ({environment: env, application: ''}));
+  onEnvironmentChange(environment) {
+    this.setState(() => ({ environment, application: '' }));
   }
 
-  onApplicationChange(app) {
-    this.setState(() => ({application: app}));
+  onApplicationChange(application) {
+    this.setState(() => ({ application }));
   }
 
   onFilterChange(filter) {
-    this.setState(() => ({filter: filter}));
+    this.setState(() => ({ filter }));
   }
 
   render() {
@@ -215,11 +228,11 @@ export class MetricPicker extends Component {
     if (environment !== '' && application !== '') {
       rows = metrics[environment][application];
     } else if (environment !== '') {
-      rows = applications.reduce((rows, app) => rows.concat(metrics[environment][app]), []);
+      rows = applications.reduce((r, app) => r.concat(metrics[environment][app]), []);
     } else {
-      rows = environments.reduce((rows, env) => {
-        return rows.concat(Object.keys(metrics[env]).reduce((rows, app) => rows.concat(metrics[env][app]), []));
-      }, []);
+      rows = environments.reduce((allRows, env) => (
+        allRows.concat(Object.keys(metrics[env]).reduce((envRows, app) => envRows.concat(metrics[env][app]), []))
+      ), []);
     }
 
     fuse.set(rows);
