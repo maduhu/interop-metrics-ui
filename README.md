@@ -65,6 +65,7 @@ Steps for deploying:
         * alternatively you can specify 'metric-data' as the project name with the `-p` flag.
 * Import your containers with: `docker load -i metrics_server_bundle.tar`
 * Set `METRICS_SERVER_CASSANDRA` environment variable to the proper IP address of the cassandra server.
+* If you have previously deployed the containers run `docker-compose down` to stop all of the running containers.
 * Launch the containers with: `docker-compose up -d`
     * This spins up 4 worker containers and an nginx load balancer on port 9000.
 * Verify your server is up and running on port 9000
