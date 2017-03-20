@@ -2,11 +2,14 @@ import json
 from datetime import datetime, timedelta
 
 import pytest
+import pytz
 from dateutil.parser import parse
 
 from metrics_server.errors import ConfigurationError, NotFoundError
 from metrics_server.metrics_service import MetricsService, TABLE_NAMES
 from tests.utils import MockResultSet
+
+TEST_DATE = datetime(2017, 1, 1, tzinfo=pytz.UTC).isoformat()
 
 
 def metric_key(m):
@@ -242,9 +245,9 @@ def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_met
     'environment,application,expected',
     [
         ('dev', 'test_app_1', [
-            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
-            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
-            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': datetime(2017, 1, 1)},
+            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval', 'last_timestamp': TEST_DATE},
+            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE},
+            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE},
         ]),
         ('prod', 'test_app_2', []),
         ('dev', 'not_in_the_data', []),
