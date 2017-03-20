@@ -94,7 +94,7 @@ class MetricsService(BaseService):
         """
         all_rows = []
         timestamp_query = (
-            'SELECT environment, application, metric_name, metric_timestamp as last_timestamp '
+            'SELECT metric_timestamp as last_timestamp '
             f'FROM {table} '
             'WHERE environment = %s '
             'AND application = %s '
