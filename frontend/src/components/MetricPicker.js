@@ -103,6 +103,7 @@ MetricPickerFilters.defaultProps = {
 class MetricPickerTable extends PureComponent {
   render() {
     let body;
+    const sortChange = this.props.onSortChange;
 
     if (this.props.metricsLoading) {
       body = (
@@ -127,6 +128,8 @@ class MetricPickerTable extends PureComponent {
         </div>
       );
     } else {
+      const sortCol = this.props.sortCol;
+      const sortDir = this.props.sortDir;
       const rows = this.props.rows.map((row) => {
         const key = `${row.environment}.${row.application}.${row.metric_name}`;
         const addMetric = () => this.props.addMetric(row);
@@ -153,15 +156,30 @@ class MetricPickerTable extends PureComponent {
         );
       });
 
+      const headerCols = ['environment', 'application', 'metric_name'].map((label) => {
+        let clsName = 'sort-icon ';
+
+        if (sortCol === label) {
+          clsName += sortDir === 'asc' ? 'fa fa-sort-asc' : 'fa fa-sort-desc';
+        }
+
+        return (
+          <th key={label} className="metric-picker__th clickable" onClick={() => sortChange(label)}>
+            <span>{label}</span>
+            <span className={clsName}>&nbsp;</span>
+          </th>
+        );
+      });
+
       body = (
         <table className="metric-picker__table">
           <tbody>
             <tr>
-              <th className="metric-picker__th">Environment</th>
-              <th className="metric-picker__th">Application</th>
-              <th className="metric-picker__th">Metric</th>
-              <th className="metric-picker__th">Type</th>
-              <th className="metric-picker__th">Add</th>
+              {headerCols}
+
+              <th className="metric-picker__th">type</th>
+
+              <th className="metric-picker__th">add</th>
             </tr>
 
             {rows}
@@ -184,9 +202,13 @@ export class MetricPicker extends Component {
     this.onEnvironmentChange = this.onEnvironmentChange.bind(this);
     this.onApplicationChange = this.onApplicationChange.bind(this);
     this.onFilterChange = this.onFilterChange.bind(this);
+    this.onSortChange = this.onSortChange.bind(this);
+    this.sortMetricsAsc = this.sortMetricsAsc.bind(this);
+    this.sortMetricsDesc = this.sortMetricsDesc.bind(this);
+    this.sortMetrics = this.sortMetrics.bind(this);
 
     const fuseOptions = {
-      shouldSort: true,
+      shouldSort: false,
       threshold: 0.45,
       location: 0,
       distance: 100,
@@ -200,6 +222,8 @@ export class MetricPicker extends Component {
       application: '',
       filter: '',
       fuse: new Fuse([], fuseOptions),
+      sortCol: 'environment',
+      sortDir: 'asc',
     };
   }
 
@@ -213,6 +237,63 @@ export class MetricPicker extends Component {
 
   onFilterChange(filter) {
     this.setState(() => ({ filter }));
+  }
+
+  onSortChange(sortCol) {
+    this.setState((state) => {
+      let sortDir = 'asc';
+
+      if (state.sortCol === sortCol) {
+        sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      }
+
+      return {
+        sortCol,
+        sortDir,
+      };
+    });
+  }
+
+  sortMetricsAsc(rows) {
+    const sortCol = this.state.sortCol;
+
+    rows.sort((a, b) => {
+      const valA = a[sortCol];
+      const valB = b[sortCol];
+
+      if (valA < valB) {
+        return -1;
+      } else if (valA > valB) {
+        return 1;
+      }
+
+      return 0;
+    });
+  }
+
+  sortMetricsDesc(rows) {
+    const sortCol = this.state.sortCol;
+
+    rows.sort((a, b) => {
+      const valA = a[sortCol];
+      const valB = b[sortCol];
+
+      if (valA < valB) {
+        return 1;
+      } else if (valA > valB) {
+        return -1;
+      }
+
+      return 0;
+    });
+  }
+
+  sortMetrics(rows) {
+    if (this.state.sortDir === 'asc') {
+      this.sortMetricsAsc(rows);
+    } else {
+      this.sortMetricsDesc(rows);
+    }
   }
 
   render() {
@@ -245,6 +326,8 @@ export class MetricPicker extends Component {
       rows = fuse.search(filter);
     }
 
+    this.sortMetrics(rows);
+
     return (
       <div className={`metric-picker ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
         <MetricPickerFilters
@@ -262,7 +345,10 @@ export class MetricPicker extends Component {
           metricsLoading={this.props.metricsLoading}
           metricsLoadError={this.props.metricsLoadError}
           rows={rows}
+          sortCol={this.state.sortCol}
+          sortDir={this.state.sortDir}
           addMetric={this.props.addMetric}
+          onSortChange={this.onSortChange}
         />
       </div>
     );

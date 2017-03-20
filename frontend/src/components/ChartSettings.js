@@ -188,6 +188,7 @@ class DateTimeSettings extends Component {
     const rangePicker = (
       <div className="chart-settings__range-picker">
         <label>Range Type:</label>
+
         <div className="range-picker-radio-group" >
           <input
             type="radio"
@@ -196,7 +197,10 @@ class DateTimeSettings extends Component {
             checked={rangeType === DYNAMIC}
             onChange={this.changeRangeType}
           />
-          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', DYNAMIC)}>Dynamic</span>
+
+          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', DYNAMIC)}>
+            Dynamic
+          </span>
 
           <input
             type="radio"
@@ -205,7 +209,10 @@ class DateTimeSettings extends Component {
             checked={rangeType === FIXED}
             onChange={this.changeRangeType}
           />
-          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', FIXED)}>Fixed</span>
+
+          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', FIXED)}>
+            Fixed
+          </span>
         </div>
       </div>
     );
