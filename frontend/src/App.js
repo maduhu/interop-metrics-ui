@@ -312,12 +312,13 @@ class App extends Component {
         previewData: [...state.targetChart.previewData],
       };
 
-      const rangeTypesEqual = chart.rangeType === oldChart.rangeType;
+      const rangeType = chart.rangeType;
+      const rangeTypesEqual = rangeType === oldChart.rangeType;
       const periodsEqual = chart.rangePeriod === oldChart.rangePeriod;
       const multipliersEqual = chart.rangeMultiplier === oldChart.rangeMultiplier;
-      const dynamicRangeChanged = chart.rangeType === 'dynamic' && (!periodsEqual || !multipliersEqual);
+      const dynamicRangeChanged = rangeType === 'dynamic' && (!periodsEqual || !multipliersEqual);
 
-      if (!rangeTypesEqual || dynamicRangeChanged) {
+      if (rangeType === 'dynamic' && (!rangeTypesEqual || dynamicRangeChanged)) {
         chart.endDate = moment.utc();
         chart.startDate = chart.endDate.clone().subtract(chart.rangeMultiplier, chart.rangePeriod);
       }
