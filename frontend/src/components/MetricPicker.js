@@ -1,8 +1,11 @@
 import React, { Component, PureComponent } from 'react';
 import Fuse from 'fuse.js';
+import moment from 'moment';
 import LoadingCube from './LoadingCube';
 import { has } from '../utils';
 import './MetricPicker.css';
+
+const METRICS_COLS = ['environment', 'application', 'metric_name', 'last_timestamp'];
 
 export function collapseMetrics(metrics) {
   /**
@@ -32,6 +35,7 @@ export function collapseMetrics(metrics) {
       env[appName] = [];
     }
 
+    metric.last_timestamp = moment(new Date(metric.last_timestamp));  // eslint-disable-line no-param-reassign
     env[appName].push(metric);
 
     return environments;
@@ -146,6 +150,7 @@ class MetricPickerTable extends PureComponent {
             <td className="metric-picker__env-col">{row.environment}</td>
             <td className="metric-picker__app-col">{row.application}</td>
             <td className="metric-picker__metric-col">{row.metric_name}</td>
+            <td className="metric-picker__timestamp-col">{row.last_timestamp.format('YYYY MM-DD HH:mm')}</td>
             <td className="metric-picker__type-col">{typeIcon}</td>
             <td className="metric-picker__add-col">
               <button className="flat-button" onClick={addMetric}>
@@ -156,7 +161,7 @@ class MetricPickerTable extends PureComponent {
         );
       });
 
-      const headerCols = ['environment', 'application', 'metric_name'].map((label) => {
+      const headerCols = METRICS_COLS.map((label) => {
         let clsName = 'sort-icon ';
 
         if (sortCol === label) {

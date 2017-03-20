@@ -43,6 +43,7 @@
 .metric-picker__app-col,
 .metric-picker__metric-col,
 .metric-picker__type-col,
+.metric-picker__timestamp-col,
 .metric-picker__add-col {
   padding: 0.3em 0.1em;
   border-bottom: 1px solid rgb(224, 224, 224);
