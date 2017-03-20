@@ -105,7 +105,11 @@ class MetricPickerTable extends PureComponent {
     let body;
 
     if (this.props.metricsLoading) {
-      body = <LoadingCube>Loading metrics...</LoadingCube>;
+      body = (
+        <div className="metrics-loading-mask">
+          <LoadingCube>Loading metrics...</LoadingCube>
+        </div>
+      );
     } else if (this.props.metricsLoadError) {
       body = (
         <div className="picker-error">
