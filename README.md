@@ -100,3 +100,7 @@ There are no logs of any operational value here, only for debugging purposes.
 Tests are written with PyTest, to run them:
 * activate your virtual environment
 * run `python -m pytest tests/`
+
+## Screenshots
+
+A brief screenshot tour of the UI can be found [here](docs/screenshots.md)
