@@ -16,11 +16,11 @@ const RANGE_PERIODS = ['minutes', 'hours', 'days'];
 const HOURS = new Array(24).fill(null).map((_, i) => (i < 10 ? `0${i}` : `${i}`));
 const MINUTES = new Array(60).fill(null).map((_, i) => (i < 10 ? `0${i}` : `${i}`));
 
-class ChartTitle extends Component {
+class ChartTitle extends PureComponent {
   render() {
     return (
-      <div className="chart-settings__title-input">
-        <label>Title:</label>
+      <div className="settings-title">
+        <label className="settings-label">Title:</label>
         <input
           type="text"
           value={this.props.chart.title}
@@ -31,11 +31,12 @@ class ChartTitle extends Component {
   }
 }
 
-class ScaleSelect extends Component {
+class ScaleSelect extends PureComponent {
   render() {
     return (
-      <div className="chart-settings__scale-input">
-        <label>{this.props.label}</label>
+      <div className="scale-select">
+        <label className="settings-label">{this.props.label}</label>
+
         <select value={this.props.value} onChange={e => this.props.onChange(e.target.value)}>
           <option value="linear">linear</option>
           <option value="log">log</option>
@@ -45,80 +46,57 @@ class ScaleSelect extends Component {
   }
 }
 
-class ScaleSettings extends Component {
+class ScaleSettings extends PureComponent {
   render() {
     const chart = this.props.chart;
+    const leftChange = value => this.props.updateTargetChart('leftAxis', value);
+    const rightChange = value => this.props.updateTargetChart('leftAxis', value);
 
     return (
-      <div className="chart-settings__scale-inputs">
-        <ScaleSelect
-          label="Left Axis Scale:" value={chart.leftAxis}
-          onChange={value => this.props.updateTargetChart('leftAxis', value)}
-        />
+      <div className="scale-settings">
+        <ScaleSelect label="Left Axis Scale:" value={chart.leftAxis} onChange={leftChange} />
 
-        <ScaleSelect
-          label="Right Axis Scale:" value={chart.rightAxis}
-          onChange={value => this.props.updateTargetChart('rightAxis', value)}
-        />
+        <ScaleSelect label="Right Axis Scale:" value={chart.rightAxis} onChange={rightChange} />
       </div>
     );
   }
 }
 
-class HourSelect extends Component {
-  constructor(props) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(e) {
-    this.props.onChange(e.target.value);
-  }
-
+class HourSelect extends PureComponent {
   render() {
+    const onChange = e => this.props.onChange(e.target.value);
+
     return (
-      <select className="time-input__hour" value={this.props.value} onChange={this.onChange}>
-        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-      </select>
+      <div className="chart-settings__input-wrapper">
+        <select className="time-input__hour" value={this.props.value} onChange={onChange}>
+          {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+        </select>
+      </div>
     );
   }
 }
 
-class MinuteSelect extends Component {
-  constructor(props) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(e) {
-    this.props.onChange(e.target.value);
-  }
-
+class MinuteSelect extends PureComponent {
   render() {
+    const onChange = e => this.props.onChange(e.target.value);
+
     return (
-      <select className="time-input__minute" value={this.props.value} onChange={this.onChange}>
-        {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-      </select>
+      <div className="chart-settings__input-wrapper">
+        <select className="time-input__minute" value={this.props.value} onChange={onChange}>
+          {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
     );
   }
 }
 
 class TimeSettings extends PureComponent {
-  /**
-   * TODO: Support dynamic ranges.
-   * Provide two types of choice for date range, Fixed and Dynamic. Fixed is what we have now, you specify a date range
-   * and we always render the data between those dates. Dynamic lets you choose a dynamic start date for example:
-   *    - last 24 HOURS
-   *    - last week
-   *    - last 2 weeks
-   *    - last month
-   * The end time is always "now" and the start time is always calculated based off of the duration you choose.
-   */
   render() {
     return (
       <div className="time-input">
-        <label className="time-input__label">{this.props.label}</label>
-        <div className="time-input__select-container">
+        <label className="settings-label">{this.props.label}</label>
+
+        <div className="time-input__select">
           <HourSelect value={this.props.hour} onChange={this.props.onHourChange} />
           <MinuteSelect value={this.props.minute} onChange={this.props.onMinuteChange} />
         </div>
@@ -127,22 +105,11 @@ class TimeSettings extends PureComponent {
   }
 }
 
-class DateTimeSettings extends Component {
+class DynamicDateSettings extends Component {
   constructor(props) {
     super(props);
-    this.changeRangeType = this.changeRangeType.bind(this);
     this.changeRangePeriod = this.changeRangePeriod.bind(this);
     this.changeRangeMultiplier = this.changeRangeMultiplier.bind(this);
-    this.changeStartDate = this.changeStartDate.bind(this);
-    this.changeStartHour = this.changeStartHour.bind(this);
-    this.changeStartMinute = this.changeStartMinute.bind(this);
-    this.changeEndDate = this.changeEndDate.bind(this);
-    this.changeEndHour = this.changeEndHour.bind(this);
-    this.changeEndMinute = this.changeEndMinute.bind(this);
-  }
-
-  changeRangeType(e) {
-    this.props.updateTargetChart('rangeType', e.target.value);
   }
 
   changeRangePeriod(e) {
@@ -151,6 +118,50 @@ class DateTimeSettings extends Component {
 
   changeRangeMultiplier(e) {
     this.props.updateTargetChart('rangeMultiplier', e.target.value);
+  }
+
+  render() {
+    const rangePeriod = this.props.chart.rangePeriod;
+    const rangeMultiplier = this.props.chart.rangeMultiplier;
+
+    return (
+      <div className="dynamic-date-settings">
+        <label className="settings-label">Range:</label>
+
+        <div>
+          <div className="chart-settings__input-wrapper">
+            <input
+              className="dynamic-multiplier"
+              type="number"
+              value={rangeMultiplier}
+              onChange={this.changeRangeMultiplier}
+            />
+          </div>
+
+          <div className="chart-settings__input-wrapper">
+            <select
+              className="dynamic-period"
+              value={rangePeriod}
+              onChange={this.changeRangePeriod}
+            >
+              {RANGE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+class FixedDateSettings extends Component {
+  constructor(props) {
+    super(props);
+    this.changeStartDate = this.changeStartDate.bind(this);
+    this.changeStartHour = this.changeStartHour.bind(this);
+    this.changeStartMinute = this.changeStartMinute.bind(this);
+    this.changeEndDate = this.changeEndDate.bind(this);
+    this.changeEndHour = this.changeEndHour.bind(this);
+    this.changeEndMinute = this.changeEndMinute.bind(this);
   }
 
   changeStartDate(value) {
@@ -178,63 +189,14 @@ class DateTimeSettings extends Component {
   }
 
   render() {
-    const rangeType = this.props.chart.rangeType;
-    const rangePeriod = this.props.chart.rangePeriod;
-    const rangeMultiplier = this.props.chart.rangeMultiplier;
     const startDate = this.props.chart.startDate;
     const endDate = this.props.chart.endDate;
-    let body;
 
-    const rangePicker = (
-      <div className="chart-settings__range-picker">
-        <label>Range Type:</label>
-
-        <div className="range-picker-radio-group" >
-          <input
-            type="radio"
-            value={DYNAMIC}
-            name="range-type"
-            checked={rangeType === DYNAMIC}
-            onChange={this.changeRangeType}
-          />
-
-          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', DYNAMIC)}>
-            Dynamic
-          </span>
-
-          <input
-            type="radio"
-            value={FIXED}
-            name="range-type"
-            checked={rangeType === FIXED}
-            onChange={this.changeRangeType}
-          />
-
-          <span className="radio-label" onClick={() => this.props.updateTargetChart('rangeType', FIXED)}>
-            Fixed
-          </span>
-        </div>
-      </div>
-    );
-
-    if (rangeType === DYNAMIC) {
-      body = (
-        <div className="chart-settings__dynamic-time-inputs">
-          <label>Range:</label>
-
-          <div>
-            <input type="number" value={rangeMultiplier} onChange={this.changeRangeMultiplier} />
-            <select value={rangePeriod} onChange={this.changeRangePeriod}>
-              {RANGE_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-        </div>
-      );
-    } else {
-      body = (
-        <div className="chart-settings__fixed-time-inputs">
-          <div className="chart-settings__date-picker">
-            <label>Start Date:</label>
+    return (
+      <div className="fixed-date-settings">
+        <div className="date-time">
+          <div className="date-picker">
+            <label className="settings-label">Start Date:</label>
             <DatePicker
               selectsStart
               startDate={startDate}
@@ -251,9 +213,11 @@ class DateTimeSettings extends Component {
             onHourChange={this.changeStartHour}
             onMinuteChange={this.changeStartMinute}
           />
+        </div>
 
-          <div className="chart-settings__date-picker">
-            <label>End Date:</label>
+        <div className="date-time">
+          <div className="date-picker">
+            <label className="settings-label">End Date:</label>
             <DatePicker
               selectsEnd
               startDate={startDate}
@@ -271,21 +235,57 @@ class DateTimeSettings extends Component {
             onMinuteChange={this.changeEndMinute}
           />
         </div>
-      );
-    }
-
-
-    return (
-      <div className="chart-settings__date-range">
-        {rangePicker}
-
-        {body}
       </div>
     );
   }
 }
 
-class MetricsSettings extends Component {
+class RangePicker extends PureComponent {
+  render() {
+    const rangeType = this.props.chart.rangeType;
+    const setDynamicRangeType = () => this.props.updateTargetChart('rangeType', DYNAMIC);
+    const setFixedRangeType = () => this.props.updateTargetChart('rangeType', FIXED);
+
+    return (
+      <div className="range-picker">
+        <label className="settings-label">Range Type:</label>
+
+        <div className="range-picker__radio-group" >
+          <label htmlFor="dynamic">
+            <input
+              id="dynamic"
+              type="radio"
+              value={DYNAMIC}
+              name="range-type"
+              checked={rangeType === DYNAMIC}
+              onChange={setDynamicRangeType}
+            />
+
+            <span className="range-picker__label">
+              Dynamic
+            </span>
+          </label>
+
+          <label htmlFor="fixed">
+            <input
+              id="fixed"
+              type="radio"
+              value={FIXED}
+              name="range-type"
+              checked={rangeType === FIXED}
+              onChange={setFixedRangeType}
+            />
+            <span className="range-picker__label">
+              Fixed
+            </span>
+          </label>
+        </div>
+      </div>
+    );
+  }
+}
+
+class MetricsSettings extends PureComponent {
   render() {
     const chart = this.props.chart;
     let body = <div>No metrics selected.</div>;
@@ -301,7 +301,7 @@ class MetricsSettings extends Component {
         )));
 
         return (
-          <tr className="chart-settings__metric" key={idx}>
+          <tr className="metrics-settings__metric" key={idx}>
             <td>{metric.environment}</td>
             <td>{metric.application}</td>
             <td>{metric.metric_name}</td>
@@ -326,15 +326,15 @@ class MetricsSettings extends Component {
       });
 
       body = (
-        <table className="chart-settings__table">
+        <table className="metrics-settings__table">
           <tbody>
             <tr>
-              <th className="chart-settings__th">Environment</th>
-              <th className="chart-settings__th">Application</th>
-              <th className="chart-settings__th">Metric</th>
-              <th className="chart-settings__th">Measure</th>
-              <th className="chart-settings__th">Axis</th>
-              <th className="chart-settings__th">&nbsp;</th>
+              <th className="metrics-settings__th">Environment</th>
+              <th className="metrics-settings__th">Application</th>
+              <th className="metrics-settings__th">Metric</th>
+              <th className="metrics-settings__th">Measure</th>
+              <th className="metrics-settings__th">Axis</th>
+              <th className="metrics-settings__th">&nbsp;</th>
             </tr>
 
             {metrics}
@@ -344,36 +344,42 @@ class MetricsSettings extends Component {
     }
 
     return (
-      <div className="chart-settings__metrics">
-        <label>Metrics:</label>
+      <div className="metrics-settings">
+        <label className="settings-label">Metrics:</label>
+
         {body}
       </div>
     );
   }
 }
 
-class ChartSettings extends Component {
+class ChartSettings extends PureComponent {
   render() {
+    const rangeType = this.props.chart.rangeType;
+
     return (
       <div className={`chart-settings ${this.props.hidden ? 'chart-settings--hidden' : ''}`}>
-        <ChartTitle {...this.props} />
+        <div className="chart-settings__row">
+          <ChartTitle {...this.props} />
+        </div>
 
-        <DateTimeSettings {...this.props} />
+        <div className="chart-settings__row">
+          <ScaleSettings {...this.props} />
+        </div>
+        <div className="chart-settings__row">
+          <RangePicker {...this.props} />
+        </div>
 
-        <ScaleSettings {...this.props} />
+        <div className="chart-settings__row">
+          {rangeType === DYNAMIC ? <DynamicDateSettings {...this.props} /> : <FixedDateSettings {...this.props} />}
+        </div>
 
-        <MetricsSettings {...this.props} />
+        <div className="chart-settings__row">
+          <MetricsSettings {...this.props} />
+        </div>
       </div>
     );
   }
 }
-
-ChartSettings.propTypes = {
-  chart: React.PropTypes.object,
-};
-
-ChartSettings.defaultProps = {
-  chart: { metrics: [] },
-};
 
 export default ChartSettings;

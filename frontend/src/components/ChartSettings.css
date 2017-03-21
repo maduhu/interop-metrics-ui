@@ -1,65 +1,90 @@
 .chart-settings--hidden {
   display: none;
 }
-.chart-settings__title-input {
-  margin-top: 0.5em;
+.settings-label {
+  display: inline-block;
+  font-weight: bold;
+  width: 100%;
+}
+.scale-settings {
+  width: 50%;
+  padding-right: 1em;
+}
+.scale-select {
+  display: inline-block;
   width: 50%;
 }
-.chart-settings__title-input label,
-.chart-settings__title-input input {
+.scale-select:first-of-type {
+  padding-right: 0.5em;
+}
+.scale-select:last-of-type {
+  padding-left: 0.5em;
+}
+.scale-select select {
+  width: 100%;
+}
+.date-time {
+  width: 50%;
   display: inline-block;
-  width: 100%;
 }
-.chart-settings__fixed-time-inputs {
-  display: flex;
-}
-.chart-settings__fixed-time-inputs,
-.chart-settings__dynamic-time-inputs {
-  margin: 0.5em 0;
-}
-.time-input,
-.chart-settings__scale-input {
-  flex: 1;
+.date-picker,
+.time-input {
   display: inline-block;
-  margin-right: 0.5em;
-  padding: .1em;
-}
-.chart-settings__date-picker input,
-.chart-settings__scale-input select {
-  width: 100%;
-}
-.chart-settings label {
-  font-weight: bold;
-}
-.chart-settings__time-input:last-of-type {
-  margin-right: 0;
-}
-.chart-settings__metrics {
-  height: 449px;
-  padding: .5em 0;
-  overflow-y: scroll;
-}
-.chart-settings__table {
-  width: 100%;
-}
-.chart-settings__th {
-  text-align: left;
-}
-.chart-settings__scale-inputs {
-  display: flex;
+  padding-right: 1em;
   width: 50%;
 }
 .time-input__hour,
 .time-input__minute {
-  flex-grow: 1;
-}
-.time-input__select-container {
   width: 100%;
-  display: flex;
 }
 .react-datepicker__input-container {
   width: 100%;
 }
-.radio-label {
-  margin: 0 1em 0 0.5em;
+.react-datepicker__input-container input {
+  width: 100%;
+}
+.settings-title {
+  width: 50%;
+  padding-right: 1em;
+}
+.settings-title input {
+  width: 100%;
+}
+.range-picker__label {
+  display: inline-block;
+  margin-right: 1em;
+  margin-left: 0.3em;
+}
+.dynamic-date-settings {
+  width: 50%;
+  padding-right: 1em;
+}
+
+.chart-settings__input-wrapper {
+  display: inline-block;
+  padding: 0 0.5em;
+  width: 50%;
+}
+.chart-settings__input-wrapper:first-of-type {
+  padding-left: 0em;
+}
+.chart-settings__input-wrapper:last-of-type {
+  padding-right: 0em;
+}
+.dynamic-multiplier,
+.dynamic-period {
+  width: 100%;
+}
+.chart-settings__row {
+  margin: 1em 0;
+}
+.metrics-settings {
+  height: 298px;
+}
+.metrics-settings__table {
+  margin-top: 1em;
+  width: 100%;
+}
+.metrics-settings__th {
+  text-align: left;
 }
