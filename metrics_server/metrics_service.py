@@ -246,12 +246,3 @@ class MetricsService(BaseService):
             rows = rows.resample(f'{bucket_size}S').agg(aggregators)
 
         return rows.reset_index()
-
-
-
-            if 'previous_metric_timestamp' in row:
-                row['previous_metric_timestamp'] = pytz.utc.localize(row['previous_metric_timestamp']).isoformat()
-
-            data.append(row)
-
-        return data
