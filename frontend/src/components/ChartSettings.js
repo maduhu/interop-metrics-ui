@@ -5,16 +5,16 @@ import './ChartSettings.css';
 
 const MEASURE_MAP = {
   raw_timer_with_interval: [
-    'count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999', 'mean_rate', 'one_min_rate',
-    'five_min_rate', 'fifteen_min_rate',
+    'count', 'interval_count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999',
+    'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate',
   ],
   raw_counter_with_interval: ['count', 'interval_count'],
 };
 const DYNAMIC = 'dynamic';
 const FIXED = 'fixed';
 const RANGE_PERIODS = ['minutes', 'hours', 'days'];
-const HOURS = Array(24).fill().map((_, i) => (i < 10 ? `0${i}` : `${i}`));
-const MINUTES = Array(60).fill().map((_, i) => (i < 10 ? `0${i}` : `${i}`));
+const HOURS = new Array(24).fill(null).map((_, i) => (i < 10 ? `0${i}` : `${i}`));
+const MINUTES = new Array(60).fill(null).map((_, i) => (i < 10 ? `0${i}` : `${i}`));
 
 class ChartTitle extends Component {
   render() {

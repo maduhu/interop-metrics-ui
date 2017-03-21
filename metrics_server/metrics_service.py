@@ -14,8 +14,8 @@ TABLE_NAMES = ['raw_counter_with_interval', 'raw_timer_with_interval']
 TIMESTAMP_COLUMNS = ['metric_timestamp', 'previous_metric_timestamp']
 COUNTER_COLUMNS = {'count', 'previous_count', 'interval_count'}
 TIMER_COLUMNS = {
-    'count', 'previous_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate', 'five_min_rate',
-    'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev'
+    'count', 'previous_count', 'interval_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate',
+    'five_min_rate', 'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev'
 }
 COLUMN_MAP = {
     'raw_counter_with_interval': COUNTER_COLUMNS,
@@ -29,6 +29,7 @@ AGGREGATOR_MAP = {
     },
     'raw_timer_with_interval': {
         'count': np.max,
+        'interval_count': np.sum,
         'previous_count': np.max,
         'p75': np.max,
         'p95': np.max,
