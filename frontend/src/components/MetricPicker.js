@@ -216,7 +216,7 @@ export class MetricPicker extends Component {
       shouldSort: false,
       threshold: 0.45,
       location: 0,
-      distance: 100,
+      distance: 500,
       maxPatternLength: 64,
       minMatchCharLength: 1,
       keys: ['metric_name'],
