@@ -1,16 +1,26 @@
 .legend {
   margin: 0.5em 0 0 2.5em;
-  list-style-type: none;
+  border-collapse: collapse;
 }
-.legend-item {
-  margin-top: 0.2em;
+.legend-row {
+  margin: 0.5em 0;
 }
-.legend-item__swatch {
-  display: inline-block;
-  margin-right: 0.5em;
+.legend-col {
+  padding: 0.3em .5em;
+}
+.legend-swatch {
   border-radius: 2px;
   width: 17px;
 }
-.legend-item__value {
+.legend-row__value {
   margin-left: 0.5em;
+}
+.legend-header {
+  text-align: left;
+  padding: 0.5em;
+}
+.line {
+  fill: none;
+  stroke-width: 2px;
+  shape-rendering: crispEdges;
 }

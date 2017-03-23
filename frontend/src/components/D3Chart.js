@@ -16,6 +16,7 @@ import {
   schemeCategory10,
   transition,
 } from 'd3';
+import moment from 'moment';
 import { has } from '../utils';
 import './D3Chart.css';
 
@@ -380,29 +381,52 @@ export default function D3Chart(el) {
 
     [...mainData.left, ...mainData.right].forEach((series) => {
       const idx = bisectDate(series.rows, dateAtPos, 1);
-      const date0 = series.rows[idx - 1];
-      const date1 = series.rows[idx];
-      let closestDate;
+      const leftRow = series.rows[idx - 1];
+      const rightRow = series.rows[idx];
+      let closestRow;
 
-      if (date0 === undefined && date1 === undefined) {
+      if (leftRow === undefined && rightRow === undefined) {
         return;
       }
 
-      if (date1 === undefined) {
-        closestDate = date0;
+      if (rightRow === undefined) {
+        closestRow = leftRow;
       } else {
-        closestDate = dateAtPos - date0[X] > date1[X] - dateAtPos ? date1 : date0;
+        closestRow = dateAtPos - leftRow[X] > rightRow[X] - dateAtPos ? rightRow : leftRow;
       }
 
-      if (Math.abs(scaleX(closestDate[X]) - posX) < 3 && closestDate[Y] !== null) {
-        values[series.name] = closestDate[Y];
+      if (Math.abs(scaleX(closestRow[X]) - posX) < 3 && closestRow[Y] !== null) {
+        values[series.name] = closestRow;
       }
     });
 
-    select(el).select('.legend')
-      .selectAll('.legend-item')
-      .select('.legend-item__value')
-      .text(d => (isNaN(values[d]) ? values[d] : values[d].toFixed(2)));
+    const legendItems = select(el).select('.legend')
+      .selectAll('.legend-row');
+
+    legendItems.select('.legend-col--value')
+      .text((d) => {
+        const key = d[0];
+        let text = '';
+
+        if (has.call(values, key)) {
+          const value = values[key][Y];
+          text = isNaN(value) ? value : value.toFixed(2);
+        }
+
+        return text;
+      });
+
+    legendItems.select('.legend-col--date')
+      .text((d) => {
+        const key = d[0];
+        let text = '';
+
+        if (has.call(values, key)) {
+          text = moment(values[key][X]).format('YYYY-MM-DD HH:mm:SS');
+        }
+
+        return text;
+      });
   }
 
   function mouseOut() {
@@ -410,8 +434,13 @@ export default function D3Chart(el) {
      * Clears all legend values on mouseout
      */
     select(el).select('.legend')
-      .selectAll('.legend-item')
-      .select('.legend-item__value')
+      .selectAll('.legend-row')
+      .select('.legend-col--value')
+      .text('');
+
+    select(el).select('.legend')
+      .selectAll('.legend-row')
+      .select('.legend-col--date')
       .text('');
   }
 
@@ -555,21 +584,41 @@ export default function D3Chart(el) {
   function renderLegend(sel) {
     // TODO: make it possible to hover over a legend item to emphasize a series.
     // TODO: make it possible to toggle emphasized series so you don't have to hover.
-    if (sel.select('ul.legend').size() === 0) {
-      sel.append('ul').attr('class', 'legend');
+    if (sel.select('table.legend').size() === 0) {
+      const tbody = sel.append('table').attr('class', 'legend').append('tbody');
+      tbody.append('th').attr('class', 'legend-header').text('color');
+      tbody.append('th').attr('class', 'legend-header').text('environment');
+      tbody.append('th').attr('class', 'legend-header').text('application');
+      tbody.append('th').attr('class', 'legend-header').text('metric');
+      tbody.append('th').attr('class', 'legend-header').text('measure');
     }
 
     const scale = axes.color.scale;
-    const colors = scale.domain();
-    const items = sel.select('ul.legend').selectAll('li.legend-item').data(colors);
-    const newItems = items.enter().append('li').attr('class', 'legend-item');
+    const colors = scale.domain().map((colorKey) => {
+      const parts = colorKey.split('.');
+      const environment = parts[0];
+      const application = parts[1];
+      const metric = parts.slice(2, parts.length - 2).join('.');
+      const measure = parts[parts.length - 1];
+
+      return [colorKey, environment, application, metric, measure];
+    });
+    const items = sel.select('table.legend tbody').selectAll('tr.legend-row').data(colors);
+    const newItems = items.enter().append('tr').attr('class', 'legend-row');
     const allItems = newItems.merge(items);
 
-    newItems.append('span').attr('class', 'legend-item__swatch').html('&nbsp;');
-    newItems.append('span').attr('class', 'legend-item__name');
-    newItems.append('span').attr('class', 'legend-item__value');
-    allItems.select('span.legend-item__name').text(d => d);
-    allItems.select('span.legend-item__swatch').attr('style', d => `background-color: ${scale(d)};`);
+    newItems.append('td').attr('class', 'legend-col').append('div').attr('class', 'legend-swatch').html('&nbsp;');
+    newItems.append('td').attr('class', 'legend-col legend-col--environment');
+    newItems.append('td').attr('class', 'legend-col legend-col--application');
+    newItems.append('td').attr('class', 'legend-col legend-col--metric');
+    newItems.append('td').attr('class', 'legend-col legend-col--measure');
+    newItems.append('td').attr('class', 'legend-col legend-col--value');
+    newItems.append('td').attr('class', 'legend-col legend-col--date');
+    allItems.select('.legend-swatch').attr('style', d => `background-color: ${scale(d[0])};`);
+    allItems.select('td.legend-col--environment').text(d => d[1]);
+    allItems.select('td.legend-col--application').text(d => d[2]);
+    allItems.select('td.legend-col--metric').text(d => d[3]);
+    allItems.select('td.legend-col--measure').text(d => d[4]);
     items.exit().remove();
   }
 
