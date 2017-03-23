@@ -598,7 +598,7 @@ export default function D3Chart(el) {
       const parts = colorKey.split('.');
       const environment = parts[0];
       const application = parts[1];
-      const metric = parts.slice(2, parts.length - 2).join('.');
+      const metric = parts.slice(2, parts.length - 1).join('.');
       const measure = parts[parts.length - 1];
 
       return [colorKey, environment, application, metric, measure];
