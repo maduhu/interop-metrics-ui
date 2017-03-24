@@ -85,7 +85,7 @@ export class Chart extends PureComponent {
             <span className="fa fa-pencil" />
           </button>
 
-          <button className="chart__icon button" onClick={this.removeChart}>
+          <button className="chart__icon button button--delete" onClick={this.removeChart}>
             <span className="fa fa-trash" />
           </button>
         </div>

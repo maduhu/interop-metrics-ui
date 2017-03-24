@@ -63,6 +63,9 @@ input:focus {
   display: inline-block;
   margin-right: 0.5em;
 }
+.button--delete:hover {
+  background-color: rgba(224, 117, 0, 1);
+}
 .tabs {
   display: flex;
   background-color: rgb(241, 243, 244);

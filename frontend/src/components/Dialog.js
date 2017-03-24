@@ -51,8 +51,8 @@ Dialog.propTypes = {
   showClose: React.PropTypes.bool,
   showOk: React.PropTypes.bool,
   showCancel: React.PropTypes.bool,
-  onOk: React.PropTypes.func,
-  onClose: React.PropTypes.func
+  onOk: React.PropTypes.func.isRequired,
+  onClose: React.PropTypes.func.isRequired,
 };
 
 Dialog.defaultProps = {

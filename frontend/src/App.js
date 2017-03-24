@@ -64,6 +64,8 @@ class App extends Component {
     this.refreshChart = this.refreshChart.bind(this);
     this.saveDashboard = this.saveDashboard.bind(this);
     this.clearDashboard = this.clearDashboard.bind(this);
+    this.openClearDialog = this.openClearDialog.bind(this);
+    this.closeClearDialog = this.closeClearDialog.bind(this);
 
     this.state = {
       rawMetrics: [],
@@ -74,6 +76,7 @@ class App extends Component {
       targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
+      clearDialogOpen: false,
     };
 
     request.get('/api/v1/metrics')
@@ -539,7 +542,15 @@ class App extends Component {
      * Clears all charts from localStorage and resets charts object.
      */
     localStorage.removeItem('charts');  // eslint-disable-line no-undef
-    this.setState(() => ({ charts: [newChart()] }));
+    this.setState(() => ({ charts: [newChart()], clearDialogOpen: false }));
+  }
+
+  openClearDialog() {
+    this.setState(() => ({ clearDialogOpen: true }));
+  }
+
+  closeClearDialog() {
+    this.setState(() => ({ clearDialogOpen: false }));
   }
 
   render() {
@@ -558,6 +569,12 @@ class App extends Component {
             updateMetric={this.updateMetric}
             updateTargetChart={this.updateTargetChart}
           />
+        </Dialog>
+      );
+    } else if (this.state.clearDialogOpen) {
+      dialog = (
+        <Dialog showClose={false} okText="yes" onOk={this.clearDashboard} onClose={this.closeClearDialog}>
+          <p className="confirm-dialog">Are you sure you want to remove all charts in your dashboard?</p>
         </Dialog>
       );
     }
@@ -582,7 +599,7 @@ class App extends Component {
             <span className="button__text">Save Dashboard</span>
           </button>
 
-          <button className="app-buttons__button button" onClick={this.clearDashboard}>
+          <button className="app-buttons__button button button--delete" onClick={this.openClearDialog}>
             <span className="button__icon fa fa-trash">&nbsp;</span>
             <span className="button__text">Clear Dashboard</span>
           </button>
