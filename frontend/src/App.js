@@ -154,7 +154,7 @@ class App extends Component {
     /**
      * Adds a new (empty) chart to the page.
      */
-    this.setState(state => ({ charts: state.charts.concat([newChart()]) }));
+    this.setState(state => ({ charts: state.charts.concat([newChart()]) }), this.saveDashboard);
   }
 
   updateTargetChart(attr, value) {
@@ -177,7 +177,7 @@ class App extends Component {
     this.setState((state) => {
       const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx + 1));
       return { charts };
-    });
+    }, this.saveDashboard);
   }
 
   selectionDataHandler(chartIdx, dataIdx, measure, error, response) {
@@ -415,7 +415,7 @@ class App extends Component {
         targetChart: null,
         settingsOpen: false,
       };
-    });
+    }, this.saveDashboard);
   }
 
   addMetric(metric) {
@@ -594,11 +594,6 @@ class App extends Component {
     return (
       <div className="app">
         <div className="app-buttons">
-          <button className="app-buttons__button button" onClick={this.saveDashboard}>
-            <span className="button__icon fa fa-save">&nbsp;</span>
-            <span className="button__text">Save Dashboard</span>
-          </button>
-
           <button className="app-buttons__button button button--delete" onClick={this.openClearDialog}>
             <span className="button__icon fa fa-trash">&nbsp;</span>
             <span className="button__text">Clear Dashboard</span>
