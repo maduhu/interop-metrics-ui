@@ -59,6 +59,10 @@ input:active,
 input:focus {
   outline: none;
 }
+.button__icon {
+  display: inline-block;
+  margin-right: 0.5em;
+}
 .tabs {
   display: flex;
   background-color: rgb(241, 243, 244);

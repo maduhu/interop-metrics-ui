@@ -46,6 +46,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
+    this.loadSavedCharts = this.loadSavedCharts.bind(this);
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
@@ -61,12 +62,15 @@ class App extends Component {
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
+    this.saveDashboard = this.saveDashboard.bind(this);
+    this.clearDashboard = this.clearDashboard.bind(this);
+
     this.state = {
       rawMetrics: [],
       metrics: {},
       metricsLoading: true,
       metricsLoadError: null,
-      charts: [newChart()],
+      charts: this.loadSavedCharts(),
       targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
@@ -100,6 +104,47 @@ class App extends Component {
       metricsLoading: false,
       metricsLoadError: null,
     }));
+  }
+
+  loadSavedCharts() {
+    const chartsStr = localStorage.getItem('charts');  // eslint-disable-line no-undef
+
+    if (chartsStr === null) {
+      return [newChart()];
+    }
+
+    return JSON.parse(chartsStr).map((savedChart, chartIdx) => {
+      const chart = { ...savedChart }; // Make a copy so ESLint doesn't complain about modifying passed in objects.
+      chart.previewData = [];
+      chart.data = [];
+
+      if (chart.rangeType === 'fixed') {
+        chart.startDate = moment.utc(chart.startDate);
+        chart.endDate = moment.utc(chart.endDate);
+      } else {
+        chart.endDate = moment.utc();
+        chart.startDate = chart.endDate.clone().subtract(chart.rangeMultiplier, chart.rangePeriod);
+      }
+
+      chart.selectionStartDate = null;
+      chart.selectionEndDate = null;
+
+      chart.metrics.forEach((metric, metricIdx) => {
+        const key = generateMetricsKey(metric);
+        const dataObj = {
+          name: key,
+          axis: metric.axis,
+          error: null,
+          loading: true,
+          rows: [],
+        };
+        chart.data.push({ ...dataObj });
+        chart.previewData.push({ ...dataObj });
+        this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
+      });
+
+      return chart;
+    });
   }
 
   addChart() {
@@ -464,6 +509,39 @@ class App extends Component {
     });
   }
 
+  saveDashboard() {
+    /**
+     * Saves all of the current charts to HTML5 local storage so we can load them on page refresh.
+     */
+    const toSave = this.state.charts.map((c) => {
+      const copy = {
+        ...c,
+        metrics: [...c.metrics],
+      };
+
+      delete copy.selectionStartDate;
+      delete copy.selectionEndDate;
+      delete copy.previewData;
+      delete copy.data;
+
+      // Convert moment objects to ISO strings.
+      copy.startDate = copy.startDate.format();
+      copy.endDate = copy.endDate.format();
+
+      return copy;
+    });
+
+    localStorage.setItem('charts', JSON.stringify(toSave));  // eslint-disable-line no-undef
+  }
+
+  clearDashboard() {
+    /**
+     * Clears all charts from localStorage and resets charts object.
+     */
+    localStorage.removeItem('charts');  // eslint-disable-line no-undef
+    this.setState(() => ({ charts: [newChart()] }));
+  }
+
   render() {
     let dialog;
 
@@ -498,10 +576,20 @@ class App extends Component {
 
     return (
       <div className="app">
-        <div className="add-chart">
-          <button className="button" onClick={this.addChart}>
-            <span className="fa fa-line-chart">&nbsp;</span>
-            New Chart
+        <div className="app-buttons">
+          <button className="app-buttons__button button" onClick={this.saveDashboard}>
+            <span className="button__icon fa fa-save">&nbsp;</span>
+            <span className="button__text">Save Dashboard</span>
+          </button>
+
+          <button className="app-buttons__button button" onClick={this.clearDashboard}>
+            <span className="button__icon fa fa-trash">&nbsp;</span>
+            <span className="button__text">Clear Dashboard</span>
+          </button>
+
+          <button className="app-buttons__button button" onClick={this.addChart}>
+            <span className="button__icon fa fa-line-chart">&nbsp;</span>
+            <span className="button__text">New Chart</span>
           </button>
         </div>
 
