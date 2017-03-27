@@ -46,6 +46,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
+    this.loadMetrics = this.loadMetrics.bind(this);
     this.loadSavedCharts = this.loadSavedCharts.bind(this);
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
@@ -78,10 +79,6 @@ class App extends Component {
       settingsOpen: false,
       clearDialogOpen: false,
     };
-
-    request.get('/api/v1/metrics')
-      .set('Accept', 'application/json')
-      .end(this.onLoadMetrics);
   }
 
   onLoadMetrics(error, response) {
@@ -107,6 +104,14 @@ class App extends Component {
       metricsLoading: false,
       metricsLoadError: null,
     }));
+  }
+
+  loadMetrics() {
+    this.setState({ metricsLoading: true });
+
+    request.get('/api/v1/metrics')
+      .set('Accept', 'application/json')
+      .end(this.onLoadMetrics);
   }
 
   loadSavedCharts() {
@@ -461,6 +466,9 @@ class App extends Component {
     /**
      * Opens the settings panel for the chart at the given index.
      */
+    this.loadMetrics();
+
+
     this.setState(state => ({
       targetChartIdx: idx,
       targetChart: { ...state.charts[idx], metrics: [...state.charts[idx].metrics] },
