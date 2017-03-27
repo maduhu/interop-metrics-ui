@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import D3Chart from '../viz/D3Chart';
+import TimeSeriesChart from '../viz/TimeSeriesChart';
 
 function isLoading(data) {
   return Object.values(data).some(series => series.loading);
 }
 
-export class D3ChartComponent extends Component {
+export class TimeSeries extends Component {
   static shouldComponentUpdate() {
     return false;
   }
@@ -30,7 +30,7 @@ export class D3ChartComponent extends Component {
       dataDomain = [chart.selectionStartDate, chart.selectionEndDate];
     }
 
-    this.graph = D3Chart(this.el)
+    this.graph = TimeSeriesChart(this.el)
       .onBrush(this.cancelSelection)
       .onBrushEnd(this.scheduleSelection)
       .xDomain(dataDomain)
@@ -64,7 +64,7 @@ export class D3ChartComponent extends Component {
         let dataDomain;
 
         if (chart.selectionStartDate === null) {
-          // TODO: add a method to clear clear selection in D3Chart and use it here.
+          // TODO: add a method to clear clear selection in TimeSeriesChart and use it here.
           dataDomain = previewDomain;
         } else {
           dataDomain = [chart.selectionStartDate, chart.selectionEndDate];
@@ -80,7 +80,7 @@ export class D3ChartComponent extends Component {
   }
 
   componentWillUnmount() {
-    // TODO: implement an unmount method on D3Chart and use it here.
+    // TODO: implement an unmount method on TimeSeriesChart and use it here.
   }
 
   cancelSelection() {
@@ -114,4 +114,4 @@ export class D3ChartComponent extends Component {
   }
 }
 
-export default D3ChartComponent;
+export default TimeSeries;

@@ -18,7 +18,7 @@ import {
 } from 'd3';
 import moment from 'moment';
 import { has } from '../utils';
-import './D3Chart.css';
+import './TimeSeriesChart.css';
 
 const SCALE_TYPES = { linear: true, log: true };
 const X = 0;
@@ -171,7 +171,7 @@ function calculateDimensions(element) {
   };
 }
 
-export default function D3Chart(el) {
+export default function TimeSeriesChart(el) {
   const chart = {};
   let mainData = null;
   let previewData = null;
