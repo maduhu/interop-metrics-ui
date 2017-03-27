@@ -14,9 +14,10 @@ export class TimeSeries extends Component {
     super(props);
     this.renderChart = this.renderChart.bind(this);
     this.cancelSelection = this.cancelSelection.bind(this);
-    this.makeSelection = this.makeSelection.bind(this);
     this.scheduleSelection = this.scheduleSelection.bind(this);
-    this.pending = null;
+    this.scheduleRender = this.scheduleRender.bind(this);
+    this.selectionPending = null;
+    this.renderPending = null;
   }
 
   componentDidMount() {
@@ -29,6 +30,8 @@ export class TimeSeries extends Component {
     } else {
       dataDomain = [chart.selectionStartDate, chart.selectionEndDate];
     }
+
+    window.addEventListener('resize', this.scheduleRender);
 
     this.graph = TimeSeriesChart(this.el)
       .onBrush(this.cancelSelection)
@@ -80,25 +83,34 @@ export class TimeSeries extends Component {
   }
 
   componentWillUnmount() {
-    // TODO: implement an unmount method on TimeSeriesChart and use it here.
+    window.removeEventListener('resize', this.scheduleRender);
   }
 
   cancelSelection() {
-    window.clearTimeout(this.pending);
-    this.pending = null;
-  }
-
-  makeSelection(selection) {
-    this.props.onSelection(this.props.idx, selection);
-    this.pending = null;
+    window.clearTimeout(this.selectionPending);
+    this.selectionPending = null;
   }
 
   scheduleSelection(selection) {
-    if (this.pending !== null) {
-      this.cancelSelection();
+    if (this.selectionPending !== null) {
+      window.clearTimeout(this.selectionPending);
     }
 
-    this.pending = window.setTimeout(this.makeSelection, 600, selection);
+    this.selectionPending = window.setTimeout(() => {
+      this.props.onSelection(this.props.idx, selection);
+      this.selectionPending = null;
+    }, 600);
+  }
+
+  scheduleRender() {
+    if (this.renderPending !== null) {
+      window.clearTimeout(this.renderPending);
+    }
+
+    this.renderPending = window.setTimeout(() => {
+      this.renderPending = null;
+      this.renderChart(this.props);
+    }, 250);
   }
 
   renderChart(props) {
