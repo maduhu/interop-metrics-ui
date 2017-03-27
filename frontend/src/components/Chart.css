@@ -4,6 +4,7 @@
   border-radius: 2px;
   margin: 1em 0;
   padding: 2.5em 0 1em 0;
+  overflow: hidden;
 }
 .chart__title {
   position: absolute;
