@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { D3ChartComponent } from './D3ChartComponent';
+import { TimeSeries } from './TimeSeries';
 import { LoadingCube } from './LoadingCube';
 import './Chart.css';
 
@@ -68,7 +68,7 @@ export class Chart extends PureComponent {
     } else if (this.isLoading()) {
       chartArea = <LoadingCube>Loading data...</LoadingCube>;
     } else {
-      chartArea = <D3ChartComponent {...this.props} />;
+      chartArea = <TimeSeries {...this.props} />;
     }
 
     return (
