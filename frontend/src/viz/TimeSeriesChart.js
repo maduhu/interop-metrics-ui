@@ -12,7 +12,7 @@ import {
   scaleLinear,
   scaleLog,
   scaleOrdinal,
-  scaleTime,
+  scaleUtc,
   schemeCategory10,
   transition,
 } from 'd3';
@@ -178,7 +178,7 @@ export default function TimeSeriesChart(el) {
   const axes = {
     x: {
       type: 'time',
-      scale: scaleTime(),
+      scale: scaleUtc(),
       axis: axisBottom(),
       userDefinedDomain: false,
       domain: null,
@@ -197,7 +197,7 @@ export default function TimeSeriesChart(el) {
     },
     xPreview: {
       type: 'time',
-      scale: scaleTime(),
+      scale: scaleUtc(),
       axis: axisBottom(), // Consider using axisTop
       userDefinedDomain: false,
       domain: null,
@@ -422,7 +422,7 @@ export default function TimeSeriesChart(el) {
         let text = '';
 
         if (has.call(values, key)) {
-          text = moment(values[key][X]).format('YYYY-MM-DD h:mm:ss A');
+          text = moment.utc(values[key][X]).format('YYYY-MM-DD h:mm:ss A');
         }
 
         return text;
