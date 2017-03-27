@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import D3Chart from './D3Chart';
+import D3Chart from '../viz/D3Chart';
 
 function isLoading(data) {
   return Object.values(data).some(series => series.loading);

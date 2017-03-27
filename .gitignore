@@ -96,3 +96,4 @@ ENV/
 
 config.json
 metrics_server_bundle.tar
+update.sh
