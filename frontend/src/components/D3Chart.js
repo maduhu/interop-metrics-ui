@@ -422,7 +422,7 @@ export default function D3Chart(el) {
         let text = '';
 
         if (has.call(values, key)) {
-          text = moment(values[key][X]).format('YYYY-MM-DD HH:mm:SS');
+          text = moment(values[key][X]).format('YYYY-MM-DD h:mm:ss A');
         }
 
         return text;
