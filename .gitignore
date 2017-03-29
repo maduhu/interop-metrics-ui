@@ -95,5 +95,5 @@ ENV/
 .idea/
 
 config.json
-metrics_server_bundle.tar
+metrics_server_bundle.tar.gz
 update.sh
