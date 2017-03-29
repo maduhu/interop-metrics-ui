@@ -150,22 +150,24 @@ function updateData(rawData, axisX, axisL, axisR) {
   return groupedData;
 }
 
+const HEIGHT = 300;
+const TOP_PADDING = 10;
+const SIDE_PADDING = 40;
+
 function calculateDimensions(element) {
   const bbox = element.getBoundingClientRect();
-  const right = 40;
-  const height = 300;
   const bottom = 30;
   const previewHeight = 60;
   const previewBottom = 20;
 
   return {
-    height,
     previewHeight,
-    top: 10,
-    left: 40,
-    bottom: height - bottom,
+    top: TOP_PADDING,
+    left: SIDE_PADDING,
+    bottom: HEIGHT - bottom,
     width: bbox.width,
-    right: bbox.width - right,
+    height: HEIGHT,
+    right: bbox.width - SIDE_PADDING,
     previewTop: 5,
     previewBottom: previewHeight - previewBottom,
   };
@@ -372,12 +374,24 @@ export default function TimeSeriesChart(el) {
      * Step 2: get the scaled value of the closest x value
      * Step 3: render value if the scaled value is within 3 pixels of the mouse.
      */
-
+    const chartEl = select(el);
     const bisectDate = bisector(d => d[0]).left;
     const scaleX = axes.x.scale;
     const posX = mouse(this)[0];
     const dateAtPos = scaleX.invert(posX);
     const values = {};
+
+    if (chartEl.select('.d3-chart .vertical-indicator').size() === 0) {
+      chartEl.select('.d3-chart').append('line')
+        .attr('class', 'vertical-indicator')
+        .lower(); // Have to use lower so the line renders behind the mouse overlay and does not trigger mouseOut.
+    }
+
+    chartEl.select('.d3-chart .vertical-indicator')
+      .attr('x1', posX)
+      .attr('x2', posX)
+      .attr('y1', TOP_PADDING)
+      .attr('y2', HEIGHT);
 
     [...mainData.left, ...mainData.right].forEach((series) => {
       const idx = bisectDate(series.rows, dateAtPos, 1);
@@ -400,7 +414,7 @@ export default function TimeSeriesChart(el) {
       }
     });
 
-    const legendItems = select(el).select('.legend')
+    const legendItems = chartEl.select('.legend')
       .selectAll('.legend-row');
 
     legendItems.select('.legend-col--value')
@@ -433,15 +447,20 @@ export default function TimeSeriesChart(el) {
     /**
      * Clears all legend values on mouseout
      */
-    select(el).select('.legend')
+    const chartEl = select(el);
+
+    chartEl.select('.legend')
       .selectAll('.legend-row')
       .select('.legend-col--value')
       .text('');
 
-    select(el).select('.legend')
+    chartEl.select('.legend')
       .selectAll('.legend-row')
       .select('.legend-col--date')
       .text('');
+
+    chartEl.select('.vertical-indicator')
+      .remove();
   }
 
   function renderMouseOverlay(sel, dims) {

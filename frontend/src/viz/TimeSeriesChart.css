@@ -21,6 +21,13 @@
 }
 .line {
   fill: none;
-  stroke-width: 2px;
   shape-rendering: crispEdges;
+  stroke-width: 2;
+}
+.vertical-indicator {
+  fill: none;
+  opacity: 0.5;
+  shape-rendering: crispEdges;
+  stroke: #000000;
+  stroke-width: 2;
 }
