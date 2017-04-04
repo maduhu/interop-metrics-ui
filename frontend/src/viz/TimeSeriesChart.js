@@ -150,6 +150,18 @@ function updateData(rawData, axisX, axisL, axisR) {
   return groupedData;
 }
 
+function findAxis(name, data) {
+  const findByName = d => d.name === name;
+
+  if (data.left.find(findByName)) {
+    return 'L';
+  } else if (data.right.find(findByName)) {
+    return 'R';
+  }
+
+  return '';
+}
+
 const HEIGHT = 300;
 const TOP_PADDING = 10;
 const SIDE_PADDING = 40;
@@ -603,9 +615,18 @@ export default function TimeSeriesChart(el) {
   function renderLegend(sel) {
     // TODO: make it possible to hover over a legend item to emphasize a series.
     // TODO: make it possible to toggle emphasized series so you don't have to hover.
+    const hasLeftAxis = mainData.left.length > 0 || previewData.left.length > 0;
+    const hasRightAxis = mainData.right.length > 0 || previewData.right.length > 0;
+    const hasBothAxes = hasLeftAxis && hasRightAxis;
+
     if (sel.select('table.legend').size() === 0) {
       const tbody = sel.append('table').attr('class', 'legend').append('tbody');
       tbody.append('th').attr('class', 'legend-header').text('color');
+
+      if (hasLeftAxis && hasRightAxis) {
+        tbody.append('th').attr('class', 'legend-header').text('axis');
+      }
+
       tbody.append('th').attr('class', 'legend-header').text('environment');
       tbody.append('th').attr('class', 'legend-header').text('application');
       tbody.append('th').attr('class', 'legend-header').text('metric');
@@ -619,14 +640,29 @@ export default function TimeSeriesChart(el) {
       const application = parts[1];
       const metric = parts.slice(2, parts.length - 1).join('.');
       const measure = parts[parts.length - 1];
+      let axis;
 
-      return [colorKey, environment, application, metric, measure];
+      if (hasBothAxes) {
+        axis = findAxis(colorKey, mainData);
+
+        if (axis === '') {
+          axis = findAxis(colorKey, previewData);
+        }
+      }
+
+      return [colorKey, environment, application, metric, measure, axis];
     });
     const items = sel.select('table.legend tbody').selectAll('tr.legend-row').data(colors);
     const newItems = items.enter().append('tr').attr('class', 'legend-row');
     const allItems = newItems.merge(items);
 
     newItems.append('td').attr('class', 'legend-col').append('div').attr('class', 'legend-swatch').html('&nbsp;');
+
+    if (hasBothAxes) {
+      newItems.append('td').attr('class', 'legend-col legend-col--axis');
+      allItems.select('td.legend-col--axis').text(d => d[5]);
+    }
+
     newItems.append('td').attr('class', 'legend-col legend-col--environment');
     newItems.append('td').attr('class', 'legend-col legend-col--application');
     newItems.append('td').attr('class', 'legend-col legend-col--metric');
