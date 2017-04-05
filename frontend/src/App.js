@@ -42,6 +42,18 @@ function newMetric(metric) {
   return { ...metric, measure: '', axis: 'left' };
 }
 
+function newDataObject(metric) {
+  return {
+    name: generateMetricsKey(metric),
+    axis: metric.axis,
+    durationUnit: metric.duration_unit,
+    rateUnit: metric.rate_unit,
+    loading: true,
+    error: null,
+    rows: [],
+  };
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -138,14 +150,7 @@ class App extends Component {
       chart.selectionEndDate = null;
 
       chart.metrics.forEach((metric, metricIdx) => {
-        const key = generateMetricsKey(metric);
-        const dataObj = {
-          name: key,
-          axis: metric.axis,
-          error: null,
-          loading: true,
-          rows: [],
-        };
+        const dataObj = newDataObject(metric);
         chart.data.push({ ...dataObj });
         chart.previewData.push({ ...dataObj });
         this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
@@ -331,16 +336,10 @@ class App extends Component {
         selectionEndDate: selection[1],
       };
 
-      chart.metrics.forEach((m, mIdx) => {
-        chart.data.push({
-          name: generateMetricsKey(m),
-          axis: m.axis,
-          loading: true,
-          error: null,
-          rows: [],
-        });
+      chart.metrics.forEach((metric, mIdx) => {
+        chart.data.push(newDataObject(metric));
 
-        this.loadData(idx, mIdx, m, selection[0], selection[1], false);
+        this.loadData(idx, mIdx, metric, selection[0], selection[1], false);
       });
 
       return {
@@ -398,13 +397,7 @@ class App extends Component {
             this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
           }
         } else {
-          const dataObj = {
-            name: key,
-            axis: metric.axis,
-            error: null,
-            loading: true,
-            rows: [],
-          };
+          const dataObj = newDataObject(metric);
           data.push({ ...dataObj });
           previewData.push({ ...dataObj });
           this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
@@ -502,13 +495,7 @@ class App extends Component {
 
       // reset all data to loading state
       copy.metrics.forEach((metric, metricIdx) => {
-        const dataObj = {
-          name: generateMetricsKey(metric),
-          axis: metric.axis,
-          error: null,
-          loading: true,
-          rows: [],
-        };
+        const dataObj = newDataObject(metric);
         copy.previewData.push({ ...dataObj });
         copy.data.push({ ...dataObj });
         this.loadData(idx, metricIdx, metric, copy.startDate.toDate(), copy.endDate.toDate(), true);

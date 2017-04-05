@@ -23,6 +23,22 @@ import './TimeSeriesChart.css';
 const SCALE_TYPES = { linear: true, log: true };
 const X = 0;
 const Y = 1;
+const unitMap = {
+  p75: 'durationUnit',
+  p95: 'durationUnit',
+  p98: 'durationUnit',
+  p99: 'durationUnit',
+  p999: 'durationUnit',
+  max: 'durationUnit',
+  mean: 'durationUnit',
+  median: 'durationUnit',
+  min: 'durationUnit',
+  std_dev: 'durationUnit',
+  one_min_rate: 'rateUnit',
+  five_min_rate: 'rateUnit',
+  fifteen_min_rate: 'rateUnit',
+  mean_rate: 'rateUnit',
+};
 
 // TODO: add an unmount method to delete underlying DOM elements.
 // TODO: add method to clear brush selection.
@@ -422,7 +438,16 @@ export default function TimeSeriesChart(el) {
       }
 
       if (Math.abs(scaleX(closestRow[X]) - posX) < 3 && closestRow[Y] !== null) {
-        values[series.name] = closestRow;
+        const x = closestRow[X];
+        let y = isNaN(closestRow[Y]) ? closestRow[Y] : closestRow[Y].toFixed(2); // Limit numbers to 2 decimal points.
+        const nameParts = series.name.split('.');
+        const measure = nameParts[nameParts.length - 1];
+
+        if (has.call(unitMap, measure)) {
+          y += ` ${series[unitMap[measure]]}`; // Add units if applicable.
+        }
+
+        values[series.name] = [x, y];
       }
     });
 
@@ -432,14 +457,7 @@ export default function TimeSeriesChart(el) {
     legendItems.select('.legend-col--value')
       .text((d) => {
         const key = d[0];
-        let text = '';
-
-        if (has.call(values, key)) {
-          const value = values[key][Y];
-          text = isNaN(value) ? value : value.toFixed(2);
-        }
-
-        return text;
+        return has.call(values, key) ? values[key][Y] : '';
       });
 
     legendItems.select('.legend-col--date')
