@@ -14,8 +14,8 @@ TABLE_NAMES = ['raw_counter_with_interval', 'raw_timer_with_interval']
 TIMESTAMP_COLUMNS = ['metric_timestamp', 'previous_metric_timestamp']
 COUNTER_COLUMNS = {'count', 'previous_count', 'interval_count'}
 TIMER_COLUMNS = {
-    'count', 'previous_count', 'interval_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'one_min_rate', 'fifteen_min_rate',
-    'five_min_rate', 'max', 'mean', 'mean_rate', 'median', 'min', 'std_dev'
+    'count', 'previous_count', 'interval_count', 'p75', 'p95', 'p98', 'p99', 'p999', 'max', 'mean', 'median', 'min',
+    'std_dev', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate', 'mean_rate'
 }
 COLUMN_MAP = {
     'raw_counter_with_interval': COUNTER_COLUMNS,
@@ -94,8 +94,13 @@ class MetricsService(BaseService):
         :return: list of dicts representing the environment, application, metric_name, and table.
         """
         all_rows = []
-        timestamp_query = (
-            'SELECT metric_timestamp as last_timestamp '
+        metadata_cols = ['metric_timestamp']
+
+        if 'timer' in table:
+            metadata_cols += ['duration_unit', 'rate_unit']
+
+        metadata_query = (
+            f'SELECT {", ".join(metadata_cols)} '
             f'FROM {table} '
             'WHERE environment = %s '
             'AND application = %s '
@@ -107,9 +112,11 @@ class MetricsService(BaseService):
 
         for row in rows:
             query_args = [row['environment'], row['application'], row['metric_name']]
-            last_timestamp = self.session.execute(timestamp_query, query_args)
+            metadata = self.session.execute(metadata_query, query_args)[0]
             row['table'] = table
-            row['last_timestamp'] = pytz.utc.localize(last_timestamp[0]['last_timestamp']).isoformat()
+            row['last_timestamp'] = pytz.utc.localize(metadata['metric_timestamp']).isoformat()
+            row['duration_unit'] = metadata.get('duration_unit')
+            row['rate_unit'] = metadata.get('rate_unit')
             all_rows.append(row)
 
         return all_rows
