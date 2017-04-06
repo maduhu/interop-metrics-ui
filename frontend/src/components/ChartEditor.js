@@ -12,23 +12,23 @@ class ChartEditor extends Component {
     this.renderTabs = this.renderTabs.bind(this);
     this.setTab = this.setTab.bind(this);
     this.addMetric = this.addMetric.bind(this);
-    this.state ={
+    this.state = {
       tab: props.chart.metrics.length > 0 ? SETTINGS : METRIC_PICKER,
     };
   }
 
   setTab(tab) {
-    this.setState(() => ({tab}));
+    this.setState(() => ({ tab }));
   }
 
   addMetric(metric) {
-    this.setState(() => ({tab: SETTINGS}));
+    this.setState(() => ({ tab: SETTINGS }));
     this.props.addMetric(metric);
   }
 
   renderTabs() {
     const pickerActive = this.state.tab === METRIC_PICKER ? 'tab--active' : '';
-    const settingsActive = this.state.tab === SETTINGS ? 'tab--active': '';
+    const settingsActive = this.state.tab === SETTINGS ? 'tab--active' : '';
 
     return (
       <div className="tabs">
