@@ -379,7 +379,7 @@ class App extends Component {
       const timesEqual = chart.startTime === oldChart.startTime && chart.endTime === oldChart.endTime;
 
       // If we've changed the date or time range of the chart we need all new data
-      const currentPreviewData = (!datesEqual || !timesEqual || rangeTypesEqual) ? [] : chart.previewData;
+      const currentPreviewData = (!datesEqual || !timesEqual || !rangeTypesEqual) ? [] : chart.previewData;
       const data = [];
       const previewData = [];
 
