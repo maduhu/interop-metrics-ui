@@ -55,6 +55,7 @@ class ChartEditor extends Component {
           metricsLoading={this.props.metricsLoading}
           metricsLoadError={this.props.metricsLoadError}
           addMetric={this.addMetric}
+          metricsLimitReached={this.props.chart.metrics.length === 4}
         />
 
         <ChartSettings

@@ -64,3 +64,11 @@
 .sort-icon {
   margin-left: 0.5em;
 }
+.metric-picker-mask {
+  height: 552px;
+}
+.metric-picker-message {
+  padding-top: 10%;
+  text-align: center;
+  font-size: 1.2em;
+}

@@ -310,6 +310,7 @@ export class MetricPicker extends Component {
     const fuse = this.state.fuse;
     let applications = [];
     let rows = [];
+    let body;
 
     if (environment !== '') {
       applications = Object.keys(metrics[environment]);
@@ -333,30 +334,42 @@ export class MetricPicker extends Component {
 
     this.sortMetrics(rows);
 
-    return (
-      <div className={`metric-picker ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
-        <MetricPickerFilters
-          environments={environments}
-          environment={environment}
-          onEnvironmentChange={this.onEnvironmentChange}
-          applications={applications}
-          application={application}
-          onApplicationChange={this.onApplicationChange}
-          filter={filter}
-          onFilterChange={this.onFilterChange}
-        />
+    if (this.props.metricsLimitReached) {
+      body = (
+        <div className={`metric-picker-mask ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
+          <p className="metric-picker-message">
+            Only 4 metrics may be plotted on a single chart.
+          </p>
+        </div>
+      );
+    } else {
+      body = (
+        <div className={`metric-picker ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
+          <MetricPickerFilters
+            environments={environments}
+            environment={environment}
+            onEnvironmentChange={this.onEnvironmentChange}
+            applications={applications}
+            application={application}
+            onApplicationChange={this.onApplicationChange}
+            filter={filter}
+            onFilterChange={this.onFilterChange}
+          />
 
-        <MetricPickerTable
-          metricsLoading={this.props.metricsLoading}
-          metricsLoadError={this.props.metricsLoadError}
-          rows={rows}
-          sortCol={this.state.sortCol}
-          sortDir={this.state.sortDir}
-          addMetric={this.props.addMetric}
-          onSortChange={this.onSortChange}
-        />
-      </div>
-    );
+          <MetricPickerTable
+            metricsLoading={this.props.metricsLoading}
+            metricsLoadError={this.props.metricsLoadError}
+            rows={rows}
+            sortCol={this.state.sortCol}
+            sortDir={this.state.sortDir}
+            addMetric={this.props.addMetric}
+            onSortChange={this.onSortChange}
+          />
+        </div>
+      );
+    }
+
+    return body;
   }
 }
 
