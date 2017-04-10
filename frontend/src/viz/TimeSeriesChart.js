@@ -60,7 +60,6 @@ function calculateXDomain(data, axis) {
   }
 
   return data.reduce((domain, series) => {
-    // First convert the series x values to dates.
     const min = series.rows[0][X];
     const max = series.rows[series.rows.length - 1][X];
 
@@ -569,6 +568,12 @@ export default function TimeSeriesChart(el) {
 
     axis.onBrushEnd = args[0];
     axis.brush.on('end', () => {
+      if (event.sourceEvent === null) {
+        // Don't trigger brush events if there is no sourceEvent, this means that the brush was programmatically set,
+        // probably due to a re-render, so we want to prevent an infinite loop of brush events.
+        return;
+      }
+
       const scaleX = axis.scale;
       const range = event.selection === null ? null : event.selection.map(scaleX.invert, scaleX);
 
@@ -578,11 +583,12 @@ export default function TimeSeriesChart(el) {
     return chart;
   };
 
-  function renderBrush(sel, height) {
+  function renderBrush(sel, height, trans) {
     const selector = 'g.brush-area';
-    const axis = axes.xPreview;
-    const rangeX = axis.scale.range();
-    const previewBrush = axis.brush;
+    const previewAxis = axes.xPreview;
+    const xAxis = axes.x;
+    const rangeX = previewAxis.scale.range();
+    const previewBrush = previewAxis.brush;
 
     previewBrush.extent([[rangeX[0], 0], [rangeX[1], height]]);
 
@@ -592,6 +598,13 @@ export default function TimeSeriesChart(el) {
 
     sel.select(selector)
       .call(previewBrush);
+
+    if ((xAxis.domain[0] - previewAxis.domain[0]) !== 0 || (xAxis.domain[1] - previewAxis.domain[1]) !== 0) {
+      // Move the brush on re-render.
+      sel.select(selector)
+        .transition(trans)
+        .call(previewBrush.move, xAxis.scale.domain().map(d => previewAxis.scale(d)));
+    }
   }
 
   function renderPreview(sel, dims, trans) {
@@ -627,7 +640,7 @@ export default function TimeSeriesChart(el) {
       .call(renderLines, 'left', scaleX, scaleL, trans)
       .call(renderLines, 'right', scaleX, scaleR, trans)
       .call(renderAxis, 'xPreview', 0, rangeY[0])
-      .call(renderBrush, height);
+      .call(renderBrush, height, trans);
   }
 
   function renderLegend(sel) {
