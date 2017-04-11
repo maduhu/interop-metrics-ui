@@ -11,6 +11,8 @@ export class Chart extends PureComponent {
     this.openSettings = this.openSettings.bind(this);
     this.removeChart = this.removeChart.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
+    this.moveUp = this.moveUp.bind(this);
+    this.moveDown = this.moveDown.bind(this);
   }
 
   isLoading() {
@@ -42,6 +44,14 @@ export class Chart extends PureComponent {
 
   refreshChart() {
     this.props.refreshChart(this.props.idx);
+  }
+
+  moveUp() {
+    this.props.moveUp(this.props.idx);
+  }
+
+  moveDown() {
+    this.props.moveDown(this.props.idx);
   }
 
   render() {
@@ -77,6 +87,14 @@ export class Chart extends PureComponent {
           <h5>{chart.title}</h5>
         </div>
         <div className="chart__icons">
+          <button className="chart__icon button" onClick={this.moveUp}>
+            <span className="fa fa-arrow-up" />
+          </button>
+
+          <button className="chart__icon button" onClick={this.moveDown}>
+            <span className="fa fa-arrow-down" />
+          </button>
+
           <button className="chart__icon button" onClick={this.refreshChart}>
             <span className="fa fa-refresh" />
           </button>

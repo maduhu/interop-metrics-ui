@@ -75,6 +75,8 @@ class App extends Component {
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
+    this.moveUp = this.moveUp.bind(this);
+    this.moveDown = this.moveDown.bind(this);
     this.saveDashboard = this.saveDashboard.bind(this);
     this.clearDashboard = this.clearDashboard.bind(this);
     this.openClearDialog = this.openClearDialog.bind(this);
@@ -507,6 +509,42 @@ class App extends Component {
     });
   }
 
+  moveUp(idx) {
+    this.setState((state) => {
+      const newState = {};
+
+      if (idx === 0) {
+        // Do nothing if we try to move the top chart up.
+        return newState;
+      }
+
+      newState.charts = [...state.charts];
+      const targetChart = newState.charts[idx];
+      newState.charts[idx] = newState.charts[idx - 1];
+      newState.charts[idx - 1] = targetChart;
+
+      return newState;
+    }, this.saveDashboard);
+  }
+
+  moveDown(idx) {
+    this.setState((state) => {
+      const newState = {};
+
+      if (idx === state.charts.length - 1) {
+        // Do nothing if we try to move the top chart up.
+        return newState;
+      }
+
+      newState.charts = [...state.charts];
+      const targetChart = newState.charts[idx];
+      newState.charts[idx] = newState.charts[idx + 1];
+      newState.charts[idx + 1] = targetChart;
+
+      return newState;
+    }, this.saveDashboard);
+  }
+
   saveDashboard() {
     /**
      * Saves all of the current charts to HTML5 local storage so we can load them on page refresh.
@@ -582,6 +620,8 @@ class App extends Component {
         openSettings={this.openSettings}
         removeChart={this.removeChart}
         refreshChart={this.refreshChart}
+        moveUp={this.moveUp}
+        moveDown={this.moveDown}
         onSelection={this.loadSelectionData}
       />
     ));
