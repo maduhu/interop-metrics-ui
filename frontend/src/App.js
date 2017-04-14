@@ -629,7 +629,7 @@ class App extends Component {
     return (
       <div className="app">
         <div className="app-buttons">
-          <button className="app-buttons__button button button--delete" onClick={this.openClearDialog}>
+          <button className="app-buttons__button button button--clear" onClick={this.openClearDialog}>
             <span className="button__icon fa fa-trash">&nbsp;</span>
             <span className="button__text">Clear Dashboard</span>
           </button>

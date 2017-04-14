@@ -61,10 +61,17 @@ input:focus {
 }
 .button__icon {
   display: inline-block;
-  margin-right: 0.5em;
+  margin-right: 0.25em;
 }
+.button--clear {
+  background-color: rgba(163, 163, 163, 1.0);
+}
+.button--clear:hover,
 .button--delete:hover {
   background-color: rgba(224, 117, 0, 1);
+}
+.app-buttons .button {
+  padding: 0.5em 1.2em;
 }
 .tabs {
   display: flex;
