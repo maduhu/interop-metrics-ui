@@ -179,7 +179,7 @@ function findAxis(name, data) {
 
 const HEIGHT = 300;
 const TOP_PADDING = 10;
-const SIDE_PADDING = 40;
+const SIDE_PADDING = 55;
 
 function calculateDimensions(element) {
   const bbox = element.getBoundingClientRect();
