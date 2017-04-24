@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import TimeSeriesChart from '../viz/TimeSeriesChart';
 
+const LOADING_TEXT = 'Loading data...';
+
 function isLoading(data) {
   return Object.values(data).some(series => series.loading);
 }
@@ -41,23 +43,25 @@ export class TimeSeries extends Component {
       .data(chart.data)
       .previewData(chart.previewData);
 
+    if (chart.initialLoad) {
+      this.graph.loadingText(LOADING_TEXT);
+    }
+
     this.renderChart(this.props);
   }
 
   componentWillReceiveProps(props) {
-    const p0 = this.props.chart.previewData;
-    const p1 = props.chart.previewData;
-    const d0 = this.props.chart.data;
-    const d1 = props.chart.data;
     const chart = props.chart;
+    const p0 = this.props.chart.previewData;
+    const p1 = chart.previewData;
+    const d0 = this.props.chart.data;
+    const d1 = chart.data;
     const previewDomain = ([chart.startDate.toDate(), chart.endDate.toDate()]);
 
     // eslint-disable-next-line
     if (p0 != p1) {
       if (!isLoading(p1)) {
         this.graph.xPreviewDomain(previewDomain).previewData(p1);
-      } else {
-        // TODO: Implement loading state method and toggle loading state here.
       }
     }
 
@@ -74,9 +78,13 @@ export class TimeSeries extends Component {
         }
 
         this.graph.xDomain(dataDomain).data(d1);
-      } else {
-        // TODO: Implement loading state method and toggle loading state here.
       }
+    }
+
+    if (chart.initialLoad) {
+      this.graph.loadingText(LOADING_TEXT);
+    } else {
+      this.graph.loadingText(null);
     }
 
     this.renderChart(props);
