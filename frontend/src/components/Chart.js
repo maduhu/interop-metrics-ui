@@ -1,22 +1,16 @@
 import React, { PureComponent } from 'react';
 import { TimeSeries } from './TimeSeries';
-import { LoadingCube } from './LoadingCube';
 import './Chart.css';
 
 export class Chart extends PureComponent {
   constructor(props) {
     super(props);
-    this.isLoading = this.isLoading.bind(this);
     this.errors = this.errors.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.removeChart = this.removeChart.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
     this.moveUp = this.moveUp.bind(this);
     this.moveDown = this.moveDown.bind(this);
-  }
-
-  isLoading() {
-    return this.props.chart.previewData.some(series => series.loading);
   }
 
   errors() {
@@ -75,8 +69,6 @@ export class Chart extends PureComponent {
           {errors}
         </div>
       );
-    } else if (this.isLoading()) {
-      chartArea = <LoadingCube>Loading data...</LoadingCube>;
     } else {
       chartArea = <TimeSeries {...this.props} />;
     }
