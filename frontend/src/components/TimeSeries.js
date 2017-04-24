@@ -67,7 +67,7 @@ export class TimeSeries extends Component {
         let dataDomain;
 
         if (chart.selectionStartDate === null) {
-          // TODO: add a method to clear clear selection in TimeSeriesChart and use it here.
+          this.graph.clearBrush();
           dataDomain = previewDomain;
         } else {
           dataDomain = [chart.selectionStartDate, chart.selectionEndDate];

@@ -619,6 +619,11 @@ export default function TimeSeriesChart(el) {
     return chart;
   };
 
+  chart.clearBrush = () => {
+    select(el).select('g.brush-area').call(axes.xPreview.brush.move, null);
+    return chart;
+  };
+
   function renderBrush(sel, height, trans) {
     const selector = 'g.brush-area';
     const previewAxis = axes.xPreview;
