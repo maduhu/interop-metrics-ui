@@ -40,7 +40,6 @@ const unitMap = {
   mean_rate: 'rateUnit',
 };
 
-// TODO: add an unmount method to delete underlying DOM elements.
 // TODO: add method to clear brush selection.
 // TODO: add methods to toggle loading state
 //      - Render some form of loading mask when loading data
@@ -204,6 +203,7 @@ export default function TimeSeriesChart(el) {
   const chart = {};
   let mainData = null;
   let previewData = null;
+  let loadingText = null;
   const axes = {
     x: {
       type: 'time',
@@ -344,6 +344,41 @@ export default function TimeSeriesChart(el) {
 
   chart.xDomain = (...args) => updateXDomain('x', ...args);
   chart.xPreviewDomain = (...args) => updateXDomain('xPreview', ...args);
+
+  chart.loadingText = (...args) => {
+    /**
+     * Set this to a string to toggle loading state. The string will be rendered to the canvas next time render is
+     * called.
+     */
+    if (args.length === 0) {
+      return loadingText;
+    }
+
+    loadingText = args[0];
+
+    return chart;
+  };
+
+  function renderLoadingText(sel, dims, trans) {
+    const selector = 'text.loading-mask';
+
+    if (loadingText !== null) {
+      if (sel.select(selector).size() === 0) {
+        sel.append('text')
+          .attr('class', 'loading-mask')
+          .attr('text-anchor', 'middle')
+          .attr('dx', dims.width / 2)
+          .attr('dy', dims.height / 2);
+      }
+
+      sel.select(selector).text(loadingText)
+        .transition(trans)
+        .attr('dx', dims.width / 2)
+        .attr('dy', dims.height / 2);
+    } else {
+      sel.select(selector).remove();
+    }
+  }
 
   function renderLines(sel, axis, scaleX, scaleY, trans) {
     const groupSelector = `g.${axis}`;
@@ -538,7 +573,8 @@ export default function TimeSeriesChart(el) {
       .call(renderAxis, 'left', rangeX[0], rangeY[1] - dims.top)
       .call(renderAxis, 'right', rangeX[1], rangeY[1] - dims.top)
       .call(renderAxis, 'x', 0, rangeY[0])
-      .call(renderMouseOverlay, dims);
+      .call(renderMouseOverlay, dims)
+      .call(renderLoadingText, dims, trans);
   }
 
   chart.onBrush = (...args) => {
@@ -687,7 +723,11 @@ export default function TimeSeriesChart(el) {
     const newItems = items.enter().append('tr').attr('class', 'legend-row');
     const allItems = newItems.merge(items);
 
-    newItems.append('td').attr('class', 'legend-col').append('div').attr('class', 'legend-swatch').html('&nbsp;');
+    newItems.append('td')
+      .attr('class', 'legend-col')
+      .append('div')
+      .attr('class', 'legend-swatch')
+      .html('&nbsp;');
 
     if (hasBothAxes) {
       newItems.append('td').attr('class', 'legend-col legend-col--axis');
