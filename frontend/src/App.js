@@ -76,6 +76,8 @@ class App extends Component {
     this.openSettings = this.openSettings.bind(this);
     this.closeSettings = this.closeSettings.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
+    this.startRefreshLoop = this.startRefreshLoop.bind(this);
+    this.refreshLoop = this.refreshLoop.bind(this);
     this.moveUp = this.moveUp.bind(this);
     this.moveDown = this.moveDown.bind(this);
     this.saveDashboard = this.saveDashboard.bind(this);
@@ -94,6 +96,8 @@ class App extends Component {
       settingsOpen: false,
       clearDialogOpen: false,
     };
+
+    this.startRefreshLoop();
   }
 
   onLoadMetrics(error, response) {
@@ -513,6 +517,28 @@ class App extends Component {
       return {
         charts: [...state.charts.slice(0, idx), ...[copy], ...state.charts.slice(idx + 1)],
       };
+    });
+  }
+
+  startRefreshLoop() {
+    window.setInterval(this.refreshLoop, 10 * 1000);
+  }
+
+  refreshLoop() {
+    /**
+     * This method gets called on an interval to update all dynamic charts that may be getting new data. We need to be
+     * careful about which charts are able to be refreshed though, so we only refresh if the user has not made a
+     * selection in the preview area, and only if it's not already loading data, that way we don't continuously queue
+     * up data refreshes if the server is slow to respond.
+     */
+    this.state.charts.forEach((chart, idx) => {
+      const hasSelection = chart.selectionStartDate !== null && chart.selectionEndDate !== null;
+      const previewLoading = chart.previewData.some(d => d.loading);
+      const dataLoading = chart.data.some(d => d.loading);
+
+      if (chart.rangeType === 'dynamic' && !hasSelection && !previewLoading && !dataLoading) {
+        this.refreshChart(idx);
+      }
     });
   }
 
