@@ -204,6 +204,7 @@ export default function TimeSeriesChart(el) {
   let mainData = null;
   let previewData = null;
   let loadingText = null;
+  let currentSelection = null;
   const axes = {
     x: {
       type: 'time',
@@ -613,6 +614,7 @@ export default function TimeSeriesChart(el) {
       const scaleX = axis.scale;
       const range = event.selection === null ? null : event.selection.map(scaleX.invert, scaleX);
 
+      currentSelection = range;
       axis.onBrushEnd(range);
     });
 
@@ -627,9 +629,9 @@ export default function TimeSeriesChart(el) {
   function renderBrush(sel, height, trans) {
     const selector = 'g.brush-area';
     const previewAxis = axes.xPreview;
-    const xAxis = axes.x;
     const rangeX = previewAxis.scale.range();
     const previewBrush = previewAxis.brush;
+    let scaledSelection = [null, null];
 
     previewBrush.extent([[rangeX[0], 0], [rangeX[1], height]]);
 
@@ -640,12 +642,11 @@ export default function TimeSeriesChart(el) {
     sel.select(selector)
       .call(previewBrush);
 
-    if ((xAxis.domain[0] - previewAxis.domain[0]) !== 0 || (xAxis.domain[1] - previewAxis.domain[1]) !== 0) {
-      // Move the brush on re-render.
-      sel.select(selector)
-        .transition(trans)
-        .call(previewBrush.move, xAxis.scale.domain().map(d => previewAxis.scale(d)));
+    if (currentSelection !== null) {
+      scaledSelection = currentSelection.map(d => previewAxis.scale(d));
     }
+
+    sel.select(selector).transition(trans).call(previewBrush.move, scaledSelection);
   }
 
   function renderPreview(sel, dims, trans) {
