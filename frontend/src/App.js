@@ -30,6 +30,7 @@ function newChart() {
     leftAxis: 'linear',
     rightAxis: 'linear',
     metrics: [],
+    initialLoad: false,
     previewData: [],
     data: [],
   };
@@ -137,6 +138,7 @@ class App extends Component {
 
     return JSON.parse(chartsStr).map((savedChart, chartIdx) => {
       const chart = { ...savedChart }; // Make a copy so ESLint doesn't complain about modifying passed in objects.
+      chart.initialLoad = true;
       chart.previewData = [];
       chart.data = [];
 
@@ -286,6 +288,10 @@ class App extends Component {
         ];
       }
 
+      if (!chart.data.some(d => d.loading)) {
+        chart.initialLoad = false;
+      }
+
       return {
         charts: [...state.charts.slice(0, chartIdx), ...[chart], ...state.charts.slice(chartIdx + 1)],
       };
@@ -399,6 +405,7 @@ class App extends Component {
             this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
           }
         } else {
+          chart.initialLoad = true;
           const dataObj = newDataObject(metric);
           data.push({ ...dataObj });
           previewData.push({ ...dataObj });
