@@ -2,58 +2,20 @@ import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
 import './App.css';
-import { generateMetricsKey, generateMetricsUrl, has } from './utils';
+import {
+  generateMetricsKey,
+  generateMetricsUrl,
+  has,
+  createChart,
+  createMetric,
+  createDataObject,
+} from './utils';
 import Dialog from './components/Dialog';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
 
-function newChart() {
-  /**
-   * Creates a new chart object.
-   * Defaults chart range to the last 24 hours.
-   * Defaults axes to linear scales.
-   */
-  const end = moment.utc();
-  const start = end.clone().subtract(1, 'hours');
 
-  return {
-    title: '',
-    rangeType: 'dynamic',
-    rangePeriod: 'hours',
-    rangeMultiplier: 1,
-    startDate: start,
-    endDate: end,
-    selectionStartDate: null,
-    selectionEndDate: null,
-    // In the future we should also allow users to set axis domains.
-    leftAxis: 'linear',
-    rightAxis: 'linear',
-    metrics: [],
-    initialLoad: false,
-    previewData: [],
-    data: [],
-  };
-}
-
-function newMetric(metric) {
-  /**
-   * Copies a metric and adds a measure and axis field. In the future we'll probably add more fields.
-   */
-  return { ...metric, measure: '', axis: 'left' };
-}
-
-function newDataObject(metric) {
-  return {
-    name: generateMetricsKey(metric),
-    axis: metric.axis,
-    durationUnit: metric.duration_unit,
-    rateUnit: metric.rate_unit,
-    loading: true,
-    error: null,
-    rows: [],
-  };
-}
 
 class App extends Component {
   constructor(props) {
@@ -137,7 +99,7 @@ class App extends Component {
     const chartsStr = localStorage.getItem('charts');  // eslint-disable-line no-undef
 
     if (chartsStr === null) {
-      return [newChart()];
+      return [createChart()];
     }
 
     return JSON.parse(chartsStr).map((savedChart, chartIdx) => {
@@ -158,7 +120,7 @@ class App extends Component {
       chart.selectionEndDate = null;
 
       chart.metrics.forEach((metric, metricIdx) => {
-        const dataObj = newDataObject(metric);
+        const dataObj = createDataObject(metric);
         chart.data.push({ ...dataObj });
         chart.previewData.push({ ...dataObj });
         this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
@@ -172,7 +134,7 @@ class App extends Component {
     /**
      * Adds a new (empty) chart to the page.
      */
-    this.setState(state => ({ charts: state.charts.concat([newChart()]) }), this.saveDashboard);
+    this.setState(state => ({ charts: state.charts.concat([createChart()]) }), this.saveDashboard);
   }
 
   updateTargetChart(attr, value) {
@@ -349,7 +311,7 @@ class App extends Component {
       };
 
       chart.metrics.forEach((metric, mIdx) => {
-        chart.data.push(newDataObject(metric));
+        chart.data.push(createDataObject(metric));
 
         this.loadData(idx, mIdx, metric, selection[0], selection[1], false);
       });
@@ -410,7 +372,7 @@ class App extends Component {
           }
         } else {
           chart.initialLoad = true;
-          const dataObj = newDataObject(metric);
+          const dataObj = createDataObject(metric);
           data.push({ ...dataObj });
           previewData.push({ ...dataObj });
           this.loadData(idx, mIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
@@ -433,7 +395,7 @@ class App extends Component {
     /**
      * Adds a metric to the targetChart metrics object.
      */
-    const metrics = this.state.targetChart.metrics.concat([newMetric(metric)]);
+    const metrics = this.state.targetChart.metrics.concat([createMetric(metric)]);
     this.updateTargetChart('metrics', metrics);
   }
 
@@ -508,7 +470,7 @@ class App extends Component {
 
       // reset all data to loading state
       copy.metrics.forEach((metric, metricIdx) => {
-        const dataObj = newDataObject(metric);
+        const dataObj = createDataObject(metric);
         copy.previewData.push({ ...dataObj });
         copy.data.push({ ...dataObj });
         this.loadData(idx, metricIdx, metric, copy.startDate.toDate(), copy.endDate.toDate(), true);
@@ -521,7 +483,7 @@ class App extends Component {
   }
 
   startRefreshLoop() {
-    window.setInterval(this.refreshLoop, 10 * 1000);
+    window.setInterval(this.refreshLoop, 60 * 1000);
   }
 
   refreshLoop() {
@@ -608,7 +570,7 @@ class App extends Component {
      * Clears all charts from localStorage and resets charts object.
      */
     localStorage.removeItem('charts');  // eslint-disable-line no-undef
-    this.setState(() => ({ charts: [newChart()], clearDialogOpen: false }));
+    this.setState(() => ({ charts: [createChart()], clearDialogOpen: false }));
   }
 
   openClearDialog() {
