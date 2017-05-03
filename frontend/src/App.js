@@ -52,6 +52,7 @@ class App extends Component {
     const currentDashboard = copyDashboard(dashboards[0]);
 
     currentDashboard.charts.forEach((chart, chartIdx) => {
+      /* eslint-disable no-param-reassign */
       chart.initialLoad = true;
       chart.previewData = [];
       chart.data = [];
@@ -61,6 +62,7 @@ class App extends Component {
         chart.previewData.push({ ...dataObj });
         this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
       });
+      /* eslint-enable */
     });
 
     this.state = {
