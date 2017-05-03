@@ -8,6 +8,8 @@ import {
   has,
   createChart,
   createMetric,
+  copyDashboard,
+  loadDashboards,
   createDataObject,
 } from './utils';
 import Dialog from './components/Dialog';
@@ -22,7 +24,6 @@ class App extends Component {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
     this.loadMetrics = this.loadMetrics.bind(this);
-    this.loadSavedCharts = this.loadSavedCharts.bind(this);
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
@@ -42,17 +43,34 @@ class App extends Component {
     this.refreshLoop = this.refreshLoop.bind(this);
     this.moveUp = this.moveUp.bind(this);
     this.moveDown = this.moveDown.bind(this);
-    this.saveDashboard = this.saveDashboard.bind(this);
+    this.saveState = this.saveState.bind(this);
     this.clearDashboard = this.clearDashboard.bind(this);
     this.openClearDialog = this.openClearDialog.bind(this);
     this.closeClearDialog = this.closeClearDialog.bind(this);
 
+    const dashboards = loadDashboards();
+    const currentDashboard = copyDashboard(dashboards[0]);
+
+    currentDashboard.charts.forEach((chart, chartIdx) => {
+      chart.initialLoad = true;
+      chart.previewData = [];
+      chart.data = [];
+      chart.metrics.forEach((metric, metricIdx) => {
+        const dataObj = createDataObject(metric);
+        chart.data.push({ ...dataObj });
+        chart.previewData.push({ ...dataObj });
+        this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
+      });
+    });
+
     this.state = {
+      dashboards,
+      currentDashboard,
+      currentDashboardIdx: 0,
       rawMetrics: [],
       metrics: {},
       metricsLoading: true,
       metricsLoadError: null,
-      charts: this.loadSavedCharts(),
       targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
@@ -95,38 +113,8 @@ class App extends Component {
       .end(this.onLoadMetrics);
   }
 
-  loadSavedCharts() {
-    const chartsStr = localStorage.getItem('charts');  // eslint-disable-line no-undef
 
-    if (chartsStr === null) {
-      return [createChart()];
-    }
 
-    return JSON.parse(chartsStr).map((savedChart, chartIdx) => {
-      const chart = { ...savedChart }; // Make a copy so ESLint doesn't complain about modifying passed in objects.
-      chart.initialLoad = true;
-      chart.previewData = [];
-      chart.data = [];
-
-      if (chart.rangeType === 'fixed') {
-        chart.startDate = moment.utc(chart.startDate);
-        chart.endDate = moment.utc(chart.endDate);
-      } else {
-        chart.endDate = moment.utc();
-        chart.startDate = chart.endDate.clone().subtract(chart.rangeMultiplier, chart.rangePeriod);
-      }
-
-      chart.selectionStartDate = null;
-      chart.selectionEndDate = null;
-
-      chart.metrics.forEach((metric, metricIdx) => {
-        const dataObj = createDataObject(metric);
-        chart.data.push({ ...dataObj });
-        chart.previewData.push({ ...dataObj });
-        this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
-      });
-
-      return chart;
     });
   }
 
@@ -134,7 +122,12 @@ class App extends Component {
     /**
      * Adds a new (empty) chart to the page.
      */
-    this.setState(state => ({ charts: state.charts.concat([createChart()]) }), this.saveDashboard);
+    this.setState(state => ({
+      currentDashboard: {
+        ...state.currentDashboard,
+        charts: state.currentDashboard.charts.concat([createChart()]),
+      },
+    }), this.saveState);
   }
 
   updateTargetChart(attr, value) {
@@ -155,15 +148,20 @@ class App extends Component {
      * Remove the chart at idx.
      */
     this.setState((state) => {
-      const charts = state.charts.slice(0, idx).concat(state.charts.slice(idx + 1));
-      return { charts };
-    }, this.saveDashboard);
+      const charts = state.currentDashboard.charts.slice(0, idx).concat(state.currentDashboard.charts.slice(idx + 1));
+      return {
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts,
+        },
+      };
+    }, this.saveState);
   }
 
   selectionDataHandler(chartIdx, dataIdx, measure, error, response) {
     this.setState((state) => {
       let body = null;
-      const oldChart = state.charts[chartIdx];
+      const oldChart = state.currentDashboard.charts[chartIdx];
       const chart = { ...oldChart };
       const data = { ...oldChart.data[dataIdx] };
 
@@ -198,7 +196,14 @@ class App extends Component {
       }
 
       return {
-        charts: [...state.charts.slice(0, chartIdx), ...[chart], ...state.charts.slice(chartIdx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, chartIdx),
+            chart,
+            ...state.currentDashboard.charts.slice(chartIdx + 1),
+          ],
+        },
       };
     });
   }
@@ -206,7 +211,7 @@ class App extends Component {
   previewDataHandler(chartIdx, dataIdx, measure, error, response) {
     this.setState((state) => {
       let body = null;
-      const oldChart = state.charts[chartIdx];
+      const oldChart = state.currentDashboard.charts[chartIdx];
       const chart = { ...oldChart };
       const data = { ...oldChart.data[dataIdx] };
       const previewData = { ...oldChart.previewData[dataIdx] };
@@ -259,7 +264,14 @@ class App extends Component {
       }
 
       return {
-        charts: [...state.charts.slice(0, chartIdx), ...[chart], ...state.charts.slice(chartIdx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, chartIdx),
+            chart,
+            ...state.currentDashboard.charts.slice(chartIdx + 1),
+          ],
+        },
       };
     });
   }
@@ -282,7 +294,7 @@ class App extends Component {
 
   clearSelection(idx) {
     this.setState((state) => {
-      const oldChart = state.charts[idx];
+      const oldChart = state.currentDashboard.charts[idx];
       const chart = {
         ...oldChart,
         data: oldChart.previewData,
@@ -291,7 +303,14 @@ class App extends Component {
       };
 
       return {
-        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, idx),
+            chart,
+            ...state.currentDashboard.charts.slice(idx + 1),
+          ],
+        },
       };
     });
   }
@@ -304,7 +323,7 @@ class App extends Component {
 
     this.setState((state) => {
       const chart = {
-        ...state.charts[idx],
+        ...state.currentDashboard.charts[idx],
         data: [],
         selectionStartDate: selection[0],
         selectionEndDate: selection[1],
@@ -317,7 +336,14 @@ class App extends Component {
       });
 
       return {
-        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, idx),
+            chart,
+            ...state.currentDashboard.charts.slice(idx + 1),
+          ],
+        },
       };
     });
   }
@@ -328,7 +354,7 @@ class App extends Component {
      */
     this.setState((state) => {
       const idx = state.targetChartIdx;
-      const oldChart = state.charts[idx];
+      const oldChart = state.currentDashboard.charts[idx];
       const chart = {
         ...state.targetChart,
         // Note: here we clear selection on save, not sure this behavior is the best.
@@ -383,12 +409,18 @@ class App extends Component {
       chart.previewData = previewData;
 
       return {
-        charts: [...state.charts.slice(0, idx), ...[chart], ...state.charts.slice(idx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, idx),
+            chart,
+            ...state.currentDashboard.charts.slice(idx + 1)],
+        },
         targetChartIdx: null,
         targetChart: null,
         settingsOpen: false,
       };
-    }, this.saveDashboard);
+    }, this.saveState);
   }
 
   addMetric(metric) {
@@ -435,11 +467,9 @@ class App extends Component {
      * Opens the settings panel for the chart at the given index.
      */
     this.loadMetrics();
-
-
     this.setState(state => ({
       targetChartIdx: idx,
-      targetChart: { ...state.charts[idx], metrics: [...state.charts[idx].metrics] },
+      targetChart: { ...state.currentDashboard.charts[idx], metrics: [...state.currentDashboard.charts[idx].metrics] },
       settingsOpen: true,
     }));
   }
@@ -453,31 +483,38 @@ class App extends Component {
 
   refreshChart(idx) {
     this.setState((state) => {
-      const chart = state.charts[idx];
-      const copy = {
-        ...chart,
+      const oldChart = state.currentDashboard.charts[idx];
+      const chart = {
+        ...oldChart,
         selectionStartDate: null,
         selectionEndDate: null,
         previewData: [],
         data: [],
       };
 
-      if (copy.rangeType === 'dynamic') {
+      if (chart.rangeType === 'dynamic') {
         // Update start and end dates when using dynamic ranges.
-        copy.endDate = moment.utc();
-        copy.startDate = copy.endDate.clone().subtract(copy.rangeMultiplier, copy.rangePeriod);
+        chart.endDate = moment.utc();
+        chart.startDate = chart.endDate.clone().subtract(chart.rangeMultiplier, chart.rangePeriod);
       }
 
       // reset all data to loading state
-      copy.metrics.forEach((metric, metricIdx) => {
+      chart.metrics.forEach((metric, metricIdx) => {
         const dataObj = createDataObject(metric);
-        copy.previewData.push({ ...dataObj });
-        copy.data.push({ ...dataObj });
-        this.loadData(idx, metricIdx, metric, copy.startDate.toDate(), copy.endDate.toDate(), true);
+        chart.previewData.push({ ...dataObj });
+        chart.data.push({ ...dataObj });
+        this.loadData(idx, metricIdx, metric, chart.startDate.toDate(), chart.endDate.toDate(), true);
       });
 
       return {
-        charts: [...state.charts.slice(0, idx), ...[copy], ...state.charts.slice(idx + 1)],
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts: [
+            ...state.currentDashboard.charts.slice(0, idx),
+            chart,
+            ...state.currentDashboard.charts.slice(idx + 1),
+          ],
+        },
       };
     });
   }
@@ -493,7 +530,7 @@ class App extends Component {
      * selection in the preview area, and only if it's not already loading data, that way we don't continuously queue
      * up data refreshes if the server is slow to respond.
      */
-    this.state.charts.forEach((chart, idx) => {
+    this.state.currentDashboard.charts.forEach((chart, idx) => {
       const hasSelection = chart.selectionStartDate !== null && chart.selectionEndDate !== null;
       const previewLoading = chart.previewData.some(d => d.loading);
       const dataLoading = chart.data.some(d => d.loading);
@@ -506,69 +543,64 @@ class App extends Component {
 
   moveUp(idx) {
     this.setState((state) => {
-      const newState = {};
-
       if (idx === 0) {
         // Do nothing if we try to move the top chart up.
-        return newState;
+        return {};
       }
 
-      newState.charts = [...state.charts];
-      const targetChart = newState.charts[idx];
-      newState.charts[idx] = newState.charts[idx - 1];
-      newState.charts[idx - 1] = targetChart;
+      const charts = [...state.currentDashboard.charts];
+      const chartToMove = charts[idx];
+      charts[idx] = charts[idx - 1];
+      charts[idx - 1] = chartToMove;
 
-      return newState;
-    }, this.saveDashboard);
+      return {
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts,
+        },
+      };
+    }, this.saveState);
   }
 
   moveDown(idx) {
     this.setState((state) => {
-      const newState = {};
-
-      if (idx === state.charts.length - 1) {
-        // Do nothing if we try to move the top chart up.
-        return newState;
+      if (idx === state.currentDashboard.charts.length - 1) {
+        // Do nothing if we try to move the bottom chart down.
+        return {};
       }
 
-      newState.charts = [...state.charts];
-      const targetChart = newState.charts[idx];
-      newState.charts[idx] = newState.charts[idx + 1];
-      newState.charts[idx + 1] = targetChart;
+      const charts = [...state.currentDashboard.charts];
+      const chartToMove = charts[idx];
+      charts[idx] = charts[idx + 1];
+      charts[idx + 1] = chartToMove;
 
-      return newState;
-    }, this.saveDashboard);
+      return {
+        currentDashboard: {
+          ...state.currentDashboard,
+          charts,
+        },
+      };
+    }, this.saveState);
   }
 
-  saveDashboard() {
+  saveState() {
     /**
-     * Saves all of the current charts to HTML5 local storage so we can load them on page refresh.
+     * Saves all of the current dashboards to HTML local storage.
      */
-    const toSave = this.state.charts.map((c) => {
-      const copy = {
-        ...c,
-        metrics: [...c.metrics],
-      };
+    const dashboards = [
+      ...this.state.dashboards.slice(0, this.state.currentDashboardIdx),
+      copyDashboard(this.state.currentDashboard),
+      ...this.state.dashboards.slice(this.state.currentDashboardIdx + 1),
+    ];
 
-      delete copy.selectionStartDate;
-      delete copy.selectionEndDate;
-      delete copy.previewData;
-      delete copy.data;
-
-      // Convert moment objects to ISO strings.
-      copy.startDate = copy.startDate.format();
-      copy.endDate = copy.endDate.format();
-
-      return copy;
-    });
-
-    localStorage.setItem('charts', JSON.stringify(toSave));  // eslint-disable-line no-undef
+    localStorage.setItem('dashboards', JSON.stringify(dashboards));
   }
 
   clearDashboard() {
     /**
      * Clears all charts from localStorage and resets charts object.
      */
+    // TODO: fix to handle multiple dashboards.
     localStorage.removeItem('charts');  // eslint-disable-line no-undef
     this.setState(() => ({ charts: [createChart()], clearDialogOpen: false }));
   }
@@ -607,7 +639,7 @@ class App extends Component {
       );
     }
 
-    const charts = this.state.charts.map((chart, idx) => (
+    const charts = this.state.currentDashboard.charts.map((chart, idx) => (
       <Chart
         key={idx} // eslint-disable-line react/no-array-index-key
         idx={idx}

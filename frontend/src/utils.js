@@ -43,6 +43,91 @@ export function createMetric(metric) {
   return { ...metric, measure: '', axis: 'left' };
 }
 
+export function createDashboard(name) {
+  return {
+    name,
+    version: '1.0',
+    charts: [createChart()],
+  };
+}
+
+function transformChart(chart) {
+  /**
+   * Transforms serialized charts to the format needed for our App.
+   *
+   * Adds null value selection start/end dates
+   * Converts dates to Moment objects
+   * Calculates dynamic time ranges.
+   */
+
+  const transformed = {
+    ...chart,
+    selectionStartDate: null,
+    selectionEndDate: null,
+  };
+
+  if (chart.rangeType === 'fixed') {
+    transformed.startDate = moment.utc(transformed.startDate);
+    transformed.endDate = moment.utc(transformed.endDate);
+  } else {
+    transformed.endDate = moment.utc();
+    transformed.startDate = transformed.endDate.clone().subtract(transformed.rangeMultiplier, transformed.rangePeriod);
+  }
+
+  return transformed;
+}
+
+function loadCharts() {
+  const chartsStr = localStorage.getItem('charts');
+
+  if (chartsStr === null) {
+    return [];
+  }
+
+  return JSON.parse(chartsStr).map(transformChart);
+}
+
+export function loadDashboards() {
+  /**
+   * Loads the saved dashboards from HTML localStorage.
+   */
+  const dashboardsStr = localStorage.getItem('dashboards');
+  let dashboards;
+
+  if (dashboardsStr === null) {
+    dashboards = [createDashboard('Default')];
+    dashboards[0].charts = loadCharts(); // try to load stored charts from the old format.
+  } else {
+    dashboards = JSON.parse(dashboardsStr).map((dashboard) => {
+      dashboard.charts = dashboard.charts.map(transformChart); // eslint-disable-line no-param-reassign
+
+      return dashboard;
+    });
+  }
+
+  return dashboards;
+}
+
+export function copyChart(chart) {
+  return {
+    ...chart,
+    startDate: chart.startDate !== null ? chart.startDate.clone() : null,
+    endDate: chart.endDate !== null ? chart.endDate.clone() : null,
+    metrics: chart.metrics.map(m => ({ ...m })),
+    previewData: [],
+    data: [],
+    selectionStartDate: null,
+    selectionEndDate: null,
+  };
+}
+
+export function copyDashboard(dashboard) {
+  return {
+    ...dashboard,
+    charts: dashboard.charts.map(copyChart),
+  };
+}
+
 export function createDataObject(metric) {
   return {
     name: generateMetricsKey(metric),
