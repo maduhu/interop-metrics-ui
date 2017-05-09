@@ -1,0 +1,10 @@
+.new-dashboard-form__label {
+  display: block;
+  font-weight: bold;
+}
+.new-dashboard-form__input {
+  font-size: 1.2em;
+  margin-top: 0.5em;
+  padding: 0.25em;
+  width: 300px;
+}

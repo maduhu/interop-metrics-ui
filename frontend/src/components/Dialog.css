@@ -5,11 +5,10 @@
   width: 80%;
 }
 .dialog__title {
-  position: relative;
-  top: .5em;
-  left: 1em;
+  margin-bottom: 1em;
   font-size: 1.2em;
   font-weight: bold;
+  text-align: center;
 }
 .dialog__close {
   position: absolute;
