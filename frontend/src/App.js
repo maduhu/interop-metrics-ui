@@ -13,6 +13,7 @@ import {
   createDataObject,
 } from './utils';
 import Dialog from './components/Dialog';
+import DashboardButtons from './components/DashboardButtons';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
@@ -657,17 +658,7 @@ class App extends Component {
 
     return (
       <div className="app">
-        <div className="app-buttons">
-          <button className="app-buttons__button button button--clear" onClick={this.openClearDialog}>
-            <span className="button__icon fa fa-trash">&nbsp;</span>
-            <span className="button__text">Clear Dashboard</span>
-          </button>
-
-          <button className="app-buttons__button button" onClick={this.addChart}>
-            <span className="button__icon fa fa-line-chart">&nbsp;</span>
-            <span className="button__text">New Chart</span>
-          </button>
-        </div>
+        <DashboardButtons openClearDialog={this.openClearDialog} addChart={this.addChart} />
 
         {dialog}
 
