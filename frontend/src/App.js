@@ -8,23 +8,32 @@ import {
   has,
   createChart,
   createMetric,
+  createDashboard,
   copyDashboard,
   loadDashboards,
   createDataObject,
 } from './utils';
 import Dialog from './components/Dialog';
+import DashboardPicker from './components/DashboardPicker';
 import DashboardButtons from './components/DashboardButtons';
 import { collapseMetrics } from './components/MetricPicker';
 import ChartEditor from './components/ChartEditor';
 import Chart from './components/Chart';
-
-
+import NewDashboardDialog from './components/NewDashboardDialog';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
     this.loadMetrics = this.loadMetrics.bind(this);
+    this.loadDashboardData = this.loadDashboardData.bind(this);
+    this.openAddDashboard = this.openAddDashboard.bind(this);
+    this.closeAddDashboard = this.closeAddDashboard.bind(this);
+    this.addDashboard = this.addDashboard.bind(this);
+    this.openDeleteDashboard = this.openDeleteDashboard.bind(this);
+    this.closeDeleteDashboard = this.closeDeleteDashboard.bind(this);
+    this.deleteDashboard = this.deleteDashboard.bind(this);
+    this.selectDashboard = this.selectDashboard.bind(this);
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
@@ -50,25 +59,10 @@ class App extends Component {
     this.closeClearDialog = this.closeClearDialog.bind(this);
 
     const dashboards = loadDashboards();
-    const currentDashboard = copyDashboard(dashboards[0]);
-
-    currentDashboard.charts.forEach((chart, chartIdx) => {
-      /* eslint-disable no-param-reassign */
-      chart.initialLoad = true;
-      chart.previewData = [];
-      chart.data = [];
-      chart.metrics.forEach((metric, metricIdx) => {
-        const dataObj = createDataObject(metric);
-        chart.data.push({ ...dataObj });
-        chart.previewData.push({ ...dataObj });
-        this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
-      });
-      /* eslint-enable */
-    });
 
     this.state = {
       dashboards,
-      currentDashboard,
+      currentDashboard: copyDashboard(dashboards[0]),
       currentDashboardIdx: 0,
       rawMetrics: [],
       metrics: {},
@@ -77,9 +71,12 @@ class App extends Component {
       targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
-      clearDialogOpen: false,
+      clearOpen: false,
+      addDashboardOpen: false,
+      deleteDashboardOpen: false,
     };
 
+    this.loadDashboardData();
     this.startRefreshLoop();
   }
 
@@ -116,9 +113,90 @@ class App extends Component {
       .end(this.onLoadMetrics);
   }
 
-
-
+  loadDashboardData() {
+    /**
+     * Loads all the data for each chart in a dashboard.
+     */
+    this.state.currentDashboard.charts.forEach((chart, chartIdx) => {
+      /* eslint-disable no-param-reassign */
+      chart.initialLoad = true;
+      chart.previewData = [];
+      chart.data = [];
+      chart.metrics.forEach((metric, metricIdx) => {
+        const dataObj = createDataObject(metric);
+        chart.data.push({ ...dataObj });
+        chart.previewData.push({ ...dataObj });
+        this.loadData(chartIdx, metricIdx, metric, chart.startDate, chart.endDate, true);
+      });
+      /* eslint-enable */
     });
+  }
+
+  openAddDashboard() {
+    this.setState(() => ({ addDashboardOpen: true }));
+  }
+
+  closeAddDashboard() {
+    this.setState(() => ({ addDashboardOpen: false }));
+  }
+
+  addDashboard(name) {
+    /**
+     * Adds a new (empty) dashboard to the page.
+     */
+    this.setState(state => ({
+      // We create two identical dashboards because currentDashboard is always a copy anyway.
+      currentDashboard: createDashboard(name),
+      currentDashboardIdx: state.dashboards.length,
+      dashboards: [...state.dashboards, createDashboard(name)],
+      addDashboardOpen: false,
+    }), this.saveState);
+  }
+
+  openDeleteDashboard() {
+    this.setState(() => ({ deleteDashboardOpen: true }));
+  }
+
+  closeDeleteDashboard() {
+    this.setState(() => ({ deleteDashboardOpen: false }));
+  }
+
+  deleteDashboard() {
+    /**
+     * Deletes the current visible dashboard and switches to the first dashboard in our list of dashboards. If no
+     * dashboard is available we create a new dashboard named "Default" and switch to that.
+     */
+    this.setState((state) => {
+      const dashboards = [
+        ...state.dashboards.slice(0, state.currentDashboardIdx),
+        ...state.dashboards.slice(state.currentDashboardIdx + 1),
+      ];
+
+      if (dashboards.length === 0) {
+        dashboards.push(createDashboard('Default'));
+      }
+
+      return {
+        dashboards,
+        currentDashboard: copyDashboard(dashboards[0]),
+        currentDashboardIdx: 0,
+        deleteDashboardOpen: false,
+      };
+    }, () => {
+      this.saveState();
+      this.loadDashboardData();
+    });
+  }
+
+  selectDashboard(idx) {
+    /**
+     * Sets the current visible dashboard, kicks of loading of data for every chart.
+     */
+    this.setState(state => ({
+      // Here we make a copy of the saved dashboard object, because we end up storing data in the dashboard object.
+      currentDashboard: copyDashboard(state.dashboards[idx]),
+      currentDashboardIdx: idx,
+    }), this.loadDashboardData);
   }
 
   addChart() {
@@ -283,8 +361,9 @@ class App extends Component {
     const url = generateMetricsUrl(measure);
     const handler = all ? this.previewDataHandler : this.selectionDataHandler;
     const cb = (error, response) => handler(chartIdx, dataIdx, measure, error, response);
-    // Set request size to window width - 144 (we have 64 pixels of padding on the window and 80 pixels on SVG)
-    const desiredRows = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 144;
+    const windowWidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+    const pad = 144; // Subtract 144 because we have 64 pixels of padding on the window and 80 pixels on SVG
+    const desiredRows = windowWidth - pad;
 
     request.get(url)
       .query({ columns: measure.measure })
@@ -603,17 +682,18 @@ class App extends Component {
     /**
      * Clears all charts from localStorage and resets charts object.
      */
-    // TODO: fix to handle multiple dashboards.
-    localStorage.removeItem('charts');  // eslint-disable-line no-undef
-    this.setState(() => ({ charts: [createChart()], clearDialogOpen: false }));
+    this.setState(state => ({
+      currentDashboard: createDashboard(state.currentDashboard.name),
+      clearOpen: false,
+    }), this.saveState);
   }
 
   openClearDialog() {
-    this.setState(() => ({ clearDialogOpen: true }));
+    this.setState(() => ({ clearOpen: true }));
   }
 
   closeClearDialog() {
-    this.setState(() => ({ clearDialogOpen: false }));
+    this.setState(() => ({ clearOpen: false }));
   }
 
   render() {
@@ -634,10 +714,18 @@ class App extends Component {
           />
         </Dialog>
       );
-    } else if (this.state.clearDialogOpen) {
+    } else if (this.state.clearOpen) {
       dialog = (
         <Dialog showClose={false} okText="yes" onOk={this.clearDashboard} onClose={this.closeClearDialog}>
           <p className="confirm-dialog">Are you sure you want to remove all charts in your dashboard?</p>
+        </Dialog>
+      );
+    } else if (this.state.addDashboardOpen) {
+      dialog = <NewDashboardDialog save={this.addDashboard} close={this.closeAddDashboard} />;
+    } else if (this.state.deleteDashboardOpen) {
+      dialog = (
+        <Dialog showClose={false} okText="yes" onOk={this.deleteDashboard} onClose={this.closeDeleteDashboard}>
+          <p className="confirm-dialog">Are you sure you want to permanently delete the current dashboard?</p>
         </Dialog>
       );
     }
@@ -658,6 +746,14 @@ class App extends Component {
 
     return (
       <div className="app">
+        <DashboardPicker
+          currentDashboard={this.state.currentDashboardIdx}
+          dashboards={this.state.dashboards}
+          selectDashboard={this.selectDashboard}
+          add={this.openAddDashboard}
+          delete={this.openDeleteDashboard}
+        />
+
         <DashboardButtons openClearDialog={this.openClearDialog} addChart={this.addChart} />
 
         {dialog}
