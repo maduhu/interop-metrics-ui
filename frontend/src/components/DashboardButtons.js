@@ -11,7 +11,7 @@ export default class DashboardButtons extends PureComponent {
 
         <button className="app-buttons__button button" onClick={this.props.addChart}>
           <span className="button__icon fa fa-line-chart">&nbsp;</span>
-          <span className="button__text">New Chart</span>
+          <span className="button__text">Add Chart</span>
         </button>
       </div>
     );
