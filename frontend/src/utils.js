@@ -84,6 +84,8 @@ function loadCharts() {
     return [];
   }
 
+  localStorage.removeItem('charts'); // Remove legacy data
+
   return JSON.parse(chartsStr).map(transformChart);
 }
 
