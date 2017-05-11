@@ -1,7 +1,28 @@
 import React, { Component } from 'react';
-import './Dialog.css'
+import './Dialog.css';
+
+const ESC = 27;
 
 export class Dialog extends Component {
+  constructor(props) {
+    super(props);
+    this.handleEsc = this.handleEsc.bind(this);
+  }
+
+  componentDidMount() {
+    document.addEventListener('keydown', this.handleEsc);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.handleEsc);
+  }
+
+  handleEsc(e) {
+    if (e.keyCode === ESC) {
+      this.props.onClose();
+    }
+  }
+
   render() {
     const size = this.props.size;
     const cancelText = this.props.cancelText;
@@ -21,13 +42,16 @@ export class Dialog extends Component {
     }
 
     if (this.props.showCancel) {
-      cancelBtn = <button className="dialog__button flat-button flat-button--secondary" onClick={onClose}>{cancelText}</button>;
+      cancelBtn = (
+        <button className="dialog__button flat-button flat-button--secondary" onClick={onClose}>
+          {cancelText}
+        </button>
+      );
     }
 
     return (
       <div className="dialog">
-        <div className="dialog__mask" onClick={onClose}>
-        </div>
+        <div className="dialog__mask" onClick={onClose} />
 
         <div className={`dialog__body dialog__body--${size}`}>
           {closeBtn}
