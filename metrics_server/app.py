@@ -1,6 +1,4 @@
-import os
-
-from flask import Flask, request
+from flask import Flask
 
 from metrics_server.data_frame_encoder import DataFrameEncoder
 from metrics_server.metrics_controller import MetricsController
