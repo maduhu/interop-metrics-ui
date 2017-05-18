@@ -3,13 +3,12 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import pytz
-from cassandra.cluster import Cluster, dict_factory
+from cassandra.cluster import Session
 
 from metrics_server.base_service import BaseService
-from metrics_server.errors import NotFoundError, ConfigurationError
+from metrics_server.errors import NotFoundError
 
 
-KEYSPACE = 'metric_data'
 TABLE_NAMES = ['raw_counter_with_interval', 'raw_timer_with_interval']
 TIMESTAMP_COLUMNS = ['metric_timestamp', 'previous_metric_timestamp']
 COUNTER_COLUMNS = {'count', 'previous_count', 'interval_count'}
@@ -59,32 +58,11 @@ class MetricsService(BaseService):
     """
     def __init__(self, config, services):
         super().__init__(config, services)
-        self._init_cassandra()
+        self._session = self.services['CassandraService'].session
 
-    def _init_cassandra(self):
-        """
-        Initialize our Cassandra database so we can start querying it.
-
-        :return:
-        """
-        config = self.config.get('cassandra')
-
-        if config is None:
-            raise ConfigurationError('No cassandra section found in config.')
-
-        host = config.get('host')
-
-        if host is None:
-            raise ConfigurationError('No host value found in cassandra section.')
-
-        self.cluster = Cluster([config['host']])
-        self.session = self.cluster.connect(KEYSPACE)
-        self.session.row_factory = dict_factory
-
-        # Note: we have to set the default fetch size to None in order for us to use pandas without taking a huge
-        # performance hit. If we set the fetch_size then we need to page through results and append rows to the
-        # dataframe, which is bad because it has to copy the old dataframe, then append the new rows.
-        self.session.default_fetch_size = None
+    @property
+    def session(self) -> Session:
+        return self._session
 
     def get_distinct_metrics_for_table(self, table):
         """

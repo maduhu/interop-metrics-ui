@@ -1,5 +1,8 @@
+from typing import Type
+
 from flask import Flask
 
+from metrics_server.cassandra_service import CassandraService
 from metrics_server.data_frame_encoder import DataFrameEncoder
 from metrics_server.metrics_controller import MetricsController
 from metrics_server.metrics_service import MetricsService
@@ -19,7 +22,7 @@ class App:
         self.init_services()
         self.init_controllers()
 
-    def add_service(self, service_class):
+    def add_service(self, service_class: Type):
         """
         Instantiates and adds a service to the services dict.
 
@@ -34,9 +37,10 @@ class App:
 
         :return:
         """
+        self.add_service(CassandraService)
         self.add_service(MetricsService)
 
-    def add_controller(self, controller_class):
+    def add_controller(self, controller_class: Type):
         """
         Instantiates and adds a controller to the controllers dict.
 
