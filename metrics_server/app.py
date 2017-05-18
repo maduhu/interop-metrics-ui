@@ -3,6 +3,8 @@ from typing import Type
 from flask import Flask
 
 from metrics_server.cassandra_service import CassandraService
+from metrics_server.dashboards_controller import DashboardsController
+from metrics_server.dashboards_service import DashboardsService
 from metrics_server.data_frame_encoder import DataFrameEncoder
 from metrics_server.metrics_controller import MetricsController
 from metrics_server.metrics_service import MetricsService
@@ -39,6 +41,7 @@ class App:
         """
         self.add_service(CassandraService)
         self.add_service(MetricsService)
+        self.add_service(DashboardsService)
 
     def add_controller(self, controller_class: Type):
         """
@@ -56,3 +59,4 @@ class App:
         :return:
         """
         self.add_controller(MetricsController)
+        self.add_controller(DashboardsController)
