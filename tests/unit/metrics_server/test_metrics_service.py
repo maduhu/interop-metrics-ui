@@ -5,6 +5,7 @@ import pytest
 import pytz
 from dateutil.parser import parse
 
+from metrics_server.cassandra_service import CassandraService
 from metrics_server.errors import ConfigurationError, NotFoundError
 from metrics_server.metrics_service import MetricsService, TABLE_NAMES
 from tests.utils import MockResultSet
@@ -113,51 +114,6 @@ def metric_data():
     return MockResultSet(data)
 
 
-@pytest.fixture()
-def patched_ms(mocker):
-    """
-    This fixture patches the Cluster class imported in metrics_server.metrics_service. Tests that use this fixture can
-    then set return_value or side_effect on the MetricsService.session object in order to unit test scenarios that would
-    normally send a query to the Cassandra server.
-
-    :param mocker: pytest.mock fixture.
-    :return: MetricsService with patched Cassandra Cluster class.
-    """
-    mocker.patch('metrics_server.metrics_service.Cluster')
-    return MetricsService({'cassandra': {'host': '0.0.0.0'}}, {})
-
-
-def test_init(patched_ms):
-    """
-    Tests the initialization of the MetricsService class
-
-    :param mocker: pytest.mock fixture
-    :return:
-    """
-    assert patched_ms.cluster is not None
-    assert patched_ms.session is not None
-
-
-def test_no_cassandra():
-    """
-    Test that no cassandra config throws error.
-
-    :return:
-    """
-    with pytest.raises(ConfigurationError):
-        MetricsService({}, {})
-
-
-def test_no_host():
-    """
-    Test that invalid cassandra config throws error.
-
-    :return:
-    """
-    with pytest.raises(ConfigurationError):
-        MetricsService({'cassandra': {}}, {})
-
-
 def test_get_distinct_metrics_for_table(patched_ms: MetricsService):
     """
     Test that get_distinct_metrics_for_table injects table name into returned results.
@@ -169,7 +125,7 @@ def test_get_distinct_metrics_for_table(patched_ms: MetricsService):
         {'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_one'},
         {'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_two'}
     ]
-    fake_ts = [{'last_timestamp': datetime.now()}]
+    fake_ts = [{'metric_timestamp': datetime.now()}]
     patched_ms.session.execute.side_effect = [fake_metrics, fake_ts, fake_ts]
     metrics = patched_ms.get_distinct_metrics_for_table('test_table')
 
@@ -185,7 +141,7 @@ def test_get_all_distinct_metrics(patched_ms: MetricsService):
     :param patched_ms: fixture
     :return:
     """
-    fake_ts = [{'last_timestamp': datetime.now()}]
+    fake_ts = [{'metric_timestamp': datetime.now()}]
     fake_counters = [{'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_counter'}]
     fake_timers = [{'environment': 'foo', 'application': 'bar', 'metric_name': 'baz_timer'}]
     patched_ms.session.execute.side_effect = [fake_counters, fake_ts, fake_timers, fake_ts]
@@ -204,8 +160,8 @@ def test_get_environments(patched_ms: MetricsService, counter_metrics, timer_met
     :param timer_metrics: fixture
     :return:
     """
-    counter_timestamps = [[{'last_timestamp': datetime.now()}] for x in counter_metrics]
-    timer_timestamps = [[{'last_timestamp': datetime.now()}] for x in timer_metrics]
+    counter_timestamps = [[{'metric_timestamp': datetime.now()}] for x in counter_metrics]
+    timer_timestamps = [[{'metric_timestamp': datetime.now()}] for x in timer_metrics]
     patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     expected = {'dev', 'staging', 'prod'}
     environments = patched_ms.get_environments()
@@ -233,8 +189,8 @@ def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_met
     :param expected: expected result
     :return:
     """
-    counter_timestamps = [[{'last_timestamp': datetime.now()}] for x in counter_metrics]
-    timer_timestamps = [[{'last_timestamp': datetime.now()}] for x in timer_metrics]
+    counter_timestamps = [[{'metric_timestamp': datetime.now()}] for x in counter_metrics]
+    timer_timestamps = [[{'metric_timestamp': datetime.now()}] for x in timer_metrics]
     patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     environments = patched_ms.get_applications(environment)
 
@@ -245,9 +201,12 @@ def test_get_applications(patched_ms: MetricsService, counter_metrics, timer_met
     'environment,application,expected',
     [
         ('dev', 'test_app_1', [
-            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval', 'last_timestamp': TEST_DATE},
-            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE},
-            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE},
+            {'metric_name': 'my.test.counter', 'table': 'raw_counter_with_interval', 'last_timestamp': TEST_DATE,
+             'duration_unit': None, 'rate_unit': None},
+            {'metric_name': 'my.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE,
+             'duration_unit': 'milliseconds', 'rate_unit': 'calls/second'},
+            {'metric_name': 'another.test.timer', 'table': 'raw_timer_with_interval', 'last_timestamp': TEST_DATE,
+             'duration_unit': 'milliseconds', 'rate_unit': 'calls/second'},
         ]),
         ('prod', 'test_app_2', []),
         ('dev', 'not_in_the_data', []),
@@ -266,8 +225,11 @@ def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics,
     :param expected: expected result
     :return:
     """
-    counter_timestamps = [[{'last_timestamp': datetime(2017, 1, 1)}] for x in counter_metrics]
-    timer_timestamps = [[{'last_timestamp': datetime(2017, 1, 1)}] for x in timer_metrics]
+    mt = datetime(2017, 1, 1)
+    du = 'milliseconds'
+    ru = 'calls/second'
+    counter_timestamps = [[{'metric_timestamp': mt}] for _ in counter_metrics]
+    timer_timestamps = [[{'metric_timestamp': mt, 'duration_unit': du, 'rate_unit': ru}] for _ in timer_metrics]
     patched_ms.session.execute.side_effect = [counter_metrics] + counter_timestamps + [timer_metrics] + timer_timestamps
     metrics = sorted(patched_ms.get_metrics(environment, application), key=metric_key)
     expected = sorted(expected, key=metric_key)
