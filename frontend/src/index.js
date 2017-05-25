@@ -2,6 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import 'normalize.css/normalize.css';
 import './index.css';
-import App from './App';
+import DashboardPage from './components/DashboardPage';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<DashboardPage />, document.getElementById('root'));

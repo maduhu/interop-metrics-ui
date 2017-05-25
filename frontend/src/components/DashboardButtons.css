@@ -1,0 +1,9 @@
+.dashboard-buttons {
+  margin: 1em 0;
+}
+.dashboard-buttons__button {
+  margin-left: 1em;
+}
+.dashboard-buttons__button:first-of-type {
+  margin-left: 0;
+}

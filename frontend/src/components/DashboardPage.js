@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
-import './App.css';
+import './DashboardPage.css';
 import {
   generateMetricsKey,
   generateMetricsUrl,
@@ -12,16 +12,34 @@ import {
   copyDashboard,
   loadDashboards,
   createDataObject,
-} from './utils';
-import Dialog from './components/Dialog';
-import DashboardPicker from './components/DashboardPicker';
-import DashboardButtons from './components/DashboardButtons';
-import { collapseMetrics } from './components/MetricPicker';
-import ChartEditor from './components/ChartEditor';
-import Chart from './components/Chart';
-import NewDashboardDialog from './components/NewDashboardDialog';
+} from '../utils';
+import Dialog from './Dialog';
+import DashboardPicker from './DashboardPicker';
+import DashboardButtons from './DashboardButtons';
+import { collapseMetrics } from './MetricPicker';
+import ChartEditor from './ChartEditor';
+import Chart from './Chart';
+import NewDashboardDialog from './NewDashboardDialog';
 
-class App extends Component {
+/**
+ * Pattern for rate limiting:
+ *
+ * have an array of pending requests
+ * have a counter of current requests
+ * only alter above data in setState
+ *
+ * have a method called maybeMakeRequest which checks request counter and array size, if counter < X && array.length > 0
+ * then kick off a new request. In callback decrement counter && call maybeMakeRequest so any pending requests will get
+ * serviced.
+ *
+ * Maybe turn this into a requestLimiter module that we instantiate on app startup:
+ *  const rl = RequestLimiter(MAX_REQUESTS);
+ *
+ * Should we rate limit requests in general or individual charts?
+ *  - This would in effect let us kick off up to 4 requests at a time.
+ */
+
+class DashboardPage extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
@@ -275,6 +293,9 @@ class App extends Component {
           ...chart.data.slice(dataIdx + 1),
         ];
       }
+
+      // TODO: refactor the below into a function called replaceChart(dashboard, idx, chart) (return copy of dashboard)
+      // Then we can do this: return { currentDashboard: replaceChart(state.currentDashboard, idx, chart) }
 
       return {
         currentDashboard: {
@@ -745,7 +766,7 @@ class App extends Component {
     ));
 
     return (
-      <div className="app">
+      <div className="dashboard-page">
         <DashboardPicker
           currentDashboard={this.state.currentDashboardIdx}
           dashboards={this.state.dashboards}
@@ -764,4 +785,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default DashboardPage;
