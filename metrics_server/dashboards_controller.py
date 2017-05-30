@@ -23,7 +23,7 @@ class DashboardsController(BaseController):
     @validate_with(DashboardPostSchema())
     def post_dashboards(self, body: dict):
         try:
-            self.dashboards_service.update_dashboard(body['type'], body['name'], body['data'])
+            self.dashboards_service.create_dashboard(body['type'], body['name'], body['data'])
         except NotFoundError as e:
             return jsonify(success=False, error=str(e)), 404
 
