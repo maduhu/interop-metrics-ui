@@ -24,8 +24,8 @@ class DashboardsController(BaseController):
     def post_dashboards(self, body: dict):
         try:
             self.dashboards_service.create_dashboard(body['type'], body['name'], body['data'])
-        except NotFoundError as e:
-            return jsonify(success=False, error=str(e)), 404
+        except ValueError as e:
+            return jsonify(success=False, error=str(e)), 400
 
         return jsonify(success=True)
 
