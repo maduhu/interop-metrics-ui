@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
-import './DashboardPage.css';
+import './Dashboard.css';
 import {
   generateMetricsKey,
   generateMetricsUrl,
   has,
   createChart,
-  createMetric,
-  createDashboard,
-  copyDashboard,
+  createTimeSeriesMetric,
+  createTimeSeriesDashboard,
+  copyTimeSeriesDashboard,
   loadDashboards,
   createDataObject,
 } from '../utils';
@@ -39,7 +39,7 @@ import NewDashboardDialog from './NewDashboardDialog';
  *  - This would in effect let us kick off up to 4 requests at a time.
  */
 
-class DashboardPage extends Component {
+class TimeSeriesDashboard extends Component {
   constructor(props) {
     super(props);
     this.onLoadMetrics = this.onLoadMetrics.bind(this);
@@ -80,7 +80,7 @@ class DashboardPage extends Component {
 
     this.state = {
       dashboards,
-      currentDashboard: copyDashboard(dashboards[0]),
+      currentDashboard: copyTimeSeriesDashboard(dashboards[0]),
       currentDashboardIdx: 0,
       rawMetrics: [],
       metrics: {},
@@ -164,9 +164,9 @@ class DashboardPage extends Component {
      */
     this.setState(state => ({
       // We create two identical dashboards because currentDashboard is always a copy anyway.
-      currentDashboard: createDashboard(name),
+      currentDashboard: createTimeSeriesDashboard(name),
       currentDashboardIdx: state.dashboards.length,
-      dashboards: [...state.dashboards, createDashboard(name)],
+      dashboards: [...state.dashboards, createTimeSeriesDashboard(name)],
       addDashboardOpen: false,
     }), this.saveState);
   }
@@ -191,12 +191,12 @@ class DashboardPage extends Component {
       ];
 
       if (dashboards.length === 0) {
-        dashboards.push(createDashboard('Default'));
+        dashboards.push(createTimeSeriesDashboard('Default'));
       }
 
       return {
         dashboards,
-        currentDashboard: copyDashboard(dashboards[0]),
+        currentDashboard: copyTimeSeriesDashboard(dashboards[0]),
         currentDashboardIdx: 0,
         deleteDashboardOpen: false,
       };
@@ -212,7 +212,7 @@ class DashboardPage extends Component {
      */
     this.setState(state => ({
       // Here we make a copy of the saved dashboard object, because we end up storing data in the dashboard object.
-      currentDashboard: copyDashboard(state.dashboards[idx]),
+      currentDashboard: copyTimeSeriesDashboard(state.dashboards[idx]),
       currentDashboardIdx: idx,
     }), this.loadDashboardData);
   }
@@ -530,7 +530,7 @@ class DashboardPage extends Component {
     /**
      * Adds a metric to the targetChart metrics object.
      */
-    const metrics = this.state.targetChart.metrics.concat([createMetric(metric)]);
+    const metrics = this.state.targetChart.metrics.concat([createTimeSeriesMetric(metric)]);
     this.updateTargetChart('metrics', metrics);
   }
 
@@ -692,7 +692,7 @@ class DashboardPage extends Component {
      */
     const dashboards = [
       ...this.state.dashboards.slice(0, this.state.currentDashboardIdx),
-      copyDashboard(this.state.currentDashboard),
+      copyTimeSeriesDashboard(this.state.currentDashboard),
       ...this.state.dashboards.slice(this.state.currentDashboardIdx + 1),
     ];
 
@@ -704,7 +704,7 @@ class DashboardPage extends Component {
      * Clears all charts from localStorage and resets charts object.
      */
     this.setState(state => ({
-      currentDashboard: createDashboard(state.currentDashboard.name),
+      currentDashboard: createTimeSeriesDashboard(state.currentDashboard.name),
       clearOpen: false,
     }), this.saveState);
   }
@@ -766,7 +766,7 @@ class DashboardPage extends Component {
     ));
 
     return (
-      <div className="dashboard-page">
+      <div className="time-series-dashboard">
         <DashboardPicker
           currentDashboard={this.state.currentDashboardIdx}
           dashboards={this.state.dashboards}
@@ -785,4 +785,4 @@ class DashboardPage extends Component {
   }
 }
 
-export default DashboardPage;
+export default TimeSeriesDashboard;

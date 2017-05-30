@@ -36,14 +36,14 @@ export function createChart() {
   };
 }
 
-export function createMetric(metric) {
+export function createTimeSeriesMetric(metric) {
   /**
    * Copies a metric and adds a measure and axis field. In the future we'll probably add more fields.
    */
   return { ...metric, measure: '', axis: 'left' };
 }
 
-export function createDashboard(name) {
+export function createTimeSeriesDashboard(name) {
   return {
     name,
     version: '1.0',
@@ -97,7 +97,7 @@ export function loadDashboards() {
   let dashboards;
 
   if (dashboardsStr === null) {
-    dashboards = [createDashboard('Default')];
+    dashboards = [createTimeSeriesDashboard('Default')];
     dashboards[0].charts = loadCharts(); // try to load stored charts from the old format.
   } else {
     dashboards = JSON.parse(dashboardsStr).map((dashboard) => {
@@ -123,7 +123,7 @@ export function copyChart(chart) {
   };
 }
 
-export function copyDashboard(dashboard) {
+export function copyTimeSeriesDashboard(dashboard) {
   return {
     ...dashboard,
     charts: dashboard.charts.map(copyChart),
