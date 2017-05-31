@@ -64,7 +64,7 @@ class TimeSeriesDashboard extends Component {
     this.closeClearDialog = this.closeClearDialog.bind(this);
 
     this.state = {
-      currentDashboard: copyTimeSeriesDashboard(this.props.dashboard),
+      dashboard: copyTimeSeriesDashboard(this.props.dashboard),
       rawMetrics: [],
       metrics: {},
       metricsLoading: true,
@@ -87,7 +87,7 @@ class TimeSeriesDashboard extends Component {
     /**
      * Loads all the data for each chart in a dashboard.
      */
-    this.state.currentDashboard.charts.forEach((chart, chartIdx) => {
+    this.state.dashboard.charts.forEach((chart, chartIdx) => {
       /* eslint-disable no-param-reassign */
       chart.initialLoad = true;
       chart.previewData = [];
@@ -107,9 +107,9 @@ class TimeSeriesDashboard extends Component {
      * Adds a new (empty) chart to the page.
      */
     this.setState(state => ({
-      currentDashboard: {
-        ...state.currentDashboard,
-        charts: state.currentDashboard.charts.concat([createChart()]),
+      dashboard: {
+        ...state.dashboard,
+        charts: state.dashboard.charts.concat([createChart()]),
       },
     }), this.saveState);
   }
@@ -132,10 +132,10 @@ class TimeSeriesDashboard extends Component {
      * Remove the chart at idx.
      */
     this.setState((state) => {
-      const charts = state.currentDashboard.charts.slice(0, idx).concat(state.currentDashboard.charts.slice(idx + 1));
+      const charts = state.dashboard.charts.slice(0, idx).concat(state.dashboard.charts.slice(idx + 1));
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts,
         },
       };
@@ -145,7 +145,7 @@ class TimeSeriesDashboard extends Component {
   selectionDataHandler(chartIdx, dataIdx, measure, error, response) {
     this.setState((state) => {
       let body = null;
-      const oldChart = state.currentDashboard.charts[chartIdx];
+      const oldChart = state.dashboard.charts[chartIdx];
       const chart = { ...oldChart };
       const data = { ...oldChart.data[dataIdx] };
 
@@ -180,15 +180,15 @@ class TimeSeriesDashboard extends Component {
       }
 
       // TODO: refactor the below into a function called replaceChart(dashboard, idx, chart) (return copy of dashboard)
-      // Then we can do this: return { currentDashboard: replaceChart(state.currentDashboard, idx, chart) }
+      // Then we can do this: return { dashboard: replaceChart(state.dashboard, idx, chart) }
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, chartIdx),
+            ...state.dashboard.charts.slice(0, chartIdx),
             chart,
-            ...state.currentDashboard.charts.slice(chartIdx + 1),
+            ...state.dashboard.charts.slice(chartIdx + 1),
           ],
         },
       };
@@ -198,7 +198,7 @@ class TimeSeriesDashboard extends Component {
   previewDataHandler(chartIdx, dataIdx, measure, error, response) {
     this.setState((state) => {
       let body = null;
-      const oldChart = state.currentDashboard.charts[chartIdx];
+      const oldChart = state.dashboard.charts[chartIdx];
       const chart = { ...oldChart };
       const data = { ...oldChart.data[dataIdx] };
       const previewData = { ...oldChart.previewData[dataIdx] };
@@ -251,12 +251,12 @@ class TimeSeriesDashboard extends Component {
       }
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, chartIdx),
+            ...state.dashboard.charts.slice(0, chartIdx),
             chart,
-            ...state.currentDashboard.charts.slice(chartIdx + 1),
+            ...state.dashboard.charts.slice(chartIdx + 1),
           ],
         },
       };
@@ -282,7 +282,7 @@ class TimeSeriesDashboard extends Component {
 
   clearSelection(idx) {
     this.setState((state) => {
-      const oldChart = state.currentDashboard.charts[idx];
+      const oldChart = state.dashboard.charts[idx];
       const chart = {
         ...oldChart,
         data: oldChart.previewData,
@@ -291,12 +291,12 @@ class TimeSeriesDashboard extends Component {
       };
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, idx),
+            ...state.dashboard.charts.slice(0, idx),
             chart,
-            ...state.currentDashboard.charts.slice(idx + 1),
+            ...state.dashboard.charts.slice(idx + 1),
           ],
         },
       };
@@ -311,7 +311,7 @@ class TimeSeriesDashboard extends Component {
 
     this.setState((state) => {
       const chart = {
-        ...state.currentDashboard.charts[idx],
+        ...state.dashboard.charts[idx],
         data: [],
         selectionStartDate: selection[0],
         selectionEndDate: selection[1],
@@ -324,12 +324,12 @@ class TimeSeriesDashboard extends Component {
       });
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, idx),
+            ...state.dashboard.charts.slice(0, idx),
             chart,
-            ...state.currentDashboard.charts.slice(idx + 1),
+            ...state.dashboard.charts.slice(idx + 1),
           ],
         },
       };
@@ -342,7 +342,7 @@ class TimeSeriesDashboard extends Component {
      */
     this.setState((state) => {
       const idx = state.targetChartIdx;
-      const oldChart = state.currentDashboard.charts[idx];
+      const oldChart = state.dashboard.charts[idx];
       const chart = {
         ...state.targetChart,
         // Note: here we clear selection on save, not sure this behavior is the best.
@@ -397,12 +397,12 @@ class TimeSeriesDashboard extends Component {
       chart.previewData = previewData;
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, idx),
+            ...state.dashboard.charts.slice(0, idx),
             chart,
-            ...state.currentDashboard.charts.slice(idx + 1),
+            ...state.dashboard.charts.slice(idx + 1),
           ],
         },
         targetChartIdx: null,
@@ -457,7 +457,7 @@ class TimeSeriesDashboard extends Component {
      */
     this.setState(state => ({
       targetChartIdx: idx,
-      targetChart: { ...state.currentDashboard.charts[idx], metrics: [...state.currentDashboard.charts[idx].metrics] },
+      targetChart: { ...state.dashboard.charts[idx], metrics: [...state.dashboard.charts[idx].metrics] },
       settingsOpen: true,
     }));
   }
@@ -471,7 +471,7 @@ class TimeSeriesDashboard extends Component {
 
   refreshChart(idx) {
     this.setState((state) => {
-      const oldChart = state.currentDashboard.charts[idx];
+      const oldChart = state.dashboard.charts[idx];
       const chart = {
         ...oldChart,
         selectionStartDate: null,
@@ -495,12 +495,12 @@ class TimeSeriesDashboard extends Component {
       });
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts: [
-            ...state.currentDashboard.charts.slice(0, idx),
+            ...state.dashboard.charts.slice(0, idx),
             chart,
-            ...state.currentDashboard.charts.slice(idx + 1),
+            ...state.dashboard.charts.slice(idx + 1),
           ],
         },
       };
@@ -522,7 +522,7 @@ class TimeSeriesDashboard extends Component {
      * selection in the preview area, and only if it's not already loading data, that way we don't continuously queue
      * up data refreshes if the server is slow to respond.
      */
-    this.state.currentDashboard.charts.forEach((chart, idx) => {
+    this.state.dashboard.charts.forEach((chart, idx) => {
       const hasSelection = chart.selectionStartDate !== null && chart.selectionEndDate !== null;
       const previewLoading = chart.previewData.some(d => d.loading);
       const dataLoading = chart.data.some(d => d.loading);
@@ -540,14 +540,14 @@ class TimeSeriesDashboard extends Component {
         return {};
       }
 
-      const charts = [...state.currentDashboard.charts];
+      const charts = [...state.dashboard.charts];
       const chartToMove = charts[idx];
       charts[idx] = charts[idx - 1];
       charts[idx - 1] = chartToMove;
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts,
         },
       };
@@ -556,19 +556,19 @@ class TimeSeriesDashboard extends Component {
 
   moveDown(idx) {
     this.setState((state) => {
-      if (idx === state.currentDashboard.charts.length - 1) {
+      if (idx === state.dashboard.charts.length - 1) {
         // Do nothing if we try to move the bottom chart down.
         return {};
       }
 
-      const charts = [...state.currentDashboard.charts];
+      const charts = [...state.dashboard.charts];
       const chartToMove = charts[idx];
       charts[idx] = charts[idx + 1];
       charts[idx + 1] = chartToMove;
 
       return {
-        currentDashboard: {
-          ...state.currentDashboard,
+        dashboard: {
+          ...state.dashboard,
           charts,
         },
       };
@@ -587,7 +587,7 @@ class TimeSeriesDashboard extends Component {
      * Clears all charts from localStorage and resets charts object.
      */
     this.setState(state => ({
-      currentDashboard: createTimeSeriesDashboard(state.currentDashboard.name),
+      dashboard: createTimeSeriesDashboard(state.dashboard.name),
       clearOpen: false,
     }), this.saveState);
   }
@@ -626,7 +626,7 @@ class TimeSeriesDashboard extends Component {
       );
     }
 
-    const charts = this.state.currentDashboard.charts.map((chart, idx) => (
+    const charts = this.state.dashboard.charts.map((chart, idx) => (
       <Chart
         key={idx} // eslint-disable-line react/no-array-index-key
         idx={idx}
