@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import request from 'superagent/lib/client';
 import moment from 'moment';
-import './Dashboard.css';
 import {
   generateMetricsKey,
   generateMetricsUrl,
@@ -68,6 +67,7 @@ class TimeSeriesDashboard extends Component {
     this.closeSettings = this.closeSettings.bind(this);
     this.refreshChart = this.refreshChart.bind(this);
     this.startRefreshLoop = this.startRefreshLoop.bind(this);
+    this.stopRefreshLoop = this.stopRefreshLoop.bind(this);
     this.refreshLoop = this.refreshLoop.bind(this);
     this.moveUp = this.moveUp.bind(this);
     this.moveDown = this.moveDown.bind(this);
@@ -92,10 +92,14 @@ class TimeSeriesDashboard extends Component {
       clearOpen: false,
       addDashboardOpen: false,
       deleteDashboardOpen: false,
+      refreshLoopId: this.startRefreshLoop(),
     };
 
     this.loadDashboardData();
-    this.startRefreshLoop();
+  }
+
+  componentWillUnmount() {
+    this.stopRefreshLoop();
   }
 
   onLoadMetrics(error, response) {
@@ -517,7 +521,8 @@ class TimeSeriesDashboard extends Component {
           charts: [
             ...state.currentDashboard.charts.slice(0, idx),
             chart,
-            ...state.currentDashboard.charts.slice(idx + 1)],
+            ...state.currentDashboard.charts.slice(idx + 1),
+          ],
         },
         targetChartIdx: null,
         targetChart: null,
@@ -623,7 +628,11 @@ class TimeSeriesDashboard extends Component {
   }
 
   startRefreshLoop() {
-    window.setInterval(this.refreshLoop, 60 * 1000);
+    return window.setInterval(this.refreshLoop, 60 * 1000);
+  }
+
+  stopRefreshLoop() {
+    window.clearInterval(this.state.refreshLoopId);
   }
 
   refreshLoop() {
