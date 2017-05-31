@@ -5,7 +5,7 @@ from cassandra.cluster import Session
 from metrics_server.base_service import BaseService
 from metrics_server.errors import NotFoundError
 
-DASHBOARD_TYPES = ('metric', 'alert')
+DASHBOARD_TYPES = ('time_series', 'alert')
 INSERT_CQL = 'INSERT INTO dashboards (type, name, data) VALUES (%s, %s, %s) IF NOT EXISTS;'
 UPDATE_CQL = 'UPDATE dashboards SET data = %s WHERE type = %s AND name = %s;'
 DELETE_CQL = 'DELETE FROM dashboards WHERE type = %s and name = %s;'
