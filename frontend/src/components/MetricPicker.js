@@ -1,6 +1,7 @@
 import React, { Component, PureComponent } from 'react';
 import Fuse from 'fuse.js';
 import moment from 'moment';
+import request from 'superagent/lib/client';
 import LoadingCube from './LoadingCube';
 import { has } from '../utils';
 import './MetricPicker.css';
@@ -204,6 +205,8 @@ class MetricPickerTable extends PureComponent {
 export class MetricPicker extends Component {
   constructor(props) {
     super(props);
+    this.onLoadMetrics = this.onLoadMetrics.bind(this);
+    this.loadMetrics = this.loadMetrics.bind(this);
     this.onEnvironmentChange = this.onEnvironmentChange.bind(this);
     this.onApplicationChange = this.onApplicationChange.bind(this);
     this.onFilterChange = this.onFilterChange.bind(this);
@@ -223,6 +226,10 @@ export class MetricPicker extends Component {
     };
 
     this.state = {
+      rawMetrics: [],
+      metrics: {},
+      metricsLoading: true,
+      metricsLoadError: null,
       environment: '',
       application: '',
       filter: '',
@@ -230,6 +237,33 @@ export class MetricPicker extends Component {
       sortCol: 'environment',
       sortDir: 'asc',
     };
+
+    this.loadMetrics();
+  }
+
+  onLoadMetrics(error, response) {
+    /**
+     * Handles response from metrics api (/api/v1/metrics)
+     */
+    if (error !== null) {
+      let errorMsg;
+
+      if (response.body !== null && response.body.error) {
+        errorMsg = response.body.error;
+      } else {
+        errorMsg = `${response.statusCode} - ${response.statusText}`;
+      }
+
+      this.setState(() => ({ metricsLoading: false, metricsLoadError: errorMsg }));
+      return;
+    }
+
+    this.setState(() => ({
+      rawMetrics: response.body.data.metrics,
+      metrics: collapseMetrics(response.body.data.metrics),
+      metricsLoading: false,
+      metricsLoadError: null,
+    }));
   }
 
   onEnvironmentChange(environment) {
@@ -257,6 +291,12 @@ export class MetricPicker extends Component {
         sortDir,
       };
     });
+  }
+
+  loadMetrics() {
+    request.get('/api/v1/metrics')
+      .set('Accept', 'application/json')
+      .end(this.onLoadMetrics);
   }
 
   sortMetricsAsc(rows) {
@@ -302,7 +342,7 @@ export class MetricPicker extends Component {
   }
 
   render() {
-    const metrics = this.props.metrics;
+    const metrics = this.state.metrics;
     const environment = this.state.environment;
     const application = this.state.application;
     const filter = this.state.filter;
@@ -357,8 +397,8 @@ export class MetricPicker extends Component {
           />
 
           <MetricPickerTable
-            metricsLoading={this.props.metricsLoading}
-            metricsLoadError={this.props.metricsLoadError}
+            metricsLoading={this.state.metricsLoading}
+            metricsLoadError={this.state.metricsLoadError}
             rows={rows}
             sortCol={this.state.sortCol}
             sortDir={this.state.sortDir}

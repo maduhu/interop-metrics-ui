@@ -15,7 +15,6 @@ import {
 import Dialog from './Dialog';
 import DashboardPicker from './DashboardPicker';
 import DashboardButtons from './DashboardButtons';
-import { collapseMetrics } from './MetricPicker';
 import ChartEditor from './ChartEditor';
 import Chart from './Chart';
 import NewDashboardDialog from './NewDashboardDialog';
@@ -41,8 +40,6 @@ import NewDashboardDialog from './NewDashboardDialog';
 class TimeSeriesDashboard extends Component {
   constructor(props) {
     super(props);
-    this.onLoadMetrics = this.onLoadMetrics.bind(this);
-    this.loadMetrics = this.loadMetrics.bind(this);
     this.loadDashboardData = this.loadDashboardData.bind(this);
     this.openAddDashboard = this.openAddDashboard.bind(this);
     this.closeAddDashboard = this.closeAddDashboard.bind(this);
@@ -100,39 +97,6 @@ class TimeSeriesDashboard extends Component {
 
   componentWillUnmount() {
     this.stopRefreshLoop();
-  }
-
-  onLoadMetrics(error, response) {
-    /**
-     * Handles response from metrics api (/api/v1/metrics)
-     */
-    if (error !== null) {
-      let errorMsg;
-
-      if (response.body !== null && response.body.error) {
-        errorMsg = response.body.error;
-      } else {
-        errorMsg = `${response.statusCode} - ${response.statusText}`;
-      }
-
-      this.setState(() => ({ metricsLoading: false, metricsLoadError: errorMsg }));
-      return;
-    }
-
-    this.setState(() => ({
-      rawMetrics: response.body.data.metrics,
-      metrics: collapseMetrics(response.body.data.metrics),
-      metricsLoading: false,
-      metricsLoadError: null,
-    }));
-  }
-
-  loadMetrics() {
-    this.setState({ metricsLoading: true });
-
-    request.get('/api/v1/metrics')
-      .set('Accept', 'application/json')
-      .end(this.onLoadMetrics);
   }
 
   loadDashboardData() {
@@ -574,7 +538,6 @@ class TimeSeriesDashboard extends Component {
     /**
      * Opens the settings panel for the chart at the given index.
      */
-    this.loadMetrics();
     this.setState(state => ({
       targetChartIdx: idx,
       targetChart: { ...state.currentDashboard.charts[idx], metrics: [...state.currentDashboard.charts[idx].metrics] },
