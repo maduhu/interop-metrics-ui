@@ -9,15 +9,12 @@ import {
   createTimeSeriesMetric,
   createTimeSeriesDashboard,
   copyTimeSeriesDashboard,
-  loadDashboards,
   createDataObject,
 } from '../utils';
 import Dialog from './Dialog';
-import DashboardPicker from './DashboardPicker';
 import DashboardButtons from './DashboardButtons';
 import ChartEditor from './ChartEditor';
 import Chart from './Chart';
-import NewDashboardDialog from './NewDashboardDialog';
 
 /**
  * Pattern for rate limiting:
@@ -41,13 +38,6 @@ class TimeSeriesDashboard extends Component {
   constructor(props) {
     super(props);
     this.loadDashboardData = this.loadDashboardData.bind(this);
-    this.openAddDashboard = this.openAddDashboard.bind(this);
-    this.closeAddDashboard = this.closeAddDashboard.bind(this);
-    this.addDashboard = this.addDashboard.bind(this);
-    this.openDeleteDashboard = this.openDeleteDashboard.bind(this);
-    this.closeDeleteDashboard = this.closeDeleteDashboard.bind(this);
-    this.deleteDashboard = this.deleteDashboard.bind(this);
-    this.selectDashboard = this.selectDashboard.bind(this);
     this.addChart = this.addChart.bind(this);
     this.updateTargetChart = this.updateTargetChart.bind(this);
     this.removeChart = this.removeChart.bind(this);
@@ -73,12 +63,8 @@ class TimeSeriesDashboard extends Component {
     this.openClearDialog = this.openClearDialog.bind(this);
     this.closeClearDialog = this.closeClearDialog.bind(this);
 
-    const dashboards = loadDashboards();
-
     this.state = {
-      dashboards,
-      currentDashboard: copyTimeSeriesDashboard(dashboards[0]),
-      currentDashboardIdx: 0,
+      currentDashboard: copyTimeSeriesDashboard(this.props.dashboard),
       rawMetrics: [],
       metrics: {},
       metricsLoading: true,
@@ -87,8 +73,6 @@ class TimeSeriesDashboard extends Component {
       targetChart: null,
       settingsOpen: false,
       clearOpen: false,
-      addDashboardOpen: false,
-      deleteDashboardOpen: false,
       refreshLoopId: this.startRefreshLoop(),
     };
 
@@ -116,73 +100,6 @@ class TimeSeriesDashboard extends Component {
       });
       /* eslint-enable */
     });
-  }
-
-  openAddDashboard() {
-    this.setState(() => ({ addDashboardOpen: true }));
-  }
-
-  closeAddDashboard() {
-    this.setState(() => ({ addDashboardOpen: false }));
-  }
-
-  addDashboard(name) {
-    /**
-     * Adds a new (empty) dashboard to the page.
-     */
-    this.setState(state => ({
-      // We create two identical dashboards because currentDashboard is always a copy anyway.
-      currentDashboard: createTimeSeriesDashboard(name),
-      currentDashboardIdx: state.dashboards.length,
-      dashboards: [...state.dashboards, createTimeSeriesDashboard(name)],
-      addDashboardOpen: false,
-    }), this.saveState);
-  }
-
-  openDeleteDashboard() {
-    this.setState(() => ({ deleteDashboardOpen: true }));
-  }
-
-  closeDeleteDashboard() {
-    this.setState(() => ({ deleteDashboardOpen: false }));
-  }
-
-  deleteDashboard() {
-    /**
-     * Deletes the current visible dashboard and switches to the first dashboard in our list of dashboards. If no
-     * dashboard is available we create a new dashboard named "Default" and switch to that.
-     */
-    this.setState((state) => {
-      const dashboards = [
-        ...state.dashboards.slice(0, state.currentDashboardIdx),
-        ...state.dashboards.slice(state.currentDashboardIdx + 1),
-      ];
-
-      if (dashboards.length === 0) {
-        dashboards.push(createTimeSeriesDashboard('Default'));
-      }
-
-      return {
-        dashboards,
-        currentDashboard: copyTimeSeriesDashboard(dashboards[0]),
-        currentDashboardIdx: 0,
-        deleteDashboardOpen: false,
-      };
-    }, () => {
-      this.saveState();
-      this.loadDashboardData();
-    });
-  }
-
-  selectDashboard(idx) {
-    /**
-     * Sets the current visible dashboard, kicks of loading of data for every chart.
-     */
-    this.setState(state => ({
-      // Here we make a copy of the saved dashboard object, because we end up storing data in the dashboard object.
-      currentDashboard: copyTimeSeriesDashboard(state.dashboards[idx]),
-      currentDashboardIdx: idx,
-    }), this.loadDashboardData);
   }
 
   addChart() {
@@ -662,13 +579,7 @@ class TimeSeriesDashboard extends Component {
     /**
      * Saves all of the current dashboards to HTML local storage.
      */
-    const dashboards = [
-      ...this.state.dashboards.slice(0, this.state.currentDashboardIdx),
-      copyTimeSeriesDashboard(this.state.currentDashboard),
-      ...this.state.dashboards.slice(this.state.currentDashboardIdx + 1),
-    ];
-
-    localStorage.setItem('dashboards', JSON.stringify(dashboards));
+    console.log('TODO: emit save event');
   }
 
   clearDashboard() {
@@ -713,14 +624,6 @@ class TimeSeriesDashboard extends Component {
           <p className="confirm-dialog">Are you sure you want to remove all charts in your dashboard?</p>
         </Dialog>
       );
-    } else if (this.state.addDashboardOpen) {
-      dialog = <NewDashboardDialog save={this.addDashboard} close={this.closeAddDashboard} />;
-    } else if (this.state.deleteDashboardOpen) {
-      dialog = (
-        <Dialog showClose={false} okText="yes" onOk={this.deleteDashboard} onClose={this.closeDeleteDashboard}>
-          <p className="confirm-dialog">Are you sure you want to permanently delete the current dashboard?</p>
-        </Dialog>
-      );
     }
 
     const charts = this.state.currentDashboard.charts.map((chart, idx) => (
@@ -739,14 +642,6 @@ class TimeSeriesDashboard extends Component {
 
     return (
       <div className="time-series-dashboard">
-        <DashboardPicker
-          currentDashboard={this.state.currentDashboardIdx}
-          dashboards={this.state.dashboards}
-          selectDashboard={this.selectDashboard}
-          add={this.openAddDashboard}
-          delete={this.openDeleteDashboard}
-        />
-
         <DashboardButtons openClearDialog={this.openClearDialog} addChart={this.addChart} />
 
         {dialog}

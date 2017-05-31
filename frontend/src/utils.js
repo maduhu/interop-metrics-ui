@@ -51,7 +51,7 @@ export function createTimeSeriesDashboard(name) {
   };
 }
 
-function transformChart(chart) {
+export function transformChart(chart) {
   /**
    * Transforms serialized charts to the format needed for our App.
    *
