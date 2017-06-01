@@ -21,8 +21,8 @@ class App:
         self.flask_app = Flask(__name__)
         self.flask_app.json_encoder = DataFrameEncoder
         self.flask_app.debug = config.get('debug', False)
-        self.init_services()
-        self.init_controllers()
+        self._init_services()
+        self._init_controllers()
 
     def add_service(self, service_class: Type):
         """
@@ -33,7 +33,7 @@ class App:
         """
         self.services[service_class.__name__] = service_class(self.config, self.services)
 
-    def init_services(self):
+    def _init_services(self):
         """
         Initialize all service classes needed to bootstrap the metrics server.
 
@@ -52,7 +52,7 @@ class App:
         """
         self.controllers[controller_class.__name__] = controller_class(self.config, self.flask_app, self.services)
 
-    def init_controllers(self):
+    def _init_controllers(self):
         """
         Initialize all controllers needed to bootstrap the metrics server.
 
