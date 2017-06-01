@@ -1,0 +1,33 @@
+.dashboard-list {
+  list-style-type: none;
+  margin-top: 1em;
+  border-collapse: collapse;
+  width: 400px;
+}
+.dashboard-list__header {
+  border-bottom: 1px solid rgb(224, 224, 224);
+  padding: 0.2em 0;
+}
+.dashboard-item__col {
+  padding: 0.3em 0.1em;
+  margin: 0.5em 0;
+}
+.dashboard-item {
+  margin: 0.5em 0;
+}
+.dashboard-item__delete {
+  border: none;
+  padding: 0.4em;
+}
+.dashboard-item__type,
+.dashboard-item__delete {
+  text-align: center;
+}
+.dashboard-item__delete {
+  border: none;
+  background-color: transparent;
+}
+.dashboard-item__name {
+  display: inline-block;
+  width: 100%;
+}

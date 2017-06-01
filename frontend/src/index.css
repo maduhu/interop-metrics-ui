@@ -92,3 +92,8 @@ input:focus {
 .clickable {
   cursor: pointer;
 }
+a,
+a:visited {
+  color: rgb(5, 138, 168);
+  text-decoration: none;
+}
