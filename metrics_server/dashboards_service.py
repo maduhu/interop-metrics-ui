@@ -24,6 +24,12 @@ class DashboardsService(BaseService):
         return self._session
 
     def get_dashboards(self, type_=None):
+        """
+        Retrieves dashboards from database by type, if type is not specified it retrieves all dashboards.
+
+        :param type_:
+        :return:
+        """
         if type_ is not None and type_ not in DASHBOARD_TYPES:
             raise ValueError(f'Invalid dashboard type "{type_}"')
 
@@ -47,6 +53,13 @@ class DashboardsService(BaseService):
         return dashboards
 
     def get_dashboard(self, type_, name):
+        """
+        Retrieves dashboard from database by type and name. Raises a NotFoundError if not found.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :return: dict representation of dashboard object
+        """
         query = 'SELECT * FROM dashboards WHERE type = %s AND name = %s'
         rows = self.session.execute(query, [type_, name]).current_rows
 
@@ -62,6 +75,15 @@ class DashboardsService(BaseService):
         }
 
     def create_dashboard(self, type_, name, data):
+        """
+        Adds a new dashboard to the database. Raises a ValueError if a dashboard already exists with the given name
+        and type, or if an invalid type is provided.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :param data: dict, the data for the dashboard
+        :return: None
+        """
         if type_ is not None and type_ not in DASHBOARD_TYPES:
             raise ValueError(f'Invalid dashboard type "{type_}"')
 
@@ -72,12 +94,28 @@ class DashboardsService(BaseService):
             raise ValueError(f'Dashboard with type "{type_}" and name "{name}" already exists')
 
     def update_dashboard(self, type_, name, data):
+        """
+        Updates an already existing dashboard. Raises a NotFoundError if no dashboard exists with the specified type
+        and name.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :param data: dict, the data for the dashboard
+        :return: None
+        """
         # Raise a not found error if the dashboard does not exist.
         self.get_dashboard(type_, name)
         data = json.dumps(data)
         self.session.execute(UPDATE_CQL, [type_, name, data])
 
     def delete_dashboard(self, type_, name):
+        """
+        Deletes a dashboard. Raises a NotFoundError if no dashboard exists with the specified type and name.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :return: None
+        """
         # Raise a not found error if the dashboard does not exist.
         self.get_dashboard(type_, name)
         self.session.execute(DELETE_CQL, [type_, name])
