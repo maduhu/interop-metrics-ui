@@ -85,7 +85,7 @@ class DashboardsController(BaseController):
             return jsonify(error='Request body must contain "data" attribute'), 400
 
         try:
-            self.dashboards_service.update_dashboard(type_, name, None)
+            self.dashboards_service.update_dashboard(type_, name, data)
         except NotFoundError as e:
             return jsonify(success=False, error=str(e)), 404
 

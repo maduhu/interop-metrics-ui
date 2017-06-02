@@ -106,7 +106,7 @@ class DashboardsService(BaseService):
         # Raise a not found error if the dashboard does not exist.
         self.get_dashboard(type_, name)
         data = json.dumps(data)
-        self.session.execute(UPDATE_CQL, [type_, name, data])
+        self.session.execute(UPDATE_CQL, [data, type_, name])
 
     def delete_dashboard(self, type_, name):
         """
@@ -119,21 +119,3 @@ class DashboardsService(BaseService):
         # Raise a not found error if the dashboard does not exist.
         self.get_dashboard(type_, name)
         self.session.execute(DELETE_CQL, [type_, name])
-
-
-if __name__ == '__main__':
-    from metrics_server.cassandra_service import CassandraService
-    config = {'cassandra': {'host': 'localhost'}}
-    services = {}
-    services['CassandraService'] = CassandraService(config, services)
-    ds = DashboardsService(config, services)
-    dashboards = ds.get_dashboards()
-    print(f'There are {len(dashboards)} dashboards')
-    # dash_data = {'name': 'test_2', 'charts': [], 'version': '3.0'}
-    # # ds.create_dashboard('metric', 'test_3', dash_data)
-    # dashboard = ds.get_dashboard('metric', 'test_2')
-    # print(dashboard)
-    ds.delete_dashboard('metric', 'test_2')
-    dashboards = ds.get_dashboards()
-    print(f'There are {len(dashboards)} dashboards')
-    ds.get_dashboard('metric', 'test_2')
