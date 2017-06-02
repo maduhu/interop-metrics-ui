@@ -18,10 +18,21 @@ class DashboardsController(BaseController):
         return self.services['DashboardsService']
 
     def get_dashboards(self):
+        """
+        Retrieves all dashboards.
+
+        :return: JSON
+        """
         return jsonify(dashboards=self.dashboards_service.get_dashboards())
 
     @validate_with(DashboardPostSchema())
     def post_dashboards(self, body: dict):
+        """
+        Creates a new dashboard.
+
+        :param body: A dict that has been validated against DashboardPostSchema.
+        :return: JSON
+        """
         try:
             self.dashboards_service.create_dashboard(body['type'], body['name'], body['data'])
         except ValueError as e:
@@ -30,18 +41,39 @@ class DashboardsController(BaseController):
         return jsonify(success=True)
 
     def get_dashboards_by_type(self, type_: str):
+        """
+        Retrieves dashboards by type.
+
+        :param type_: The type of dashboard to retrieve.
+        :return:
+        """
         try:
             return jsonify(dashboards=self.dashboards_service.get_dashboards(type_))
         except ValueError as e:
             return jsonify(error=str(e)), 400
 
     def get_dashboard(self, type_: str, name: str):
+        """
+        Fetches dashboard from database given type and name.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :return:
+        """
         try:
             return jsonify(dashboard=self.dashboards_service.get_dashboard(type_, name))
         except NotFoundError as e:
             return jsonify(error=str(e)), 404
 
     def put_dashboard(self, type_: str, name: str):
+        """
+        Allows a user to modify a dashboard. Currently only allows for updating the data attribute of a dashboard, and
+        not renaming it.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :return: JSON response.
+        """
         body = request.get_json()
 
         if body is None:
@@ -60,6 +92,13 @@ class DashboardsController(BaseController):
         return jsonify(success=True)
 
     def delete_dashboard(self, type_: str, name: str):
+        """
+        Deletes a dashboard with a given type and name.
+
+        :param type_: str, the type of dashboard
+        :param name: str, the name of the dashboard
+        :return:
+        """
         try:
             self.dashboards_service.delete_dashboard(type_, name)
         except NotFoundError as e:
