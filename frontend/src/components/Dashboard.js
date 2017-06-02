@@ -10,18 +10,14 @@ class Dashboard extends Component {
   constructor(props) {
     super(props);
     this.onLoad = this.onLoad.bind(this);
-    this.onSave = this.onSave.bind(this);
     this.load = this.load.bind(this);
     this.save = this.save.bind(this);
-    this.openEdit = this.openEdit.bind(this);
-    this.closeEdit = this.closeEdit.bind(this);
     const params = this.props.match.params;
 
     this.state = {
       name: params.name,
       type: params.type,
       dashboard: null,
-      editOpen: false,
       loading: true,
       loadError: null,
     };
@@ -42,34 +38,35 @@ class Dashboard extends Component {
         loading: false,
       });
     } else {
-      this.setState({ loadError: 'Error loading dashboard' });
+      // TODO: better handle loading errors, i.e. differentiate between a 400, 404, 500, etc.
+      this.setState({
+        loading: false,
+        loadError: 'Error loading dashboard',
+      });
     }
   }
 
-  onSave() {
-    // TODO
-  }
-
   load() {
-    const params = this.props.match.params;
-    const type = params.type;
-    const name = params.name;
-
-    request.get(`api/v1/dashboards/${type}/${name}`)
+    request.get(`api/v1/dashboards/${this.state.type}/${this.state.name}`)
       .set('Accept', 'application/json')
       .end(this.onLoad);
   }
 
-  save() {
-    // TODO
-  }
+  save(data) {
+    const cb = (error, response) => {
+      // TODO: actually do something if there is a save error.
 
-  openEdit() {
-    this.setState({ editOpen: true });
-  }
+      if (error !== null) {
+        console.error('Error saving dashboard.', error, response);
+      } else {
+        console.log('Dashboard saved.');
+      }
+    };
 
-  closeEdit() {
-    this.setState({ editOpen: false });
+    request.put(`api/v1/dashboards/${this.state.type}/${this.state.name}`)
+      .set('Accept', 'application/json')
+      .send({ data })
+      .end(cb);
   }
 
   render() {
@@ -77,6 +74,8 @@ class Dashboard extends Component {
 
     if (this.state.loading) {
       body = <p>Loading Dashboard...</p>;
+    } else if (this.state.loadError) {
+      body = <p>{this.state.loadError}</p>;
     } else if (this.state.type === 'time_series') {
       body = <TimeSeriesDashboard dashboard={this.state.dashboard} save={this.save} />;
     } else if (this.state.type === 'alert') {

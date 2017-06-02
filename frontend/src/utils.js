@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+export const has = Object.prototype.hasOwnProperty;
+
 export function generateMetricsKey(m) {
   return `${m.environment}.${m.application}.${m.metric_name}.${m.measure}`;
 }
@@ -53,13 +55,12 @@ export function createTimeSeriesDashboard(name) {
 
 export function transformChart(chart) {
   /**
-   * Transforms serialized charts to the format needed for our App.
+   * Transforms serialized charts from the server to the format needed for the client App.
    *
    * Adds null value selection start/end dates
    * Converts dates to Moment objects
    * Calculates dynamic time ranges.
    */
-
   const transformed = {
     ...chart,
     selectionStartDate: null,
@@ -77,40 +78,10 @@ export function transformChart(chart) {
   return transformed;
 }
 
-function loadCharts() {
-  const chartsStr = localStorage.getItem('charts');
-
-  if (chartsStr === null) {
-    return [];
-  }
-
-  localStorage.removeItem('charts'); // Remove legacy data
-
-  return JSON.parse(chartsStr).map(transformChart);
-}
-
-export function loadDashboards() {
-  /**
-   * Loads the saved dashboards from HTML localStorage.
-   */
-  const dashboardsStr = localStorage.getItem('dashboards');
-  let dashboards;
-
-  if (dashboardsStr === null) {
-    dashboards = [createTimeSeriesDashboard('Default')];
-    dashboards[0].charts = loadCharts(); // try to load stored charts from the old format.
-  } else {
-    dashboards = JSON.parse(dashboardsStr).map((dashboard) => {
-      dashboard.charts = dashboard.charts.map(transformChart); // eslint-disable-line no-param-reassign
-
-      return dashboard;
-    });
-  }
-
-  return dashboards;
-}
-
 export function copyChart(chart) {
+  /**
+   * Copies a chart object from a Time Series Dashboard
+   */
   return {
     ...chart,
     startDate: chart.startDate !== null ? chart.startDate.clone() : null,
@@ -142,4 +113,3 @@ export function createDataObject(metric) {
   };
 }
 
-export const has = Object.prototype.hasOwnProperty;

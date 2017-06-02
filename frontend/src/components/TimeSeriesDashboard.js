@@ -579,7 +579,7 @@ class TimeSeriesDashboard extends Component {
     /**
      * Saves all of the current dashboards to HTML local storage.
      */
-    console.log('TODO: emit save event');
+    this.props.save(copyTimeSeriesDashboard(this.state.dashboard));
   }
 
   clearDashboard() {
