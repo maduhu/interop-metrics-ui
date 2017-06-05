@@ -97,3 +97,6 @@ a:visited {
   color: rgb(5, 138, 168);
   text-decoration: none;
 }
+.hidden {
+  display: none;
+}

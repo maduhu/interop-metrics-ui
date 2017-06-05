@@ -691,20 +691,28 @@ export default function TimeSeriesChart(el) {
     const hasLeftAxis = mainData.left.length > 0 || previewData.left.length > 0;
     const hasRightAxis = mainData.right.length > 0 || previewData.right.length > 0;
     const hasBothAxes = hasLeftAxis && hasRightAxis;
+    let axisHeaderClass = 'legend-header legend-header--axis';
+    let axisRowClass = 'legend-col legend-col--axis';
+
+    if (!hasBothAxes) {
+      // Only show the axis column if we are using both axes.
+      axisHeaderClass += ' hidden';
+      axisRowClass += ' hidden';
+    }
 
     if (sel.select('table.legend').size() === 0) {
-      const tbody = sel.append('table').attr('class', 'legend').append('tbody');
-      tbody.append('th').attr('class', 'legend-header').text('color');
-
-      if (hasLeftAxis && hasRightAxis) {
-        tbody.append('th').attr('class', 'legend-header').text('axis');
-      }
-
-      tbody.append('th').attr('class', 'legend-header').text('environment');
-      tbody.append('th').attr('class', 'legend-header').text('application');
-      tbody.append('th').attr('class', 'legend-header').text('metric');
-      tbody.append('th').attr('class', 'legend-header').text('measure');
+      const tBody = sel.append('table').attr('class', 'legend').append('tbody');
+      tBody.append('th').attr('class', 'legend-header').text('color');
+      tBody.append('th').attr('class', axisHeaderClass).text('axis');
+      tBody.append('th').attr('class', 'legend-header').text('environment');
+      tBody.append('th').attr('class', 'legend-header').text('application');
+      tBody.append('th').attr('class', 'legend-header').text('metric');
+      tBody.append('th').attr('class', 'legend-header').text('measure');
+    } else {
+      sel.select('th.legend-header--axis').attr('class', axisHeaderClass);
     }
+
+
 
     const scale = axes.color.scale;
     const colors = scale.domain().map((colorKey) => {
@@ -713,33 +721,20 @@ export default function TimeSeriesChart(el) {
       const application = parts[1];
       const metric = parts.slice(2, parts.length - 1).join('.');
       const measure = parts[parts.length - 1];
-      let axis;
+      let axis = findAxis(colorKey, mainData);
 
-      if (hasBothAxes) {
-        axis = findAxis(colorKey, mainData);
-
-        if (axis === '') {
-          axis = findAxis(colorKey, previewData);
-        }
+      if (axis === '') {
+        axis = findAxis(colorKey, previewData);
       }
 
-      return [colorKey, environment, application, metric, measure, axis];
+      return [colorKey, axis, environment, application, metric, measure];
     });
     const items = sel.select('table.legend tbody').selectAll('tr.legend-row').data(colors);
     const newItems = items.enter().append('tr').attr('class', 'legend-row');
     const allItems = newItems.merge(items);
 
-    newItems.append('td')
-      .attr('class', 'legend-col')
-      .append('div')
-      .attr('class', 'legend-swatch')
-      .html('&nbsp;');
-
-    if (hasBothAxes) {
-      newItems.append('td').attr('class', 'legend-col legend-col--axis');
-      allItems.select('td.legend-col--axis').text(d => d[5]);
-    }
-
+    newItems.append('td').attr('class', 'legend-col').append('div').attr('class', 'legend-swatch').html('&nbsp;');
+    newItems.append('td').attr('class', axisRowClass);
     newItems.append('td').attr('class', 'legend-col legend-col--environment');
     newItems.append('td').attr('class', 'legend-col legend-col--application');
     newItems.append('td').attr('class', 'legend-col legend-col--metric');
@@ -747,10 +742,11 @@ export default function TimeSeriesChart(el) {
     newItems.append('td').attr('class', 'legend-col legend-col--value');
     newItems.append('td').attr('class', 'legend-col legend-col--date');
     allItems.select('.legend-swatch').attr('style', d => `background-color: ${scale(d[0])};`);
-    allItems.select('td.legend-col--environment').text(d => d[1]);
-    allItems.select('td.legend-col--application').text(d => d[2]);
-    allItems.select('td.legend-col--metric').text(d => d[3]);
-    allItems.select('td.legend-col--measure').text(d => d[4]);
+    allItems.select('td.legend-col--axis').attr('class', axisRowClass).text(d => d[1]);
+    allItems.select('td.legend-col--environment').text(d => d[2]);
+    allItems.select('td.legend-col--application').text(d => d[3]);
+    allItems.select('td.legend-col--metric').text(d => d[4]);
+    allItems.select('td.legend-col--measure').text(d => d[5]);
     items.exit().remove();
   }
 
