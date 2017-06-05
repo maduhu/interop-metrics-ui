@@ -65,10 +65,6 @@ class TimeSeriesDashboard extends Component {
 
     this.state = {
       dashboard: copyTimeSeriesDashboard(this.props.dashboard),
-      rawMetrics: [],
-      metrics: {},
-      metricsLoading: true,
-      metricsLoadError: null,
       targetChartIdx: null,
       targetChart: null,
       settingsOpen: false,
@@ -607,9 +603,6 @@ class TimeSeriesDashboard extends Component {
       dialog = (
         <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeSettings} size="xl">
           <ChartEditor
-            metrics={this.state.metrics}
-            metricsLoading={this.state.metricsLoading}
-            metricsLoadError={this.state.metricsLoadError}
             chart={this.state.targetChart}
             addMetric={this.addMetric}
             removeMetric={this.removeMetric}
