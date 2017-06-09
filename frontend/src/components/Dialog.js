@@ -27,6 +27,7 @@ export class Dialog extends Component {
     const size = this.props.size;
     const cancelText = this.props.cancelText;
     const okText = this.props.okText;
+    const okEnabled = this.props.okEnabled;
     const onOk = () => this.props.onOk();
     const onClose = () => this.props.onClose();
     let closeBtn;
@@ -38,7 +39,7 @@ export class Dialog extends Component {
     }
 
     if (this.props.showOk) {
-      okBtn = <button className="dialog__button button" onClick={onOk}>{okText}</button>;
+      okBtn = <button className="dialog__button button" disabled={!okEnabled} onClick={onOk}>{okText}</button>;
     }
 
     if (this.props.showCancel) {
@@ -74,6 +75,7 @@ Dialog.propTypes = {
   okText: React.PropTypes.string,
   showClose: React.PropTypes.bool,
   showOk: React.PropTypes.bool,
+  okEnabled: React.PropTypes.bool,
   showCancel: React.PropTypes.bool,
   onOk: React.PropTypes.func.isRequired,
   onClose: React.PropTypes.func.isRequired,
@@ -83,9 +85,10 @@ Dialog.defaultProps = {
   size: '',
   cancelText: 'cancel',
   okText: 'ok',
-  showClose: true,
+  showClose: false,
   showCancel: true,
   showOk: true,
+  okEnabled: true,
 };
 
 export default Dialog;
