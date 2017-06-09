@@ -185,7 +185,7 @@ class MetricPickerTable extends PureComponent {
 
               <th className="metric-picker__th">type</th>
 
-              <th className="metric-picker__th">add</th>
+              <th className="metric-picker__th">{this.props.addColText}</th>
             </tr>
 
             {rows}
@@ -201,6 +201,10 @@ class MetricPickerTable extends PureComponent {
     );
   }
 }
+
+MetricPickerTable.defaultProps = {
+  addColText: 'add',
+};
 
 export class MetricPicker extends Component {
   constructor(props) {
@@ -401,6 +405,7 @@ export class MetricPicker extends Component {
             sortCol={this.state.sortCol}
             sortDir={this.state.sortDir}
             addMetric={this.props.addMetric}
+            addColText={this.props.addColText}
             onSortChange={this.onSortChange}
           />
         </div>
