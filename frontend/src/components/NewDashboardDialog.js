@@ -32,7 +32,7 @@ export default class NewDashboardDialog extends Component {
 
   render() {
     return (
-      <Dialog showClose={false} okText="save" onOk={this.save} onClose={this.props.close}>
+      <Dialog okText="save" onOk={this.save} onClose={this.props.close}>
         <div className="new-dashboard-form">
           <h3 className="dialog__title">
             Add Dashboard
