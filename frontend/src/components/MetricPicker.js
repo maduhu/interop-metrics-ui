@@ -226,7 +226,6 @@ export class MetricPicker extends Component {
     };
 
     this.state = {
-      rawMetrics: [],
       metrics: {},
       metricsLoading: true,
       metricsLoadError: null,
@@ -259,7 +258,6 @@ export class MetricPicker extends Component {
     }
 
     this.setState(() => ({
-      rawMetrics: response.body.data.metrics,
       metrics: collapseMetrics(response.body.data.metrics),
       metricsLoading: false,
       metricsLoadError: null,

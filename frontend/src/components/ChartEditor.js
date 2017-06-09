@@ -51,9 +51,6 @@ class ChartEditor extends Component {
         <MetricPicker
           hidden={this.state.tab !== METRIC_PICKER}
           chart={this.props.chart}
-          metrics={this.props.metrics}
-          metricsLoading={this.props.metricsLoading}
-          metricsLoadError={this.props.metricsLoadError}
           addMetric={this.addMetric}
           metricsLimitReached={this.props.chart.metrics.length === 4}
         />
