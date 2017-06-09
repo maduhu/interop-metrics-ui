@@ -601,7 +601,7 @@ class TimeSeriesDashboard extends Component {
 
     if (this.state.settingsOpen) {
       dialog = (
-        <Dialog showClose={false} okText="save" onOk={this.saveChart} onClose={this.closeSettings} size="xl">
+        <Dialog okText="save" onOk={this.saveChart} onClose={this.closeSettings} size="xl">
           <ChartEditor
             chart={this.state.targetChart}
             addMetric={this.addMetric}
@@ -613,7 +613,7 @@ class TimeSeriesDashboard extends Component {
       );
     } else if (this.state.clearOpen) {
       dialog = (
-        <Dialog showClose={false} okText="yes" onOk={this.clearDashboard} onClose={this.closeClearDialog}>
+        <Dialog okText="yes" onOk={this.clearDashboard} onClose={this.closeClearDialog}>
           <p className="confirm-dialog">Are you sure you want to remove all charts in your dashboard?</p>
         </Dialog>
       );
@@ -635,7 +635,7 @@ class TimeSeriesDashboard extends Component {
 
     return (
       <div className="time-series-dashboard">
-        <DashboardButtons openClearDialog={this.openClearDialog} addChart={this.addChart} />
+        <DashboardButtons clear={this.openClearDialog} add={this.addChart} type="Chart" icon="fa-line-chart" />
 
         {dialog}
 
