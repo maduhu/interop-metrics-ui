@@ -19,7 +19,7 @@
   margin-right: 0.5em;
 }
 .metric-picker__metrics {
-  height: 500px;
+  height: 402px;
   padding: .5em 0;
   overflow-y: scroll;
 }
