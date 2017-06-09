@@ -5,23 +5,22 @@
   width: 400px;
 }
 .dashboard-list__header {
-  border-bottom: 1px solid rgb(224, 224, 224);
+  text-align: left;
   padding: 0.2em 0;
 }
 .dashboard-item__col {
-  padding: 0.3em 0.1em;
+  padding: 1em 0;
   margin: 0.5em 0;
 }
 .dashboard-item {
   margin: 0.5em 0;
 }
+.dashboard-item:hover {
+  background-color: rgb(241, 243, 244);
+}
 .dashboard-item__delete {
   border: none;
   padding: 0.4em;
-}
-.dashboard-item__type,
-.dashboard-item__delete {
-  text-align: center;
 }
 .dashboard-item__delete {
   border: none;
