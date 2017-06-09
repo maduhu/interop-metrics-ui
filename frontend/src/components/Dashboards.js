@@ -33,7 +33,7 @@ class DashboardItem extends PureComponent {
         </td>
 
         <td className="dashboard-item__col dashboard-item__delete">
-          <button onClick={() => this.props.openDelete(this.props.dashboard)}>
+          <button className="flat-button" onClick={() => this.props.openDelete(this.props.dashboard)}>
             <span className="fa fa-trash" />
           </button>
         </td>
@@ -216,13 +216,13 @@ class Dashboards extends Component {
       dialog = <NewDashboardDialog save={this.addDashboard} close={this.closeAddDashboard} />;
     } else if (this.state.dashboardToDelete !== null) {
       dialog = (
-        <Dialog onOk={this.deleteDashboard} onClose={this.closeDelete} okText="yes" showClose={false}>
+        <Dialog onOk={this.deleteDashboard} onClose={this.closeDelete} okText="yes">
           <p>Are you sure you want to delete {this.state.dashboardToDelete.name}?</p>
         </Dialog>
       );
     } else if (this.state.addDashboardError !== null) {
       dialog = (
-        <Dialog showClose={false} showCancel={false} onClose={this.closeAddError} onOk={this.closeAddError}>
+        <Dialog showCancel={false} onClose={this.closeAddError} onOk={this.closeAddError}>
           <p>{this.state.addDashboardError}</p>
         </Dialog>
       );
