@@ -15,14 +15,6 @@
 .chart__title h5 {
   font-size: 1.1em;
 }
-.chart__icons {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-.chart__icon {
-  margin-left: 0.8em;
-}
 .chart__loading-error {
   color: red;
 }
@@ -31,4 +23,9 @@
 }
 .chart-area__blank {
   padding: 0 2em;
+}
+.chart-config-buttons {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
