@@ -54,6 +54,9 @@ body {
   padding: 0.5em;
   transition: all 0.15s linear;
 }
+.flat-button--primary {
+  color: rgb(80, 200, 232);
+}
 .flat-button--secondary {
   color: #e07500;
 }
