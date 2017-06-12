@@ -55,7 +55,7 @@ export function createTimeSeriesDashboard(name) {
 
 export function transformChart(chart) {
   /**
-   * Transforms serialized charts from the server to the format needed for the client App.
+   * Transforms serialized charts from the server to the format needed for the client app.
    *
    * Adds null value selection start/end dates
    * Converts dates to Moment objects
@@ -76,6 +76,16 @@ export function transformChart(chart) {
   }
 
   return transformed;
+}
+
+export function transformTimeSeriesDashboard(dashboard) {
+  /**
+   * Transforms serialized time series dashboards from the server to the format needed for the client app.
+   */
+  return {
+    ...dashboard,
+    charts: dashboard.charts.map(transformChart),
+  };
 }
 
 export function copyChart(chart) {
@@ -105,11 +115,94 @@ export function createDataObject(metric) {
   return {
     name: generateMetricsKey(metric),
     axis: metric.axis,
-    durationUnit: metric.duration_unit,
-    rateUnit: metric.rate_unit,
+    duration_unit: metric.duration_unit,
+    rate_unit: metric.rate_unit,
     loading: true,
     error: null,
     rows: [],
   };
 }
 
+export function createAlertMetric(metric) {
+  /**
+   * Copies a metric and adds a measure field.
+   */
+  return { ...metric, measure: '' };
+}
+
+export function createAlert() {
+  return {
+    metric: null,
+    warning: null,
+    error: null,
+    data: {
+      warning: null,
+      error: null,
+    },
+  };
+}
+
+export function createAlertDashboard(name) {
+  return {
+    name,
+    version: '1.0',
+    rangePeriod: 1,
+    rangeMultiplier: 'hours',
+    alerts: [createAlert()],
+  };
+}
+
+export function copyAlert(alert) {
+  return {
+    ...alert,
+    metric: { ...alert.metric },
+    data: {
+      warning: null,
+      error: null,
+    },
+  };
+}
+
+export function copyAlertDashboard(dashboard) {
+  return {
+    ...dashboard,
+    alerts: dashboard.alerts.map(copyAlert),
+  };
+}
+
+export function transformAlert(alert) {
+  return { ...alert };
+}
+
+export function transformAlertDashboard(dashboard) {
+  return {
+    ...dashboard,
+    alerts: dashboard.alerts.map(transformAlert),
+  };
+}
+
+export const measureMap = {
+  raw_timer_with_interval: [
+    'count', 'interval_count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999',
+    'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate',
+  ],
+  raw_counter_with_interval: ['count', 'interval_count'],
+  '': [],
+};
+
+export const unitMap = {
+  p75: 'duration_unit',
+  p95: 'duration_unit',
+  p98: 'duration_unit',
+  p99: 'duration_unit',
+  p999: 'duration_unit',
+  max: 'duration_unit',
+  mean: 'duration_unit',
+  median: 'duration_unit',
+  min: 'duration_unit',
+  std_dev: 'duration_unit',
+  one_min_rate: 'rate_unit',
+  five_min_rate: 'rate_unit',
+  fifteen_min_rate: 'rate_unit',
+  mean_rate: 'rate_unit',
+};

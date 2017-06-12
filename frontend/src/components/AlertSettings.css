@@ -1,0 +1,13 @@
+.alert-section {
+  margin: 1em 0;
+}
+.alert-section__label {
+  display: inline-block;
+  font-weight: bold;
+  text-align: right;
+  width: 110px;
+}
+.alert-section__value {
+  display: inline-block;
+  margin: 0 1em;
+}

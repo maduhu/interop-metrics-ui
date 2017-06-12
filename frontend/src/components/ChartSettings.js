@@ -1,15 +1,9 @@
 import React, { Component, PureComponent } from 'react';
 import DatePicker from 'react-datepicker';
+import { measureMap } from '../utils';
 import 'react-datepicker/dist/react-datepicker.css';
 import './ChartSettings.css';
 
-const MEASURE_MAP = {
-  raw_timer_with_interval: [
-    'count', 'interval_count', 'mean', 'min', 'median', 'max', 'std_dev', 'p75', 'p95', 'p98', 'p99', 'p999',
-    'mean_rate', 'one_min_rate', 'five_min_rate', 'fifteen_min_rate',
-  ],
-  raw_counter_with_interval: ['count', 'interval_count'],
-};
 const DYNAMIC = 'dynamic';
 const FIXED = 'fixed';
 const RANGE_PERIODS = ['minutes', 'hours', 'days'];
@@ -296,7 +290,7 @@ class MetricsSettings extends PureComponent {
         const measureChange = e => this.props.updateMetric(idx, 'measure', e.target.value);
         const axisChange = e => this.props.updateMetric(idx, 'axis', e.target.value);
         let measureOptions = [<option key="" value="">Choose Measure</option>];
-        measureOptions = measureOptions.concat(MEASURE_MAP[metric.table].map(measure => (
+        measureOptions = measureOptions.concat(measureMap[metric.table].map(measure => (
           <option key={measure} value={measure}>{measure}</option>
         )));
 

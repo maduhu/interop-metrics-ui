@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 import request from 'superagent/lib/client';
 import TimeSeriesDashboard from './TimeSeriesDashboard';
 import AlertDashboard from './AlertDashboard';
-import { transformChart } from '../utils';
+import {
+  transformTimeSeriesDashboard,
+  transformAlertDashboard,
+} from '../utils';
 import './Dashboard.css';
 
 class Dashboard extends Component {
@@ -26,11 +29,12 @@ class Dashboard extends Component {
 
   onLoad(error, response) {
     if (error === null) {
-      const dashboard = { ...response.body.dashboard.data };
+      let dashboard;
 
-      // TODO: this could be done better.
       if (this.state.type === 'time_series') {
-        dashboard.charts = dashboard.charts.map(transformChart);
+        dashboard = transformTimeSeriesDashboard(response.body.dashboard.data);
+      } else if (this.state.type === 'alert') {
+        dashboard = transformAlertDashboard(response.body.dashboard.data);
       }
 
       this.setState({

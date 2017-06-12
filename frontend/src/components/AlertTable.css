@@ -1,0 +1,31 @@
+.alert-table {
+  width: 100%;
+}
+.alert-row__col__warning,
+.alert-row__col__error {
+  text-align: center;
+}
+.alert-row__col__warning {
+  color: #e07500;
+}
+.alert-row__col__error {
+  color: red;
+}
+.alert-row__col--ok {
+  color: green;
+}
+.alert-row__col-count {
+  font-size: 1.2em;
+}
+.alert-row__col-definition {
+  font-size: 0.8em;
+  margin-top: 0.2em;
+  color: rgb(33, 62, 71);
+}
+.alert-header,
+.alert-row__col {
+  padding: 0.5em;
+}
+.alert-header {
+  text-align: left;
+}

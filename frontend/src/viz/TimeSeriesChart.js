@@ -17,28 +17,12 @@ import {
   transition,
 } from 'd3';
 import moment from 'moment';
-import { has } from '../utils';
+import { has, unitMap } from '../utils';
 import './TimeSeriesChart.css';
 
 const SCALE_TYPES = { linear: true, log: true };
 const X = 0;
 const Y = 1;
-const unitMap = {
-  p75: 'durationUnit',
-  p95: 'durationUnit',
-  p98: 'durationUnit',
-  p99: 'durationUnit',
-  p999: 'durationUnit',
-  max: 'durationUnit',
-  mean: 'durationUnit',
-  median: 'durationUnit',
-  min: 'durationUnit',
-  std_dev: 'durationUnit',
-  one_min_rate: 'rateUnit',
-  five_min_rate: 'rateUnit',
-  fifteen_min_rate: 'rateUnit',
-  mean_rate: 'rateUnit',
-};
 
 // TODO: add method to clear brush selection.
 // TODO: add methods to toggle loading state
