@@ -2,6 +2,8 @@ from typing import Type
 
 from flask import Flask
 
+from metrics_server.alerts_controller import AlertsController
+from metrics_server.alerts_service import AlertsService
 from metrics_server.cassandra_service import CassandraService
 from metrics_server.dashboards_controller import DashboardsController
 from metrics_server.dashboards_service import DashboardsService
@@ -42,6 +44,7 @@ class App:
         self.add_service(CassandraService)
         self.add_service(MetricsService)
         self.add_service(DashboardsService)
+        self.add_service(AlertsService)
 
     def add_controller(self, controller_class: Type):
         """
@@ -60,3 +63,4 @@ class App:
         """
         self.add_controller(MetricsController)
         self.add_controller(DashboardsController)
+        self.add_controller(AlertsController)
