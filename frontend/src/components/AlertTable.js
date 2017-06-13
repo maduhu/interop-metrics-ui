@@ -11,16 +11,16 @@ class AlertRow extends PureComponent {
     let warningClass = '';
     let errorClass = '';
 
-    if (props.data.warning !== null) {
-      warningCount = props.data.warning.length;
+    if (props.data.warnings !== null) {
+      warningCount = props.data.warnings.length;
 
       if (warningCount === 0) {
         warningClass = 'alert-row__col--ok';
       }
     }
 
-    if (props.data.error !== null) {
-      errorCount = props.data.error.length;
+    if (props.data.errors !== null) {
+      errorCount = props.data.errors.length;
 
       if (errorCount === 0) {
         errorClass = 'alert-row__col--ok';

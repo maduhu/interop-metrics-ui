@@ -40,14 +40,14 @@ function many() {
 }
 
 const fakeData = [{
-  error: [],
-  warning: [],
+  errors: [],
+  warnings: [],
 }, {
-  error: [],
-  warning: few(),
+  errors: [],
+  warnings: few(),
 }, {
-  error: some(),
-  warning: many(),
+  errors: some(),
+  warnings: many(),
 }];
 
 /**

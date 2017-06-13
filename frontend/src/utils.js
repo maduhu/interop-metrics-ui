@@ -157,8 +157,8 @@ export function copyAlert(alert) {
     ...alert,
     metric: { ...alert.metric },
     data: {
-      warning: null,
-      error: null,
+      warnings: null,
+      errors: null,
     },
   };
 }
