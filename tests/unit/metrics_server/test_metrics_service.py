@@ -241,7 +241,7 @@ def test_get_metrics(patched_ms: MetricsService, counter_metrics, timer_metrics,
     'args,expected',
     [
         (['', '', 'not_real_table', '', []], 'table "not_real_table"'),
-        (['', '', TABLE_NAMES[0], '', ['not_real_column']], 'column "not_real_column"')
+        (['', '', TABLE_NAMES[0], '', ['not_real_column']], 'column(s) (not_real_column)')
     ]
 )
 def test_get_metric_data_invalid_args(patched_ms: MetricsService, args, expected):

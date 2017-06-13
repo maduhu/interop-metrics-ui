@@ -48,6 +48,30 @@ AGGREGATOR_MAP = {
 }
 
 
+def validate_columns(table, columns):
+    columns_set = set(columns)
+    table_columns = COLUMN_MAP.get(table)
+
+    if table_columns is None:
+        raise NotFoundError(f'table "{table}" does not exist')
+
+    if not columns_set.issubset(table_columns):
+        bad_columns = columns_set.difference(table_columns)
+        raise NotFoundError(f'column(s) ({", ".join(bad_columns)}) not found in table "{table}"')
+
+    is_interval_count = False
+
+    try:
+        idx = columns.index('interval_count')
+        columns = columns + columns[0:idx] + ['count', 'previous_count'] + columns[idx + 1:]
+        is_interval_count = True
+    except ValueError:
+        # This is fine, it just means interval_count is not a requested column.
+        pass
+
+    return columns, is_interval_count
+
+
 def interval_count(df: pd.DataFrame):
     return df.assign(interval_count=df['count'] - df['previous_count']).drop(['count', 'previous_count'], axis=1)
 
@@ -179,30 +203,14 @@ class MetricsService(BaseService):
             just isn't enough data in the database.
         :return: list of rows.
         """
-        query_columns = ['metric_timestamp']
-        is_interval_count = False
-
         if end_timestamp is None:
             end_timestamp = datetime.now(tz=pytz.utc)
 
         if start_timestamp is None:
             start_timestamp = end_timestamp - timedelta(hours=24)
 
-        table_columns = COLUMN_MAP.get(table)
-
-        if table_columns is None:
-            raise NotFoundError(f'table "{table}" does not exist')
-
-        for column in columns:
-            if column not in table_columns:
-                raise NotFoundError(f'column "{column}" not in table "{table}"')
-
-            if column == 'interval_count':
-                query_columns += ['count', 'previous_count']
-                is_interval_count = True
-            else:
-                query_columns.append(column)
-
+        columns, is_interval_count = validate_columns(table, columns)
+        query_columns = ['metric_timestamp'] + columns
         column_str = ', '.join(query_columns)
         query = (
             f'SELECT {column_str} FROM {table} WHERE environment=%s AND application=%s AND metric_name=%s '
