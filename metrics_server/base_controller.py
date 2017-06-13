@@ -26,23 +26,35 @@ class BaseController(metaclass=ABCMeta):
         raise NotImplementedError()
 
 
-def validate_with(schema):
+def validate_with(schema, validate_query_args: bool=False):
     """
     Validates that the body of the request is valid JSON and checks that it is valid according to the Marshmallow schema
     passed into the decorator.
 
-    :param schema: An instantiated Marshmallow schema. 
-    :return: 
+    :param schema: An instantiated Marshmallow schema.
+    :param validate_query_args: bool, flag to validate query args. Defaults to False.
+    :return:
     """
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*args, **kwargs):
+            data_to_validate = {}  # Everything to be validated will get merged into this dict
             body = request.get_json()
+            query_args = request.args
 
-            if body is None:
+            if body is None and query_args is False:
                 return jsonify(error='Request body must be JSON'), 400
 
-            data, errors = schema.load(body)
+            if body is not None:
+                data_to_validate.update(body)
+
+            if validate_query_args is True:
+                # Note the usage of flat=True here, this means the Werkzeug MultiDict class will lose data, so this
+                # may not be ideal for parsing query_args. We may want to make this configurable in the future if we
+                # find ourselves needing to leverage MultiDict functionality.
+                data_to_validate.update(query_args.to_dict(flat=True))
+
+            data, errors = schema.load(data_to_validate)
 
             if len(errors) > 0:
                 return jsonify(errors=errors), 400
