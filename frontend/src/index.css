@@ -110,3 +110,9 @@ a:visited {
 .hidden {
   display: none;
 }
+.input-wrapper__label {
+  font-weight: bold;
+}
+.input-wrapper__input {
+  margin-left: 0.5em;
+}

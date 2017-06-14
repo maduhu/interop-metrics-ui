@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import moment from 'moment';
 import DashboardButtons from './DashboardButtons';
+import AlertDashboardDialog from './AlertDashboardDialog';
 import AlertTable from './AlertTable';
 import AlertDialog from './AlertDialog';
 import { copyAlert, copyAlertDashboard, createAlert } from '../utils';
@@ -69,6 +70,7 @@ class AlertDashboard extends Component {
     this.closeAlertSettings = this.closeAlertSettings.bind(this);
     this.openDashboardSettings = this.openDashboardSettings.bind(this);
     this.closeDashboardSettings = this.closeDashboardSettings.bind(this);
+    this.saveDashboardSettings = this.saveDashboardSettings.bind(this);
     this.openAdd = this.openAdd.bind(this);
     this.closeAdd = this.closeAdd.bind(this);
     this.addAlert = this.addAlert.bind(this);
@@ -186,6 +188,17 @@ class AlertDashboard extends Component {
     this.setState({ dashboardSettingsOpen: false });
   }
 
+  saveDashboardSettings(settings) {
+    this.setState(state => ({
+      dashboardSettingsOpen: false,
+      dashboard: {
+        ...state.dashboard,
+        // The AlertDashboardDialog only gives us a subset of dashboard attributes on save so this is safe.
+        ...settings,
+      },
+    }), this.saveDashboard);
+  }
+
   openAdd() {
     this.setState({ addOpen: true });
   }
@@ -239,6 +252,14 @@ class AlertDashboard extends Component {
 
     if (this.state.addOpen) {
       dialog = <AlertDialog alert={createAlert()} save={this.addAlert} cancel={this.closeAdd} />;
+    } else if (this.state.dashboardSettingsOpen) {
+      dialog = (
+        <AlertDashboardDialog
+          dashboard={this.state.dashboard}
+          save={this.saveDashboardSettings}
+          close={this.closeDashboardSettings}
+        />
+      )
     } else if (this.state.alertSettingsOpen) {
       const alert = copyAlert(this.state.dashboard.alerts[this.state.targetAlertIdx]);
       dialog = <AlertDialog alert={alert} save={this.saveAlert} cancel={this.closeAlertSettings} />;
