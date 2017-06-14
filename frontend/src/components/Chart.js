@@ -35,7 +35,11 @@ export class Chart extends PureComponent {
       chartArea = (
         <div className="chart-area__blank">
           <span>No metrics chosen, </span>
-          <button className="button" onClick={this.openSettings}>choose a metric</button>
+
+          <button className="button" onClick={() => this.props.openSettings(this.props.idx)}>
+            choose a metric
+          </button>
+
           <span> to visualize.</span>
         </div>
       );
