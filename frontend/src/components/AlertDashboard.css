@@ -1,3 +1,7 @@
 .alert-list {
   list-style-type: none;
 }
+.dashboard-info {
+  padding: 0.25em;
+  margin: 1em 0;
+}

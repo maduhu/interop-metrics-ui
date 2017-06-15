@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import request from 'superagent/lib/client';
 import moment from 'moment';
 import DashboardButtons from './DashboardButtons';
 import AlertDashboardDialog from './AlertDashboardDialog';
@@ -7,59 +8,23 @@ import AlertDialog from './AlertDialog';
 import { copyAlert, copyAlertDashboard, createAlert } from '../utils';
 import './AlertDashboard.css';
 
-/**
- * TODO: REMOVE THE BELOW FUNCTIONS
- */
-function few() {
-  const timestamps = [];
+function computeDateRange(rangeMultiplier, rangePeriod) {
+  const endDate = moment.utc();
 
-  for (let i = 0; i < 3; i++) {
-    timestamps.push(moment.utc().subtract(60 + (i * 3), 'minutes'));
-  }
-
-  return timestamps;
+  return {
+    endDate,
+    startDate: endDate.clone().subtract(rangeMultiplier, rangePeriod),
+  };
 }
-
-function some() {
-  const timestamps = [];
-
-  for (let i = 0; i < 10; i++) {
-    timestamps.push(moment.utc().subtract(60 + i, 'minutes'));
-  }
-
-  return timestamps;
-}
-
-function many() {
-  const timestamps = [];
-
-  for (let i = 0; i < 97; i++) {
-    timestamps.push(moment.utc().subtract(60 + i, 'minutes'));
-  }
-
-  return timestamps;
-}
-
-const fakeData = [{
-  errors: [],
-  warnings: [],
-}, {
-  errors: [],
-  warnings: few(),
-}, {
-  errors: some(),
-  warnings: many(),
-}];
-
-/**
- * TODO: REMOVE THE ABOVE FUNCTIONS
- */
 
 class AlertDashboard extends Component {
   constructor(props) {
     super(props);
     this.saveDashboard = this.saveDashboard.bind(this);
+    this.updateDates = this.updateDates.bind(this);
+    this.updateAlert = this.updateAlert.bind(this);
     this.refreshDashboard = this.refreshDashboard.bind(this);
+    this.refreshLoop = this.refreshLoop.bind(this);
     this.startRefreshLoop = this.startRefreshLoop.bind(this);
     this.stopRefreshLoop = this.stopRefreshLoop.bind(this);
     this.moveAlertUp = this.moveAlertUp.bind(this);
@@ -77,8 +42,14 @@ class AlertDashboard extends Component {
     this.saveAlert = this.saveAlert.bind(this);
     this.removeAlert = this.removeAlert.bind(this);
 
+    const dashboard = copyAlertDashboard(this.props.dashboard);
+    dashboard.alerts = dashboard.alerts.map(a => ({ ...a, isLoading: true }));
+    const { startDate, endDate } = computeDateRange(dashboard.rangeMultiplier, dashboard.rangePeriod);
+
     this.state = {
-      dashboard: copyAlertDashboard(this.props.dashboard),
+      dashboard,
+      startDate,
+      endDate,
       targetAlertIdx: null,
       targetAlert: null,
       alertSettingsOpen: false,
@@ -88,8 +59,9 @@ class AlertDashboard extends Component {
       editOpen: false,
       refreshLoopId: this.startRefreshLoop(),
     };
+  }
 
-    // Load data asap.
+  componentDidMount() {
     this.refreshDashboard();
   }
 
@@ -97,25 +69,80 @@ class AlertDashboard extends Component {
     this.stopRefreshLoop();
   }
 
-  saveDashboard() {
+  saveDashboard(needsRefresh) {
+    if (needsRefresh) {
+      this.updateDates();
+      this.refreshDashboard();
+    }
+
     this.props.save(copyAlertDashboard(this.state.dashboard));
   }
 
+  updateDates() {
+    /**
+     * This is separate than computeDateRange because we cannot use setState in the constructor.
+     */
+    this.setState(computeDateRange(this.state.dashboard.rangeMultiplier, this.state.dashboard.rangePeriod));
+  }
+
+  updateAlert(attrs, idx, cb) {
+    this.setState((state) => {
+      const dashboard = state.dashboard;
+      const alerts = dashboard.alerts;
+      const alert = {
+        ...alerts[idx],
+        ...attrs,
+      };
+
+      return {
+        dashboard: {
+          ...dashboard,
+          alerts: [...alerts.slice(0, idx), alert, ...alerts.slice(idx + 1)],
+        },
+      };
+    }, cb);
+  }
+
+  loadAlertData(idx) {
+    const alert = this.state.dashboard.alerts[idx];
+    const env = alert.metric.environment;
+    const app = alert.metric.application;
+    const metric = alert.metric.metric_name;
+    const table = alert.metric.table;
+    const url = `/api/v1/alerts/${env}/${app}/${table}/${metric}`;
+    const queryParams = {
+      measure: alert.metric.measure,
+      warning: alert.warning,
+      error: alert.error,
+      start: this.state.startDate.toISOString(),
+      end: this.state.endDate.toISOString(),
+    };
+
+    const onLoad = (error, response) => {
+      if (error !== null) {
+        // TODO: we need to do something with this error.
+        this.updateAlert({ loadError: 'Error loading alert data', isLoading: false }, idx);
+      } else {
+        this.updateAlert({ data: response.body, isLoading: false }, idx);
+      }
+    };
+
+    // request.get(url).query(queryParams).end(onLoad);
+    this.updateAlert({ isLoading: true }, idx, () => request.get(url).query(queryParams).end(onLoad));
+  }
+
   refreshDashboard() {
-    const set = state => ({
-      dashboard: {
-        alerts: state.dashboard.alerts.map((alert, idx) => ({
-          ...alert,
-          data: fakeData[idx],
-        })),
-      },
-    });
-    window.setTimeout(() => this.setState(set), 1500);
+    const dashboard = this.state.dashboard;
+    dashboard.alerts.forEach((_, idx) => this.loadAlertData(idx));
+  }
+
+  refreshLoop() {
+    this.updateDates();
+    this.refreshDashboard();
   }
 
   startRefreshLoop() {
-    // TODO
-    return null;
+    return window.setInterval(this.refreshLoop, 60 * 1000);
   }
 
   stopRefreshLoop() {
@@ -189,14 +216,30 @@ class AlertDashboard extends Component {
   }
 
   saveDashboardSettings(settings) {
-    this.setState(state => ({
-      dashboardSettingsOpen: false,
-      dashboard: {
-        ...state.dashboard,
-        // The AlertDashboardDialog only gives us a subset of dashboard attributes on save so this is safe.
-        ...settings,
-      },
-    }), this.saveDashboard);
+    let needsRefresh = false;
+
+    this.setState((state) => {
+      const multipliersEqual = state.dashboard.rangeMultiplier === settings.rangeMultiplier;
+      const periodsEqual = state.dashboard.rangePeriod === settings.rangePeriod;
+
+      if (!multipliersEqual || !periodsEqual) {
+        needsRefresh = true;
+        return {
+          dashboardSettingsOpen: false,
+          dashboard: {
+            ...state.dashboard,
+            // The AlertDashboardDialog only gives us a subset of dashboard attributes on save so this is safe.
+            ...settings,
+          },
+        };
+      }
+
+      return { dashboardSettingsOpen: false };
+    }, () => {
+      if (needsRefresh) {
+        this.saveDashboard(needsRefresh);
+      }
+    });
   }
 
   openAdd() {
@@ -208,13 +251,18 @@ class AlertDashboard extends Component {
   }
 
   addAlert(alert) {
+    const idx = this.state.dashboard.alerts.length;
+
     this.setState(state => ({
       addOpen: false,
       dashboard: {
         ...state.dashboard,
         alerts: [...state.dashboard.alerts, alert],
       },
-    }), this.saveDashboard);
+    }), () => {
+      this.saveDashboard(false);
+      this.loadAlertData(idx);
+    });
   }
 
   removeAlert(idx) {
@@ -233,6 +281,8 @@ class AlertDashboard extends Component {
   }
 
   saveAlert(alert) {
+    const idx = this.state.targetAlertIdx;
+
     this.setState(state => ({
       alertSettingsOpen: false,
       targetAlertIdx: false,
@@ -244,11 +294,20 @@ class AlertDashboard extends Component {
           ...state.dashboard.alerts.slice(state.targetAlertIdx + 1),
         ],
       },
-    }), this.saveDashboard);
+    }), () => {
+      this.saveDashboard(false);
+      this.loadAlertData(idx);
+    });
   }
 
   render() {
     let dialog;
+    const isLoading = this.state.dashboard.alerts.some(a => a.isLoading);
+    const dateFormat = 'YYYY-MM-DD HH:mm';
+    const start = this.state.startDate.format(dateFormat);
+    const end = this.state.endDate.format(dateFormat);
+    const dateMsgPrefix = isLoading ? 'Loading' : 'Showing';
+    const dateMsg = `${dateMsgPrefix} data from ${start} to ${end}`;
 
     if (this.state.addOpen) {
       dialog = <AlertDialog alert={createAlert()} save={this.addAlert} cancel={this.closeAdd} />;
@@ -259,7 +318,7 @@ class AlertDashboard extends Component {
           save={this.saveDashboardSettings}
           close={this.closeDashboardSettings}
         />
-      )
+      );
     } else if (this.state.alertSettingsOpen) {
       const alert = copyAlert(this.state.dashboard.alerts[this.state.targetAlertIdx]);
       dialog = <AlertDialog alert={alert} save={this.saveAlert} cancel={this.closeAlertSettings} />;
@@ -278,6 +337,10 @@ class AlertDashboard extends Component {
             <span className="button__text">Refresh</span>
           </button>
         </DashboardButtons>
+
+        <div className="dashboard-info">
+          {dateMsg}
+        </div>
 
         <AlertTable
           alerts={this.state.dashboard.alerts}
