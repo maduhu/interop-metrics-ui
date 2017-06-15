@@ -135,9 +135,11 @@ export function createAlert() {
     metric: null,
     warning: null,
     error: null,
+    isLoading: false,
+    loadError: null,
     data: {
-      warning: null,
-      error: null,
+      warnings: null,
+      errors: null,
     },
   };
 }
@@ -155,6 +157,8 @@ export function createAlertDashboard(name) {
 export function copyAlert(alert) {
   return {
     ...alert,
+    isLoading: false,
+    loadError: null,
     metric: { ...alert.metric },
     data: {
       warnings: null,
