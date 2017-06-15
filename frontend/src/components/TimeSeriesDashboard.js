@@ -265,13 +265,15 @@ class TimeSeriesDashboard extends Component {
     const cb = (error, response) => handler(chartIdx, dataIdx, measure, error, response);
     const windowWidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
     const pad = 144; // Subtract 144 because we have 64 pixels of padding on the window and 80 pixels on SVG
-    const desiredRows = windowWidth - pad;
+    const queryParams = {
+      columns: measure.measure,
+      start_timestamp: start.toISOString(),
+      end_timestamp: end.toISOString(),
+      size: windowWidth - pad,
+    };
 
     request.get(url)
-      .query({ columns: measure.measure })
-      .query({ start_timestamp: start.toISOString() })
-      .query({ end_timestamp: end.toISOString() })
-      .query({ size: desiredRows })
+      .query(queryParams)
       .set('Accept', 'application/json')
       .end(cb);
   }
