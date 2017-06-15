@@ -151,7 +151,7 @@ class MetricPickerTable extends PureComponent {
             <td className="metric-picker__env-col">{row.environment}</td>
             <td className="metric-picker__app-col">{row.application}</td>
             <td className="metric-picker__metric-col">{row.metric_name}</td>
-            <td className="metric-picker__timestamp-col">{row.last_timestamp.format('YYYY MM-DD HH:mm')}</td>
+            <td className="metric-picker__timestamp-col">{row.last_timestamp.format('YYYY-MM-DD HH:mm')}</td>
             <td className="metric-picker__type-col">{typeIcon}</td>
             <td className="metric-picker__add-col">
               <button className="flat-button" onClick={addMetric}>
