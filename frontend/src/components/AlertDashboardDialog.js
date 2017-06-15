@@ -16,7 +16,7 @@ export default class AlertDashboardDialog extends Component {
   }
 
   changeMultiplier(e) {
-    this.setState({ rangeMultiplier: e.target.value });
+    this.setState({ rangeMultiplier: parseFloat(e.target.value) });
   }
 
   changePeriod(e) {
