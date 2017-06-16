@@ -150,7 +150,7 @@ export function createAlertDashboard(name) {
     version: '1.0',
     rangePeriod: 1,
     rangeMultiplier: 'hours',
-    alerts: [createAlert()],
+    alerts: [],
   };
 }
 
