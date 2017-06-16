@@ -88,7 +88,9 @@ export default class AlertTable extends PureComponent {
           </tr>
 
           {this.props.alerts.map((alert, idx) => {
-            const key = `${alert.environment + alert.application + alert.metric.metric_name + alert.metric.measure}`;
+            const { environment, application, metric_name: metricName, measure } = alert.metric;
+            const { warning, error } = alert;
+            const key = `${environment}.${application}.${metricName}.${measure}.${warning}.${error}`;
             return (
               <AlertRow
                 {...alert}
