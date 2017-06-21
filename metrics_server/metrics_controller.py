@@ -20,39 +20,6 @@ class MetricsController(BaseController):
         """
         return jsonify(data={'metrics': self.metrics_service.get_all_distinct_metrics()})
 
-    def environments(self):
-        """
-        Returns all of the available environments that we can retrieve metrics for.
-
-        :return: JSON
-        """
-        return jsonify(data={'environments': self.metrics_service.get_environments()})
-    
-    def applications(self, env):
-        """
-        Returns all of the available applications for an environment.
-
-        :param env: The environment.
-        :return: JSON
-        """
-        return jsonify(data={'environment': env, 'applications': self.metrics_service.get_applications(env)})
-    
-    def metrics(self, env, app):
-        """
-        Returns all of the available metrics for an account and application. Each metric belongs to a table
-
-        :param env: The environment.
-        :param app: The application.
-        :return: JSON
-        """
-        return jsonify(
-            data={
-                'environment': env,
-                'application': app,
-                'metrics': self.metrics_service.get_metrics(env, app)
-            }
-        )
-
     @staticmethod
     def _parse_timestamp(timestamp):
         if timestamp is not None:
@@ -64,8 +31,8 @@ class MetricsController(BaseController):
                 timestamp = timestamp.astimezone(pytz.utc)
 
         return timestamp
-    
-    def metric(self, env, app, table, metric):
+
+    def metric(self, table, env, app, metric):
         """
         Returns all of the available data for a metric.
 
@@ -119,7 +86,4 @@ class MetricsController(BaseController):
 
     def add_routes(self):
         self.add_route('/api/v1/metrics', self.distinct_metrics, ['GET'])
-        self.add_route('/api/v1/environments/', self.environments, ['GET'])
-        self.add_route('/api/v1/environments/<env>/applications', self.applications, ['GET'])
-        self.add_route('/api/v1/environments/<env>/applications/<app>/metrics', self.metrics, ['GET'])
-        self.add_route('/api/v1/environments/<env>/applications/<app>/metrics/<table>/<metric>', self.metric, ['GET'])
+        self.add_route('/api/v1/metrics/<table>/<env>/<app>/<metric>', self.metric, ['GET'])

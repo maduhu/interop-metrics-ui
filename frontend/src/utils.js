@@ -7,7 +7,7 @@ export function generateMetricsKey(m) {
 }
 
 export function generateMetricsUrl(m) {
-  return `api/v1/environments/${m.environment}/applications/${m.application}/metrics/${m.table}/${m.metric_name}`;
+  return `api/v1/metrics/${m.table}/${m.environment}/${m.application}/${m.metric_name}`;
 }
 
 export function createChart() {

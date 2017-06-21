@@ -136,56 +136,6 @@ class MetricsService(BaseService):
 
         return all_rows
 
-    def get_environments(self):
-        """
-        Retrieve environments from DB
-
-        :return: list of strings
-        """
-        environments = set()
-        distinct_metrics = self.get_all_distinct_metrics()
-
-        for metric in distinct_metrics:
-            environments.add(metric['environment'])
-
-        return list(environments)
-
-    def get_applications(self, environment):
-        """
-        Retrieve applications from DB for a given environment.
-
-        :param environment: The environment you want to get applications from.
-        :return: list of strings
-        """
-        applications = set()
-        distinct_metrics = self.get_all_distinct_metrics()
-
-        for metric in distinct_metrics:
-            if metric['environment'] == environment:
-                # Can't filter only one partition key, so have to manually filter here.
-                applications.add(metric['application'])
-
-        return list(applications)
-
-    def get_metrics(self, environment, application):
-        """
-        Retrieve available metrics from DB for a given environment and application.
-
-        :param environment: The environment you want to get metrics from.
-        :param application: The application you want to get metrics from.
-        :return: list of strings
-        """
-        available_metrics = []
-        all_metrics = self.get_all_distinct_metrics()
-
-        for metric in all_metrics:
-            if metric['environment'] == environment and metric['application'] == application:
-                metric.pop('environment')
-                metric.pop('application')
-                available_metrics.append(metric)
-
-        return available_metrics
-
     def get_metric_data(self, environment, application, table, metric, columns, start_timestamp=None,
                         end_timestamp=None, size=1000) -> pd.DataFrame:
         """
