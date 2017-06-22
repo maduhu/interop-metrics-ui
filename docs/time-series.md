@@ -1,4 +1,4 @@
-# Screenshots
+# Time Series Dashboards
 
 On first page load a new chart is added by default, but is not configured. The chart will prompt you to choose a metric
 to visualize.

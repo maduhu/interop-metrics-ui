@@ -1,3 +1,5 @@
+# Dashboards Page
+
 The metrics platform allows users to create as many dashboards as they like, and share them via their unique URLs. The
 default page for the metrics platform is the dashboards page, which lists all of the current dashboards and their types:
 

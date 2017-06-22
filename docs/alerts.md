@@ -1,3 +1,5 @@
+# Alert Dashboards
+
 Alert Dashboards are simple, they allow you to pick a specific metric and measure, set a warning and error threshold,
 and monitor how many warnings and errors have happened in the last time period you are interested in.
 
