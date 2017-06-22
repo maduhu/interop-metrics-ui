@@ -103,4 +103,4 @@ Tests are written with PyTest, to run them:
 
 ## Screenshots
 
-A brief screenshot tour of the UI can be found [here](docs/screenshots.md)
+A brief screenshot tour of the UI can be found [here](docs/dashboards.md)
