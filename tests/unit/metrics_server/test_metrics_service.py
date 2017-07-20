@@ -140,8 +140,9 @@ def test_validate_columns_good():
 
 
 @pytest.mark.parametrize('table,columns,expected_error', [
-    ('raw_timer_with_interval', ['count', 'interval_count', 'i do not exist'], 'column(s)'),
-    ('i do not exist', ['count'], 'table'),
+    ('raw_timer_with_interval', ['count', 'interval_count', 'i do not exist'], 'i do not exist'),
+    ('raw_timer_with_interval', ['i do not exist', 'i also do not exist'], 'i do not exist, i also do not exist'),
+    ('i do not exist', ['count'], 'i do not exist'),
 ])
 def test_validate_columns_bad(table, columns, expected_error):
     """
@@ -155,7 +156,7 @@ def test_validate_columns_bad(table, columns, expected_error):
     with pytest.raises(NotFoundError) as exc_info:
         validate_columns(table, columns)
 
-    assert str(exc_info.value).startswith(expected_error)
+    assert expected_error in str(exc_info.value)
 
 
 @pytest.mark.parametrize('columns,expected_columns', [
