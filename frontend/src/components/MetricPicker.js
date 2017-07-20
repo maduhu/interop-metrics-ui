@@ -380,7 +380,7 @@ export class MetricPicker extends Component {
       body = (
         <div className={`metric-picker-mask ${this.props.hidden ? 'metric-picker--hidden' : ''}`}>
           <p className="metric-picker-message">
-            Only 4 metrics may be plotted on a single chart.
+            Only 8 metrics may be plotted on a single chart.
           </p>
         </div>
       );
