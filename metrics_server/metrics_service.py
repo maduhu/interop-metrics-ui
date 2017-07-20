@@ -63,7 +63,7 @@ def validate_columns(table, columns):
 
     try:
         idx = columns.index('interval_count')
-        columns = columns + columns[0:idx] + ['count', 'previous_count'] + columns[idx + 1:]
+        columns = columns[0:idx] + ['count', 'previous_count'] + columns[idx + 1:]
         is_interval_count = True
     except ValueError:
         # This is fine, it just means interval_count is not a requested column.
