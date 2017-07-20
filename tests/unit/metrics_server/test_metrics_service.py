@@ -6,7 +6,7 @@ import pytz
 from dateutil.parser import parse
 
 from metrics_server.errors import NotFoundError
-from metrics_server.metrics_service import MetricsService, TABLE_NAMES
+from metrics_server.metrics_service import MetricsService, TABLE_NAMES, validate_columns
 from tests.utils import MockResultSet
 
 TEST_DATE = datetime(2017, 1, 1, tzinfo=pytz.UTC).isoformat()
@@ -130,3 +130,34 @@ def test_get_metric_data_resample(patched_ms: MetricsService, metric_data: MockR
                                              start, end, 500)
 
     assert abs(len(resp) - 500) < 100
+
+
+def test_validate_columns_good():
+    test_columns = ['count', 'previous_count']
+    columns, is_interval_count = validate_columns('raw_timer_with_interval', test_columns)
+    assert is_interval_count is False
+    assert test_columns == columns
+
+
+@pytest.mark.parametrize('table,columns,expected_error', [
+    ('raw_timer_with_interval', ['count', 'interval_count', 'i do not exist'], 'column(s)'),
+    ('i do not exist', ['count'], 'table'),
+])
+def test_validate_columns_bad(table, columns, expected_error):
+    """
+    Test validate columns with bad table and bad column values
+    """
+    with pytest.raises(NotFoundError) as exc_info:
+        validate_columns(table, columns)
+
+    assert str(exc_info.value).startswith(expected_error)
+
+
+@pytest.mark.parametrize('columns,expected_columns', [
+    (['interval_count'], ['count', 'previous_count']),
+    (['interval_count', 'p99'], ['count', 'previous_count', 'p99']),
+])
+def test_validate_columns_interval(columns, expected_columns):
+    actual_columns, is_interval_count = validate_columns('raw_timer_with_interval', columns)
+    assert is_interval_count
+    assert expected_columns == actual_columns
