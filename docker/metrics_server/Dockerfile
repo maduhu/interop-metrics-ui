@@ -4,8 +4,8 @@ ENV PROJECT_PATH /opt/modusbox/metrics_server
 ENV PYTHONPATH $PROJECT_PATH
 WORKDIR $PROJECT_PATH
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY docker_requirements.txt .
+RUN pip install --no-cache-dir -r docker_requirements.txt
 
 COPY metrics_server ./metrics_server
 
