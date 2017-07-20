@@ -146,6 +146,11 @@ def test_validate_columns_good():
 def test_validate_columns_bad(table, columns, expected_error):
     """
     Test validate columns with bad table and bad column values
+
+    :param table: table name
+    :param columns: list of column names
+    :param expected_error: The error message to expect
+    :return:
     """
     with pytest.raises(NotFoundError) as exc_info:
         validate_columns(table, columns)
@@ -158,6 +163,14 @@ def test_validate_columns_bad(table, columns, expected_error):
     (['interval_count', 'p99'], ['count', 'previous_count', 'p99']),
 ])
 def test_validate_columns_interval(columns, expected_columns):
+    """
+    Tests validate_columns with interval_count column, which is not a real column, but a calculated one based on
+    count and previous_count.
+
+    :param columns: columns to pass to validate_columns
+    :param expected_columns: columns that we expect validate_columns to return
+    :return:
+    """
     actual_columns, is_interval_count = validate_columns('raw_timer_with_interval', columns)
     assert is_interval_count
     assert expected_columns == actual_columns
